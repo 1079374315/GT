@@ -66,7 +66,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -80,7 +79,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -93,8 +91,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
@@ -131,12 +127,12 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- //GT 须依赖的包：
- implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
- implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ * //GT 须依赖的包：
+ * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
@@ -186,6 +182,98 @@ public class GT {
         }
         return gt;
     }
+
+    /**
+     * 获取 Context
+     *
+     * @return
+     */
+    public Context getCONTEXT() {
+        return CONTEXT;
+    }
+
+    /**
+     * 获取控制外部所有的 Log 显示
+     *
+     * @return boolean 返回当前日志提示是否开启
+     */
+    public Boolean getLogTf() {
+        return LOG_TF;
+    }
+
+    /**
+     * 设置 外部 日志是否开启
+     *
+     * @param logTf true 为开启 false 为关闭 默认为 true
+     */
+    public void setLogTf(Boolean logTf) {
+        LOG_TF = logTf;
+    }
+
+    /**
+     * 控制外部所有的 toast 显示 获取与设置
+     *
+     * @return boolean 返回 toast 是否开启的状态
+     */
+    public Boolean getToastTf() {
+        return TOAST_TF;
+    }
+
+    /**
+     * 设置 Toast 是否开启
+     *
+     * @param toastTf true 为开启 false 为关闭
+     */
+    public void setToastTf(Boolean toastTf) {
+        TOAST_TF = toastTf;
+    }
+
+    /**
+     * 为外部提供访问 GT Context 接口
+     *
+     * @param CONTEXT
+     */
+    public void setCONTEXT(Context CONTEXT) {
+        this.CONTEXT = CONTEXT;
+    }
+
+    /**
+     * 获取GT类内部的日志是否开启状态
+     *
+     * @return Boolean true 为开启 false 为关闭
+     */
+    public Boolean getGtLogTf() {
+        return GT_LOG_TF;
+    }
+
+    /**
+     * 设置 GT 类内部日志是否开启
+     *
+     * @param gtLogTf true 为开启 false 为关闭
+     */
+    public void setGtLogTf(Boolean gtLogTf) {
+        GT_LOG_TF = gtLogTf;
+    }
+
+    /**
+     * 获取 GT 类 内部Toast 是否开启
+     *
+     * @return true 为开启 false 为关闭
+     */
+    public Boolean getGtToastTf() {
+        return GT_TOAST_TF;
+    }
+
+    /**
+     * 设置 GT 类内部 Toast 是否显示
+     *
+     * @param gtToastTf true 为开启 false 为关闭
+     */
+    public void setGtToastTf(Boolean gtToastTf) {
+        GT_TOAST_TF = gtToastTf;
+    }
+
+    //============================================= 提示类 =========================================
 
     /**
      * 提示消息 Log
@@ -337,7 +425,15 @@ public class GT {
 
     }
 
-    //============================================= 提示类 =========================================
+    /**
+     * 报错提示 该提示可通过 GT 提供的接口 的实例获取
+     *
+     * @return String 报错的文件与行号
+     */
+    public String getLineInfo() {
+        StackTraceElement ste = new Throwable().getStackTrace()[1];
+        return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
+    }
 
     /**
      * 单个消息框 Toast
@@ -394,159 +490,6 @@ public class GT {
     public static void toast_time(Context context, Object msg, int time) {
         if (TOAST_TF)
             Toast.makeText(context, String.valueOf(msg), time).show();
-    }
-
-    /**
-     * 跳转 Activity
-     *
-     * @param activityClass 跳转的类
-     */
-    public static void startAct(Class activityClass) {
-        if (getGT().CONTEXT != null) {
-            getGT().CONTEXT.startActivity(new Intent(getGT().CONTEXT, activityClass));//跳转 Activity
-        } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 为 null 无法进行相应的 Activity 跳转");
-        }
-    }
-
-    /**
-     * 跳转 Activity
-     *
-     * @param intent
-     */
-    public static void startAct(Intent intent) {
-
-        if (getGT().CONTEXT != null && intent != null) {
-            getGT().CONTEXT.startActivity(intent);//跳转 Activity
-        } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
-        }
-    }
-
-    /**
-     * 跳转 Activity
-     *
-     * @param context       上下文
-     * @param activityClass 跳转的类
-     */
-    public static void startAct(Context context, Class activityClass) {
-        if (context != null) {
-            context.startActivity(new Intent(context, activityClass));//跳转 Activity
-        }
-    }
-
-    /**
-     * 跳转 Activity
-     *
-     * @param context 上下文
-     * @param intent  intent
-     */
-    public static void startAct(Context context, Intent intent) {
-        if (context != null && intent != null) {
-            context.startActivity(intent); //跳转 Activity
-        } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
-        }
-    }
-
-    /**
-     * 获取 Context
-     *
-     * @return
-     */
-    public Context getCONTEXT() {
-        return CONTEXT;
-    }
-
-    /**
-     * 为外部提供访问 GT Context 接口
-     *
-     * @param CONTEXT
-     */
-    public void setCONTEXT(Context CONTEXT) {
-        this.CONTEXT = CONTEXT;
-    }
-
-    /**
-     * 获取控制外部所有的 Log 显示
-     *
-     * @return boolean 返回当前日志提示是否开启
-     */
-    public Boolean getLogTf() {
-        return LOG_TF;
-    }
-
-    /**
-     * 设置 外部 日志是否开启
-     *
-     * @param logTf true 为开启 false 为关闭 默认为 true
-     */
-    public void setLogTf(Boolean logTf) {
-        LOG_TF = logTf;
-    }
-
-    /**
-     * 控制外部所有的 toast 显示 获取与设置
-     *
-     * @return boolean 返回 toast 是否开启的状态
-     */
-    public Boolean getToastTf() {
-        return TOAST_TF;
-    }
-
-    /**
-     * 设置 Toast 是否开启
-     *
-     * @param toastTf true 为开启 false 为关闭
-     */
-    public void setToastTf(Boolean toastTf) {
-        TOAST_TF = toastTf;
-    }
-
-    /**
-     * 获取GT类内部的日志是否开启状态
-     *
-     * @return Boolean true 为开启 false 为关闭
-     */
-    public Boolean getGtLogTf() {
-        return GT_LOG_TF;
-    }
-
-    /**
-     * 设置 GT 类内部日志是否开启
-     *
-     * @param gtLogTf true 为开启 false 为关闭
-     */
-    public void setGtLogTf(Boolean gtLogTf) {
-        GT_LOG_TF = gtLogTf;
-    }
-
-    /**
-     * 获取 GT 类 内部Toast 是否开启
-     *
-     * @return true 为开启 false 为关闭
-     */
-    public Boolean getGtToastTf() {
-        return GT_TOAST_TF;
-    }
-
-    /**
-     * 设置 GT 类内部 Toast 是否显示
-     *
-     * @param gtToastTf true 为开启 false 为关闭
-     */
-    public void setGtToastTf(Boolean gtToastTf) {
-        GT_TOAST_TF = gtToastTf;
-    }
-
-    /**
-     * 报错提示 该提示可通过 GT 提供的接口 的实例获取
-     *
-     * @return String 报错的文件与行号
-     */
-    public String getLineInfo() {
-        StackTraceElement ste = new Throwable().getStackTrace()[1];
-        return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
     }
 
     /**
@@ -609,6 +552,7 @@ public class GT {
         }
 
     }
+
 
     /**
      * AlertDialog.Builder 对话框类
@@ -851,16 +795,6 @@ public class GT {
         private static String CHANEL_ID = "com.gsls.king";
         private static String CHANEL_DESCRIPTION = "GT_Android 描述";
         private static String CHANEL_NAME = "GT_Android复习";
-        private Activity activity;
-
-        /**
-         * 实例化 通知类
-         *
-         * @param activity
-         */
-        public GT_Notification(Activity activity) {
-            this.activity = activity;
-        }
 
         /**
          * 设置 通知类的 code
@@ -896,6 +830,17 @@ public class GT {
          */
         public void setChanelName(String ChanelName) {
             CHANEL_NAME = ChanelName;
+        }
+
+        private Activity activity;
+
+        /**
+         * 实例化 通知类
+         *
+         * @param activity
+         */
+        public GT_Notification(Activity activity) {
+            this.activity = activity;
         }
 
         /**
@@ -968,6 +913,59 @@ public class GT {
 
     }
 
+    /**
+     * 跳转 Activity
+     *
+     * @param activityClass 跳转的类
+     */
+    public static void startAct(Class activityClass) {
+        if (getGT().CONTEXT != null) {
+            getGT().CONTEXT.startActivity(new Intent(getGT().CONTEXT, activityClass));//跳转 Activity
+        } else {
+            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 为 null 无法进行相应的 Activity 跳转");
+        }
+    }
+
+    /**
+     * 跳转 Activity
+     *
+     * @param intent
+     */
+    public static void startAct(Intent intent) {
+
+        if (getGT().CONTEXT != null && intent != null) {
+            getGT().CONTEXT.startActivity(intent);//跳转 Activity
+        } else {
+            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
+        }
+    }
+
+    /**
+     * 跳转 Activity
+     *
+     * @param context       上下文
+     * @param activityClass 跳转的类
+     */
+    public static void startAct(Context context, Class activityClass) {
+        if (context != null) {
+            context.startActivity(new Intent(context, activityClass));//跳转 Activity
+        }
+    }
+
+    /**
+     * 跳转 Activity
+     *
+     * @param context 上下文
+     * @param intent  intent
+     */
+    public static void startAct(Context context, Intent intent) {
+        if (context != null && intent != null) {
+            context.startActivity(intent); //跳转 Activity
+        } else {
+            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
+        }
+    }
+
     //============================================= 数据存储类 =====================================
 
     /**
@@ -975,13 +973,33 @@ public class GT {
      */
     public static class GT_SharedPreferences {
 
+        private Context context;
+
+        public void commit() {
+            sp_e.apply();
+        }  // 使用 apply 手动提交 如果提交后还有后续操作，建议使用 apply，先会写入内存，然后再异步写入磁盘
+
+        public void clear() {
+            sp_e.clear();
+            sp_e.commit();
+        }//清空    //如果使用 commit 来提交事务，是直接写入磁盘 ，如果需要频繁的提交的话， apply 的性能会优于 commit
+
+        private SharedPreferences sp;
+
+        public SharedPreferences getSharedPreferences() {
+            return sp;
+        }           //获取 SharedPreferences
+
+        private SharedPreferences.Editor sp_e;
+
+        public SharedPreferences.Editor getEditor() {
+            return sp_e;
+        }   //获取 SharedPreferences.Editor
+
+        private boolean commit = false;             //定义是否自动提交
         public static final int PRIVATE = 0;        //只有本应用可读写
         public static final int PROTECTED = 1;      //其他应用可以只读
         public static final int PUBLIC = 2;         //其他应用可以读写
-        private Context context;
-        private SharedPreferences sp;
-        private SharedPreferences.Editor sp_e;
-        private boolean commit = false;             //定义是否自动提交
         private Gson gson = new Gson();             //是俩胡 Gson 对象
 
         /**
@@ -998,23 +1016,6 @@ public class GT {
             sp = context.getSharedPreferences(SPName, permissions);//打开 或 创建 SharedPreferences
             sp_e = sp.edit();//让userData处于编辑状态
         }
-
-        public void commit() {
-            sp_e.apply();
-        }  // 使用 apply 手动提交 如果提交后还有后续操作，建议使用 apply，先会写入内存，然后再异步写入磁盘
-
-        public void clear() {
-            sp_e.clear();
-            sp_e.commit();
-        }//清空    //如果使用 commit 来提交事务，是直接写入磁盘 ，如果需要频繁的提交的话， apply 的性能会优于 commit
-
-        public SharedPreferences getSharedPreferences() {
-            return sp;
-        }           //获取 SharedPreferences
-
-        public SharedPreferences.Editor getEditor() {
-            return sp_e;
-        }   //获取 SharedPreferences.Editor
 
         /**
          * 增加
@@ -1401,12 +1402,12 @@ public class GT {
         //       sp = context.getSharedPreferences(SQLName, AppCompatActivity.MODE_WORLD_WRITEABLE);//打开 sp
         //       sp_e = sp.edit();//让userData处于编辑状态
 
-        private final static String DATABASE = "GT_DATABASE";
         private Context context;
         private Object password;
         private SharedPreferences sp;
         private SharedPreferences.Editor sp_e;
         private Map<Object, Object> sqlMap = new HashMap<>();
+        private final static String DATABASE = "GT_DATABASE";
 
         //初始化 Hibernate
         public Hibernate(Context context) {
@@ -1704,29 +1705,89 @@ public class GT {
     //=========================================== 网络类 =========================================
 
     /**
+     * network 网络类
+     */
+    public static class Network {
+
+        /**
+         * 监听网络状态 true 网络正常  false 网络异常
+         *
+         * @param context 上下文
+         * @return boolean  true 为当前网络正常    false 则反之
+         */
+        @SuppressLint("MissingPermission")
+        public boolean netWorkStatus(Context context) {
+            ConnectivityManager cwjManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cwjManager.getActiveNetworkInfo() != null) {
+                return cwjManager.getActiveNetworkInfo().isAvailable();
+            }
+            return false;
+        }
+
+        /**
+         * 获取手机 IP 地址
+         *
+         * @param context 上下文
+         * @return String   返回当前 ip 地址
+         */
+        public String getIPAddress(Context context) {
+            @SuppressLint("MissingPermission") NetworkInfo info = ((ConnectivityManager) context
+                    .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+            if (info != null && info.isConnected()) {
+                if (info.getType() == ConnectivityManager.TYPE_MOBILE) {//当前使用2G/3G/4G网络
+                    try {
+                        //Enumeration<NetworkInterface> en=NetworkInterface.getNetworkInterfaces();
+                        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                            NetworkInterface intf = en.nextElement();
+                            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                                InetAddress inetAddress = enumIpAddr.nextElement();
+                                if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                                    return inetAddress.getHostAddress();
+                                }
+                            }
+                        }
+                    } catch (SocketException e) {
+                        e.printStackTrace();
+                    }
+
+
+                } else if (info.getType() == ConnectivityManager.TYPE_WIFI) {//当前使用无线网络
+                    WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+                    @SuppressLint("MissingPermission") WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+                    int ipAddress1 = wifiInfo.getIpAddress();
+                    String ipAddress = (ipAddress1 & 0xFF) + "." +
+                            ((ipAddress1 >> 8) & 0xFF) + "." +
+                            ((ipAddress1 >> 16) & 0xFF) + "." +
+                            (ipAddress1 >> 24 & 0xFF);
+                    return ipAddress;
+                }
+            } else {
+                //当前无网络连接,请在设置中打开网络
+                GT.toast_s("当前无网络");
+            }
+            return null;
+        }
+
+        //检测当前手机是否可上网
+        public boolean isInternet(Context context) {
+            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
+            NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
+            if (info == null || !manager.getBackgroundDataSetting()) {
+                return false;
+            }
+            return true;
+        }
+
+    }
+
+    /**
      * JSON 接口解析
      */
     public static class JSON {
 
         private String string;
-        /**
-         * 用法:
-         * 第一步：将请求的数据放入   GT.JSON json = new GT.JSON(“请求的数据”);
-         * 第二步：初始化 JSON 数据  json.initBeanData(json.getData());
-         * 第三步：获取 list 集合    JSONArray list = json.getJSONArray("list");     //获取 list 节点
-         * 第四步：获取 list 内数据  Object author = json.getJSONObject(list, “节点名”, “集合list的索引”);
-         * <p>
-         * 注意:
-         * 如果请求的数据是 "data":{}  就用 get()方法 获取 data 再就进行初始化后 获取里面的值
-         * 如果请求的数据是 "list": [] 就用 getJSONObject() 获取 List<?>
-         */
-        private JSONObject jsonObject;
 
-        /*********************************  根据 Bean 获取数据*************************************/
-        private JSONArray jsonArray;
-
-
-        /*********************************  没有 Bean 获取数据*************************************/
         /**
          * 初始化 json 数据
          *
@@ -1743,45 +1804,7 @@ public class GT {
             }
         }
 
-        /**
-         * 添加新的 json 数据
-         *
-         * @param jsonArray
-         * @param new_jsonArray
-         * @return
-         */
-        public static JSONArray addJSONArray(JSONArray jsonArray, JSONArray new_jsonArray) {
-
-            for (int i = 0; i < new_jsonArray.length(); i++) {
-                try {
-                    Object o = jsonArray.get(i);
-                    jsonArray.put(o);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            return jsonArray;
-        }//添加新的 json 数据
-
-        /**
-         * 清除所有的 key
-         *
-         * @param jsonArray
-         * @return
-         */
-        public static JSONArray clear(JSONArray jsonArray) {
-            for (int i = 0, len = jsonArray.length(); i < len; i++) {
-                JSONObject obj = null;
-                try {
-                    obj = jsonArray.getJSONObject(i);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                obj.remove("key");
-            }
-            return jsonArray;
-        }
-
+        /*********************************  根据 Bean 获取数据*************************************/
         /**
          * 根据 bean 类获取 bean 对象
          *
@@ -1797,6 +1820,22 @@ public class GT {
             }
             return o;
         }
+
+
+        /*********************************  没有 Bean 获取数据*************************************/
+        /**
+         * 用法:
+         * 第一步：将请求的数据放入   GT.JSON json = new GT.JSON(“请求的数据”);
+         * 第二步：初始化 JSON 数据  json.initBeanData(json.getData());
+         * 第三步：获取 list 集合    JSONArray list = json.getJSONArray("list");     //获取 list 节点
+         * 第四步：获取 list 内数据  Object author = json.getJSONObject(list, “节点名”, “集合list的索引”);
+         * <p>
+         * 注意:
+         * 如果请求的数据是 "data":{}  就用 get()方法 获取 data 再就进行初始化后 获取里面的值
+         * 如果请求的数据是 "list": [] 就用 getJSONObject() 获取 List<?>
+         */
+        private JSONObject jsonObject;
+        private JSONArray jsonArray;
 
         /**
          * 初始化 实体类数据
@@ -1899,6 +1938,45 @@ public class GT {
             return o;
         }   //获取 JSON 对象
 
+        /**
+         * 添加新的 json 数据
+         *
+         * @param jsonArray
+         * @param new_jsonArray
+         * @return
+         */
+        public static JSONArray addJSONArray(JSONArray jsonArray, JSONArray new_jsonArray) {
+
+            for (int i = 0; i < new_jsonArray.length(); i++) {
+                try {
+                    Object o = jsonArray.get(i);
+                    jsonArray.put(o);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            return jsonArray;
+        }//添加新的 json 数据
+
+        /**
+         * 清除所有的 key
+         *
+         * @param jsonArray
+         * @return
+         */
+        public static JSONArray clear(JSONArray jsonArray) {
+            for (int i = 0, len = jsonArray.length(); i < len; i++) {
+                JSONObject obj = null;
+                try {
+                    obj = jsonArray.getJSONObject(i);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                obj.remove("key");
+            }
+            return jsonArray;
+        }
+
 
     }
 
@@ -1910,6 +1988,24 @@ public class GT {
         private Map<String, String> map;
         private String url;
 
+
+        /**
+         * 初始化 map 并进行添加参数
+         *
+         * @param key
+         * @param value
+         * @return
+         */
+        public OkGo addParameter(String key, String value) {
+            if (map == null) {
+                map = new HashMap<>();//初始化 map
+            } else {
+                if (!map.containsKey(key)) {//如果当前 map 中没有此key
+                    map.put(key, value);
+                }
+            }
+            return this;
+        }
 
         /**
          * 实例化  post 请求
@@ -1929,24 +2025,6 @@ public class GT {
          */
         public OkGo(String url) {
             this.url = url;
-        }
-
-        /**
-         * 初始化 map 并进行添加参数
-         *
-         * @param key
-         * @param value
-         * @return
-         */
-        public OkGo addParameter(String key, String value) {
-            if (map == null) {
-                map = new HashMap<>();//初始化 map
-            } else {
-                if (!map.containsKey(key)) {//如果当前 map 中没有此key
-                    map.put(key, value);
-                }
-            }
-            return this;
         }
 
         /**
@@ -2156,6 +2234,9 @@ public class GT {
         }
 
     }
+
+
+    //============================================= 小工具类 =======================================
 
     /**
      * data 日期类
@@ -2386,9 +2467,6 @@ public class GT {
 
     }
 
-
-    //============================================= 小工具类 =======================================
-
     /**
      * 分享功能
      */
@@ -2455,6 +2533,9 @@ public class GT {
 
     }
 
+
+    //============================================= UI类 ===========================================
+
     /**
      * Window 窗体类
      */
@@ -2484,7 +2565,7 @@ public class GT {
          *
          * @param activity
          */
-        public static void close_virtualButton(Activity activity) {
+        public static void Close_virtualButton(Activity activity) {
             if (Build.VERSION.SDK_INT > 11 && Build.VERSION.SDK_INT < 19) {
                 View v = activity.getWindow().getDecorView();
                 v.setSystemUiVisibility(View.GONE);
@@ -2683,8 +2764,6 @@ public class GT {
     }
 
 
-    //============================================= UI类 ===========================================
-
     /**
      * Game 游戏类
      */
@@ -2698,7 +2777,7 @@ public class GT {
         public static void startGameWindow(Activity activity) {
             Window.light(activity);//屏幕常亮
             Window.immersionMode(activity);//沉浸式模式
-            Window.close_virtualButton(activity);//关闭虚拟按钮
+            Window.Close_virtualButton(activity);//关闭虚拟按钮
         }
 
 
@@ -2746,30 +2825,209 @@ public class GT {
      */
     public static class GT_Fragment {
 
+        private GT_Fragment() {
+        }//单例
+
         private static GT_Fragment gt_fragment;
-        private static Map<String, Object> mapSQL;       //用于存储 Fragment 之间数据传递的 Map
+
+        //实例化 GT_Fragment
+        public static GT_Fragment getGT_fragment() {
+            synchronized (GT_Fragment.class) {
+                if (gt_fragment == null) {
+                    gt_fragment = new GT_Fragment();
+                }
+            }
+            return gt_fragment;
+        }
+
+
         /**
-         * 注意事项：
-         * 1.初始化与构造方法 建议只调用一次
-         * 2.在初始化与添加新Fragment的时候，传入的 map key 中请不要有相同的如下：
-         * <p>
-         * 错误的实例：
-         * map.put("f1",new Fragment_1());
-         * map.put("f1",new Fragment_2());
-         * <p>
-         * 正确的实例：
-         * map.put("f1",new Fragment_1());
-         * map.put("f2",new Fragment_2());
+         * 用于辅助 Fragment
+         */
+        public abstract static class BaseFragments extends Fragment {
+
+            //定义 Activity
+            protected Activity activity;
+
+            // 获取 GT 实例
+            public GT getGT() {
+                return getGT();
+            }
+
+
+            //如果重写该方法了的话就需要自己写 接收 Activity
+            @Override
+            public void onAttach(Context context) {
+                super.onAttach(context);
+                activity = (Activity) context;//接收 Activity
+            }
+
+            /**
+             * 返回要加载的布局
+             *
+             * @return
+             */
+            protected abstract int loadLayout();
+
+            /**
+             * 初始化 View 数据
+             *
+             * @param view
+             * @param savedInstanceState
+             */
+            protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
+
+            /**
+             * 主要实现的功能
+             */
+            protected void function() {
+            }
+
+            /**
+             * 用户在初始化布局前设置必要的参数 当前方法可不重写
+             *
+             * @param view
+             */
+            public void createView(View view) {
+            }
+
+            /**
+             * 获取一个 Fragment 管理器实例
+             *
+             * @return
+             */
+            public GT_Fragment getGT_Fragment() {
+                return gt_fragment;
+            }
+
+            /**
+             * 退出当前 Fragment
+             */
+            public void finish() {
+                if (gt_fragment != null) {
+                    gt_fragment.finish();
+                }
+            }
+
+            /**
+             * 开启新的 Fragment
+             *
+             * @param newFragment
+             */
+            public void startFragment(Fragment newFragment) {
+                if (gt_fragment != null) {
+                    gt_fragment.startFragment(newFragment);
+                }
+            }
+
+            /**
+             * 初始化 当前 Fragment 必要的属性
+             *
+             * @param view
+             */
+            public void initBaseFragment(View view) {
+                if (getGT_fragment() != null) {
+                    getGT_fragment().initBaseFragment(view);
+                }
+            }
+
+            @Nullable
+            @Override
+            public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                View view = inflater.inflate(loadLayout(), container, false);
+                createView(view);
+                return view;
+            }
+
+            @Override
+            public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+                super.onViewCreated(view, savedInstanceState);
+                initBaseFragment(view);
+                initView(view, savedInstanceState);//主要方法
+                function();
+            }
+
+        }
+
+
+        /**
+         * 用于辅助 DialogFragment
          */
 
-        //属性
-        private Activity activity;                      //获取 Activity
-        private FragmentManager fm;                     //Fragment 管理器
-        private FragmentTransaction transaction;        //Fragment 事务
+        public abstract static class BaseDialogFragments extends DialogFragment {
+
+            /**
+             * 返回要加载的布局
+             *
+             * @return
+             */
+            protected abstract int loadLayout();
+
+            /**
+             * 初始化 View 数据
+             *
+             * @param view
+             * @param savedInstanceState
+             */
+            protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
+
+            /**
+             * 主要实现的功能
+             */
+            protected void function() {
+            }
+
+            /**
+             * 是否去掉 背景弹窗
+             *
+             * @return
+             */
+            protected boolean isShow() {
+                return false;
+            }
+
+            /**
+             * 用户在初始化布局前设置必要的参数 当前方法可不重写
+             *
+             * @param view
+             */
+            public void createView(View view) {
+            }
+
+            /**
+             * 关闭当前 对话框 Fragment
+             */
+            public void finish() {
+                dismiss();
+            }
+
+            public void startDialogFragment(DialogFragment dialogFragment) {
+                dialogFragment.show(getFragmentManager(), dialogFragment.getClass().toString());//弹出退出提示
+            }
+
+            @Nullable
+            @Override
+            public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+                View view = inflater.inflate(loadLayout(), container, false);
+                createView(view);
+                return view;
+            }
+
+            @Override
+            public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+                super.onViewCreated(view, savedInstanceState);
+                if (isShow())
+                    getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                initView(view, savedInstanceState);//主要方法
+                function();
+            }
+
+
+        }
 
 
         /**
-         * 事务的方法
+         *  事务的方法
          * add(Fragment fragment, String tag) //  调用add(int, Fragment, String),填入为0的containerViewId.
          * add(int containerViewId, Fragment fragment) // 调用add(int, Fragment, String),填入为null的tag.
          * add(int containerViewId, Fragment fragment, String tag) // 向Activity中添加一个Fragment.
@@ -2797,25 +3055,32 @@ public class GT {
          * setTransition(int transit) // 为事务设置一个标准动画
          * setTransitionStyle(int styleRes) // 为事务标准动画设置自定义样式
          * show(Fragment fragment) // 显示一个被隐藏的Fragment
+         *
          */
+
+        /**
+         * 注意事项：
+         * 1.初始化与构造方法 建议只调用一次
+         * 2.在初始化与添加新Fragment的时候，传入的 map key 中请不要有相同的如下：
+         * <p>
+         * 错误的实例：
+         * map.put("f1",new Fragment_1());
+         * map.put("f1",new Fragment_2());
+         * <p>
+         * 正确的实例：
+         * map.put("f1",new Fragment_1());
+         * map.put("f2",new Fragment_2());
+         */
+
+        //属性
+        private Activity activity;                      //获取 Activity
+        private FragmentManager fm;                     //Fragment 管理器
+        private FragmentTransaction transaction;        //Fragment 事务
         private int fragmentLayoutId;                   //Fragment 显示的容器 id
         private Object topFragment;                     //记录当前未加入退回栈的最顶层
         private List<String> topList;                   //记录当前 加入回退栈最顶层的 Fragment
         private Bundle savedInstanceState;              //用于鉴别当前 Activity 是否为初次创建
-
-        private GT_Fragment() {
-        }//单例
-
-        //实例化 GT_Fragment
-        public static GT_Fragment getGT_fragment() {
-            synchronized (GT_Fragment.class) {
-                if (gt_fragment == null) {
-                    gt_fragment = new GT_Fragment();
-                    mapSQL = new HashMap<>();
-                }
-            }
-            return gt_fragment;
-        }
+        private static Map<String, Object> mapSQL;       //用于存储 Fragment 之间数据传递的 Map
 
         /**
          * 提供给外部的访问接口
@@ -2856,6 +3121,7 @@ public class GT {
                 this.activity = activity;
                 this.fm = fm;
                 this.savedInstanceState = savedInstanceState;
+                mapSQL = new HashMap<>();
             } else {
                 if (GT_LOG_TF) {
                     GT.log_v(getGT().getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
@@ -3166,6 +3432,7 @@ public class GT {
             view.setOnKeyListener(onKeyListener);
         }
 
+
         /**
          * 屏蔽掉 Fragment 的 物理返回键
          *
@@ -3201,6 +3468,7 @@ public class GT {
             });
         }
 
+
         /**
          * 释放 Fragment 管理器的所有资源
          */
@@ -3234,6 +3502,7 @@ public class GT {
             }
 
         }
+
 
         /**
          * 用作于 Fragment 之间传递数据的 中间存储的方法
@@ -3296,175 +3565,11 @@ public class GT {
             return this;
         }
 
-        /**
-         * 用于辅助 Fragment
-         */
-        public abstract static class BaseFragments extends Fragment {
-
-            /**
-             * 返回要加载的布局
-             *
-             * @return
-             */
-            protected abstract int loadLayout();
-
-            /**
-             * 初始化 View 数据
-             *
-             * @param view
-             * @param savedInstanceState
-             */
-            protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
-
-            /**
-             * 主要实现的功能
-             */
-            protected void function() {
-            }
-
-            /**
-             * 用户在初始化布局前设置必要的参数 当前方法可不重写
-             *
-             * @param view
-             */
-            public void createView(View view) {
-            }
-
-            /**
-             * 获取一个 Fragment 管理器实例
-             *
-             * @return
-             */
-            public GT_Fragment getGT_Fragment() {
-                return gt_fragment;
-            }
-
-            /**
-             * 退出当前 Fragment
-             */
-            public void finish() {
-                if (gt_fragment != null) {
-                    gt_fragment.finish();
-                }
-            }
-
-            /**
-             * 开启新的 Fragment
-             *
-             * @param newFragment
-             */
-            public void startFragment(Fragment newFragment) {
-                if (gt_fragment != null) {
-                    gt_fragment.startFragment(newFragment);
-                }
-            }
-
-            /**
-             * 初始化 当前 Fragment 必要的属性
-             *
-             * @param view
-             */
-            public void initBaseFragment(View view) {
-                if (getGT_fragment() != null) {
-                    getGT_fragment().initBaseFragment(view);
-                }
-            }
-
-            @Nullable
-            @Override
-            public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-                View view = inflater.inflate(loadLayout(), container, false);
-                createView(view);
-                return view;
-            }
-
-            @Override
-            public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-                super.onViewCreated(view, savedInstanceState);
-                initBaseFragment(view);
-                initView(view, savedInstanceState);//主要方法
-                function();
-            }
-
-        }
-
-        /**
-         * 用于辅助 DialogFragment
-         */
-
-        public abstract static class BaseDialogFragments extends DialogFragment {
-
-            /**
-             * 返回要加载的布局
-             *
-             * @return
-             */
-            protected abstract int loadLayout();
-
-            /**
-             * 初始化 View 数据
-             *
-             * @param view
-             * @param savedInstanceState
-             */
-            protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
-
-            /**
-             * 主要实现的功能
-             */
-            protected void function() {
-            }
-
-            /**
-             * 是否去掉 背景弹窗
-             *
-             * @return
-             */
-            protected boolean isShow() {
-                return false;
-            }
-
-            /**
-             * 用户在初始化布局前设置必要的参数 当前方法可不重写
-             *
-             * @param view
-             */
-            public void createView(View view) {
-            }
-
-            /**
-             * 关闭当前 对话框 Fragment
-             */
-            public void finish() {
-                dismiss();
-            }
-
-            public void startDialogFragment(DialogFragment dialogFragment) {
-                dialogFragment.show(getFragmentManager(), dialogFragment.getClass().toString());//弹出退出提示
-            }
-
-            @Nullable
-            @Override
-            public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-                View view = inflater.inflate(loadLayout(), container, false);
-                createView(view);
-                return view;
-            }
-
-            @Override
-            public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-                super.onViewCreated(view, savedInstanceState);
-                if (isShow())
-                    getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                initView(view, savedInstanceState);//主要方法
-                function();
-            }
-
-
-        }
-
 
     }
+
+
+    //============================================= 设备监听类 ======================================
 
     public static class DeviceListening {
 
@@ -3703,6 +3808,17 @@ public class GT {
             }
 
             /**
+             * 自定义接口
+             */
+            public interface ScreenStateListener {
+                void onScreenOn();            //手机屏幕点亮
+
+                void onScreenOff();            //手机屏幕锁屏
+
+                void onUserPresent();        //手机屏幕解锁
+            }
+
+            /**
              * 获取screen的状态
              */
             private void getScreenState() {
@@ -3715,6 +3831,25 @@ public class GT {
                 } else {                      //如果监听没开启
                     if (mScreenStateListener != null) {
                         mScreenStateListener.onScreenOff();
+                    }
+                }
+            }
+
+            /**
+             * 写一个内部的广播
+             */
+            private class ScreenBroadcastReceiver extends BroadcastReceiver {
+                private String action = null;
+
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    action = intent.getAction();
+                    if (Intent.ACTION_SCREEN_ON.equals(action)) {        //屏幕亮时操作
+                        mScreenStateListener.onScreenOn();
+                    } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {   //屏幕关闭时操作
+                        mScreenStateListener.onScreenOff();
+                    } else if (Intent.ACTION_USER_PRESENT.equals(action)) {//解锁时操作
+                        mScreenStateListener.onUserPresent();
                     }
                 }
             }
@@ -3746,42 +3881,11 @@ public class GT {
             public void unregisterListener() {
                 context2.unregisterReceiver(mScreenReceiver); //注销广播
             }
-
-            /**
-             * 自定义接口
-             */
-            public interface ScreenStateListener {
-                void onScreenOn();            //手机屏幕点亮
-
-                void onScreenOff();            //手机屏幕锁屏
-
-                void onUserPresent();        //手机屏幕解锁
-            }
-
-            /**
-             * 写一个内部的广播
-             */
-            private class ScreenBroadcastReceiver extends BroadcastReceiver {
-                private String action = null;
-
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    action = intent.getAction();
-                    if (Intent.ACTION_SCREEN_ON.equals(action)) {        //屏幕亮时操作
-                        mScreenStateListener.onScreenOn();
-                    } else if (Intent.ACTION_SCREEN_OFF.equals(action)) {   //屏幕关闭时操作
-                        mScreenStateListener.onScreenOff();
-                    } else if (Intent.ACTION_USER_PRESENT.equals(action)) {//解锁时操作
-                        mScreenStateListener.onUserPresent();
-                    }
-                }
-            }
         }
 
         //HeadsetPlugReceiver 监听耳机是否插入
         public static class GT_HeadsetPlugReceiver {
 
-            private static boolean headset_TF;//定义耳机是否插入
             /**
              * 监听 耳机
              * <p>
@@ -3793,16 +3897,8 @@ public class GT {
              */
 
             private Activity activity;
+            private static boolean headset_TF;//定义耳机是否插入
             private HeadsetPlugReceiver headsetPlugReceiver;//监听手机是否有耳机插入广播
-
-            /**
-             * 实例化 耳机监听
-             *
-             * @param activity
-             */
-            public GT_HeadsetPlugReceiver(Activity activity) {
-                this.activity = activity;
-            }
 
             /**
              * 检测是否插入耳机
@@ -3812,6 +3908,15 @@ public class GT {
             public boolean isHeadset_TF() {
                 registerHeadsetPlugReceiver();
                 return headset_TF;
+            }
+
+            /**
+             * 实例化 耳机监听
+             *
+             * @param activity
+             */
+            public GT_HeadsetPlugReceiver(Activity activity) {
+                this.activity = activity;
             }
 
             /**
@@ -3855,17 +3960,6 @@ public class GT {
 
         //Spiritleve 屏幕旋转监听
         public static class Spiritleve implements SensorEventListener {
-            //动作定义 常量
-            public static final int LIE_LOW = 0;         //平躺
-            public static final int SLEEPER = 1;         //卧铺
-            public static final int STAND_RIGHT = 2;     //右立;
-            public static final int LEFT_STANDING = 3;   //左立
-            public static final int STAND = 4;           //站立
-            public static final int HANDSTAND = 5;       //倒立
-            public static final int ZHP = 1;            //正横屏
-            public static final int FHP = -1;           //反横屏
-            public static final int ZSP = 2;            //正竖屏
-            public static final int FSP = -2;           //反竖屏
             /**
              * * 用法如下：
              * * //屏幕旋转监听 内部类
@@ -3888,6 +3982,20 @@ public class GT {
              */
             float[] acceleromterValues = new float[3];//加速度传感器的值
             float[] magneticValues = new float[3];//磁场传感器的值
+
+            //动作定义 常量
+            public static final int LIE_LOW = 0;         //平躺
+            public static final int SLEEPER = 1;         //卧铺
+            public static final int STAND_RIGHT = 2;     //右立;
+            public static final int LEFT_STANDING = 3;   //左立
+            public static final int STAND = 4;           //站立
+            public static final int HANDSTAND = 5;       //倒立
+
+            public static final int ZHP = 1;            //正横屏
+            public static final int FHP = -1;           //反横屏
+            public static final int ZSP = 2;            //正竖屏
+            public static final int FSP = -2;           //反竖屏
+
             private SensorManager sensorManager;       //定义取消屏幕监听
 
             public Spiritleve(Context context) {
@@ -3987,10 +4095,10 @@ public class GT {
     }
 
 
-    //============================================= 设备监听类 ======================================
+    //============================================= 多媒体类 ========================================
 
     /**
-     * 播放音乐
+     * 播放音乐 长音频
      */
     public static class GT_MediaPlayer {
 
@@ -4022,6 +4130,16 @@ public class GT {
         private int resid = 0;
         private String url = null;
 
+
+        /**
+         * 获取 mediaPlayer 组件
+         *
+         * @return
+         */
+        public MediaPlayer getMediaPlayer() {
+            return mediaPlayer;
+        }
+
         /**
          * 初始化音频播放的上下文
          *
@@ -4037,7 +4155,7 @@ public class GT {
          * @param resid
          * @return
          */
-        public MediaPlayer loadMusic(int resid) {
+        public GT_MediaPlayer loadMusic(int resid) {
             this.resid = resid;
             if (!isPlay) {       //停止过播放
                 if (mediaPlayer.isPlaying()) {//如果属于播放状态
@@ -4048,7 +4166,7 @@ public class GT {
             mediaPlayer = null;//清空内存中对象
             mediaPlayer = MediaPlayer.create(activity, resid);    //初始化 MediaPlayer 对象
             isPlay = true;//恢复可播放状态
-            return mediaPlayer;
+            return this;
         }//加载 res 目录下的资源文件
 
         /**
@@ -4057,7 +4175,7 @@ public class GT {
          * @param url
          * @return
          */
-        public MediaPlayer loadMusic(String url) {
+        public GT_MediaPlayer loadMusic(String url) {
             this.url = url;
             if (!isPlay) {       //停止过播放
                 if (mediaPlayer.isPlaying()) {//如果属于播放状态
@@ -4075,7 +4193,7 @@ public class GT {
                 GT.log_e(getGT().getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
             }
             isPlay = true;//恢复可播放状态
-            return mediaPlayer;
+            return this;
         }//获取 网络 或 SD 上的的音频资源
 
         /**
@@ -4083,12 +4201,12 @@ public class GT {
          *
          * @return
          */
-        public MediaPlayer play() {
+        public GT_MediaPlayer play() {
             if (mediaPlayer != null) {
                 recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
                 mediaPlayer.start();
             }
-            return mediaPlayer;
+            return this;
         }//播放
 
         /**
@@ -4096,11 +4214,11 @@ public class GT {
          *
          * @return
          */
-        public MediaPlayer pause() {
+        public GT_MediaPlayer pause() {
             if (mediaPlayer != null) {
                 mediaPlayer.pause();
             }
-            return mediaPlayer;
+            return this;
         }//暂停
 
         /**
@@ -4108,14 +4226,14 @@ public class GT {
          *
          * @return
          */
-        public MediaPlayer play_pause() {
+        public GT_MediaPlayer play_pause() {
             recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
             if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
                 mediaPlayer.start();//继续播放
             } else {  //当前处于音乐暂停状态
                 mediaPlayer.pause();//暂停音乐
             }
-            return mediaPlayer;
+            return this;
         }//播放 与 暂停
 
         /**
@@ -4123,10 +4241,10 @@ public class GT {
          *
          * @return
          */
-        public MediaPlayer stop() {
+        public GT_MediaPlayer stop() {
             isPlay = false;//设置为暂停状态
             mediaPlayer.stop();
-            return mediaPlayer;
+            return this;
         }//停止音乐
 
         /**
@@ -4134,7 +4252,7 @@ public class GT {
          *
          * @return
          */
-        private MediaPlayer recover_play() {
+        private GT_MediaPlayer recover_play() {
             if (!isPlay) {       //停止过播放
                 if (mediaPlayer.isPlaying()) {//如果属于播放状态
                     mediaPlayer.stop();//停止播放
@@ -4154,7 +4272,7 @@ public class GT {
                 }
                 isPlay = true;//恢复可播放状态
             }
-            return mediaPlayer;
+            return this;
         }//恢复可播放
 
         /**
@@ -4171,19 +4289,16 @@ public class GT {
 
     }
 
-
-    //============================================= 多媒体类 ========================================
-
     /**
-     * 播放音频
+     * 播放音频 短音频
      */
     public static class GT_SoundPool {
 
+        private Context context;
         private static SoundPool soundPool;
+        private AudioAttributes attr = null;
         private static Map<String, Integer> map = new HashMap<>();      //初始化 map  用于存放 音频 key 与 值
         private static Map<String, Integer> mapMusic = new HashMap<>(); //初始化 mapMusic 用于存放待播放的音频
-        private Context context;
-        private AudioAttributes attr = null;
 
         /**
          * 初始化 Content
@@ -4213,7 +4328,7 @@ public class GT {
          * @return
          */
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-        public GT_SoundPool loadMusic(Map map) {
+        public GT_SoundPool initMusic(Map<String, Integer> map) {
             if (map != null) {
                 this.map = map;
                 if (attr == null) {
@@ -4230,7 +4345,7 @@ public class GT {
                         .setMaxStreams(map.size())//最大容纳 动态添加最大值 个音频
                         .build();
 
-                initMusic();//初始化 音频流
+                loadMusic();//初始化 音频流
             }
             return this;
         }
@@ -4262,7 +4377,7 @@ public class GT {
                             .setMaxStreams(map.size())//最大容纳 动态添加最大值 个音频
                             .build();
 
-                    initMusic();//初始化 音频流
+                    loadMusic();//初始化 音频流
 
                 } else {
                     GT.log_v(getGT().getLineInfo(), "添加音频无效，当前已经包含相同的 key，无法再进行装载相同的 key");//提示无效的添加
@@ -4274,7 +4389,7 @@ public class GT {
         /**
          * 初始化音频
          */
-        private void initMusic() {
+        private void loadMusic() {
             if (map != null) {
                 for (String key : map.keySet()) {
                     mapMusic.put(key, soundPool.load(context, map.get(key), 1));//初始化 待播放的音频
@@ -4293,7 +4408,7 @@ public class GT {
                 if (map.containsKey(key)) {
                     map.remove(key);
                     mapMusic.remove(key);
-                    initMusic();//初始化音频
+                    loadMusic();//初始化音频
                 } else {
                     log_v(getGT().getLineInfo(), "移除音频失败，当前并不存在此 key:" + key);
                 }
@@ -4326,7 +4441,7 @@ public class GT {
                 if (map.containsKey(key)) {
                     map.put(key, rawId);
                     mapMusic.put(key, rawId);
-                    initMusic();//初始化音频
+                    loadMusic();//初始化音频
                 } else {
                     GT.log_v(getGT().getLineInfo(), "修改音频无效，当前并不存在当前 key，无法进行更新操作");//提示无效的更新
                 }
@@ -4362,7 +4477,6 @@ public class GT {
      */
     public static class GT_Video implements SurfaceHolder.Callback {
 
-        private static boolean isPlay = true;   //定义是否被停止播放过视频
         /**
          * 使用说明：
          * 第一步：在 xml 中 定义好 SurfaceView 组件
@@ -4375,6 +4489,7 @@ public class GT {
         private SurfaceHolder surfaceHolder;
         private Context context;
         private int resId;
+        private static boolean isPlay = true;   //定义是否被停止播放过视频
 
         /**
          * 初始化视频 ()注意，需要单击才有效果 一个坑
@@ -4485,6 +4600,9 @@ public class GT {
         }
     }
 
+
+    //======================================= Run GT 的内部注解 =====================================
+
     /**
      * 注解类
      */
@@ -4497,9 +4615,6 @@ public class GT {
         }
 
     }
-
-
-    //======================================= Run GT 的内部注解 =====================================
 
     /**
      * 判断注解类
@@ -4577,94 +4692,10 @@ public class GT {
 
     }
 
-    //========================================= 反射 ===============================================
-    public static class JavaReflect {
-
-        /**
-         * 通过 对象 反射出方法并调用 可以反射出 私有方法
-         *
-         * @param object     要反射的对象
-         * @param MethodName 调用该对象的那个方法
-         */
-        public void runMethod(Object object, String MethodName) {
-            if (object == null || MethodName == null || MethodName.length() <= 0) return;
-            Method method;
-            try {
-                method = object.getClass().getDeclaredMethod(MethodName);
-                if (method != null) {
-                    method.setAccessible(true);
-                    try {
-                        method.invoke(object);
-                    } catch (IllegalAccessException e) {
-                        GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 1 号 ");
-                    } catch (InvocationTargetException e) {
-                        GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 2 号 ");
-                    }
-                }
-            } catch (NoSuchMethodException e) {
-                GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 3 号 ");
-            }
-        }
-
-        /**
-         * 通过 对象 反射出方法并调用 可以反射出 私有方法
-         *
-         * @param object     要反射的对象
-         * @param MethodName 调用该对象的那个方法
-         * @param <T>        返回 方法所产生的数据
-         * @return
-         */
-        public <T> T returnMethod(Object object, String MethodName) {
-            if (object == null || MethodName == null || MethodName.length() <= 0) return null;
-            Method method;
-            try {
-                method = object.getClass().getDeclaredMethod(MethodName);
-                if (method != null) {
-                    method.setAccessible(true);
-                    try {
-                        Object invoke = method.invoke(object);
-                        return (T) invoke;
-                    } catch (IllegalAccessException e) {
-                        GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 1 号 ");
-                    } catch (InvocationTargetException e) {
-                        GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 2 号 ");
-                    }
-                }
-            } catch (NoSuchMethodException e) {
-                GT.log_e(getGT().getLineInfo(), "Java 反射 方法 报错 3 号 ");
-            }
-            return null;
-        }
-
-
-        /**
-         * 解析文件 反射 Object
-         *
-         * @param obj
-         * @return
-         */
-        public Object ObjectClassToObject(Object obj) {
-            String[] strs = obj.toString().split(" ");
-            String str = strs[1];
-            Class<?> clazz = getClass();
-            try {
-                clazz = Class.forName(str);
-            } catch (ClassNotFoundException e1) {
-                e1.printStackTrace();
-            }
-            try {
-                obj = clazz.newInstance();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            }
-            return obj;
-        }
-
-    }
 
     //========================================== 线程 ==============================================
+
+    //Thread 更新UI线程
     public static class Thread {
 
         /**
@@ -4757,28 +4788,6 @@ public class GT {
         }
 
         /**
-         * AsyncTask 封装
-         *
-         * @param gtAsyncTask
-         * @return
-         */
-        public static GTAsyncTask asyncTask(GTAsyncTask gtAsyncTask) {
-            return gtAsyncTask;
-        }
-
-        /**
-         * 自动开启的 AsyncTask 封装
-         *
-         * @param start
-         * @param gtAsyncTask
-         * @return
-         */
-        public static GTAsyncTask asyncTask(boolean start, GTAsyncTask gtAsyncTask) {
-            if (start) gtAsyncTask.execute();//如果设置为
-            return gtAsyncTask;
-        }
-
-        /**
          * Timer 整体封装
          */
         public static class GT_Timer {
@@ -4836,6 +4845,29 @@ public class GT {
 
         }
 
+
+        /**
+         * AsyncTask 封装
+         *
+         * @param gtAsyncTask
+         * @return
+         */
+        public static GTAsyncTask asyncTask(GTAsyncTask gtAsyncTask) {
+            return gtAsyncTask;
+        }
+
+        /**
+         * 自动开启的 AsyncTask 封装
+         *
+         * @param start
+         * @param gtAsyncTask
+         * @return
+         */
+        public static GTAsyncTask asyncTask(boolean start, GTAsyncTask gtAsyncTask) {
+            if (start) gtAsyncTask.execute();//如果设置为
+            return gtAsyncTask;
+        }
+
         /**
          * AsyncTask 整体封装
          */
@@ -4846,21 +4878,21 @@ public class GT {
             private GTAsyncTask gtAsyncTask;    //定义 GTAsyncTask
 
             /**
-             * 初始化 GTAsyncTask
-             *
-             * @param gtAsyncTask
-             */
-            public AsyncTask(GTAsyncTask gtAsyncTask) {
-                this.gtAsyncTask = gtAsyncTask;
-            }
-
-            /**
              * 获取 GTAsyncTask 对象
              *
              * @return
              */
             public GTAsyncTask getGtAsyncTask() {
                 return gtAsyncTask;
+            }
+
+            /**
+             * 初始化 GTAsyncTask
+             *
+             * @param gtAsyncTask
+             */
+            public AsyncTask(GTAsyncTask gtAsyncTask) {
+                this.gtAsyncTask = gtAsyncTask;
             }
 
             //启动 GTAsyncTask
@@ -4929,9 +4961,14 @@ public class GT {
 
     }
 
-    //============================================ 随机类 ===============================================
+
+//============================================ 随机类 ===============================================
+
+    /**
+     * 随机类
+     */
     public static class GT_Random {
-        private static Random random;
+        private Random random;
 
         /**
          * 实例化 随机类 类
@@ -4945,7 +4982,7 @@ public class GT {
          *
          * @return int
          */
-        public static int getInt() {
+        public int getInt() {
             int min = -2147483648;
             int max = 2147483647;
             return random.nextInt(max) % (max - min + 1) + min;
@@ -4958,100 +4995,8 @@ public class GT {
          * @param max
          * @return
          */
-        public static int getInt(int min, int max) {
+        public int getInt(int min, int max) {
             return random.nextInt(max) % (max - min + 1) + min;
-        }
-
-        /**
-         * 随机产生汉字
-         *
-         * @return
-         */
-        public static char getRandomChar() {
-            return (char) (0x4e00 + (int) (Math.random() * (0x9fa5 - 0x4e00 + 1)));
-        }
-
-        public static Double getDouble(int min, int max) {
-            double number = Math.random() * ((min - 1) / 1) + (max + 1 - min);
-            return number;
-        }
-
-
-    }
-
-    /**
-     * network 网络类
-     */
-    public class Network {
-
-        /**
-         * 监听网络状态 true 网络正常  false 网络异常
-         *
-         * @param context 上下文
-         * @return boolean  true 为当前网络正常    false 则反之
-         */
-        @SuppressLint("MissingPermission")
-        public boolean netWorkStatus(Context context) {
-            ConnectivityManager cwjManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (cwjManager.getActiveNetworkInfo() != null) {
-                return cwjManager.getActiveNetworkInfo().isAvailable();
-            }
-            return false;
-        }
-
-        /**
-         * 获取手机 IP 地址
-         *
-         * @param context 上下文
-         * @return String   返回当前 ip 地址
-         */
-        public String getIPAddress(Context context) {
-            @SuppressLint("MissingPermission") NetworkInfo info = ((ConnectivityManager) context
-                    .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
-            if (info != null && info.isConnected()) {
-                if (info.getType() == ConnectivityManager.TYPE_MOBILE) {//当前使用2G/3G/4G网络
-                    try {
-                        //Enumeration<NetworkInterface> en=NetworkInterface.getNetworkInterfaces();
-                        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                            NetworkInterface intf = en.nextElement();
-                            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                                InetAddress inetAddress = enumIpAddr.nextElement();
-                                if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                                    return inetAddress.getHostAddress();
-                                }
-                            }
-                        }
-                    } catch (SocketException e) {
-                        e.printStackTrace();
-                    }
-
-
-                } else if (info.getType() == ConnectivityManager.TYPE_WIFI) {//当前使用无线网络
-                    WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-                    @SuppressLint("MissingPermission") WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-
-                    int ipAddress1 = wifiInfo.getIpAddress();
-                    String ipAddress = (ipAddress1 & 0xFF) + "." +
-                            ((ipAddress1 >> 8) & 0xFF) + "." +
-                            ((ipAddress1 >> 16) & 0xFF) + "." +
-                            (ipAddress1 >> 24 & 0xFF);
-                    return ipAddress;
-                }
-            } else {
-                //当前无网络连接,请在设置中打开网络
-                GT.toast_s("当前无网络");
-            }
-            return null;
-        }
-
-        //检测当前手机是否可上网
-        public boolean isInternet(Context context) {
-            ConnectivityManager manager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
-            NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
-            if (info == null || !manager.getBackgroundDataSetting()) {
-                return false;
-            }
-            return true;
         }
 
     }
