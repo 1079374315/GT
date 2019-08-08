@@ -46,7 +46,7 @@ dependencies {
 		}
 ````
 
-## [进一步使用、GSLS.SDK，查看GT最新版使用教程](https://#)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.1)
 
 ## LICENSE
 ````
