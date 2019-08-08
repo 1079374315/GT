@@ -42,20 +42,20 @@
 ````gradle
 第一步 1. 将以下存储库将其添加到根构建中。存储库末尾的gradle
 allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
 	}
+}
 	
 	
 第二步 2. 添加依赖关系
 dependencies {
-	        implementation 'com.github.1079374315:GT:v1.0.1'
-		}
+	implementation 'com.github.1079374315:GT:v1.0.2'
+}
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.1)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.2)
 
 ## LICENSE
 ````
