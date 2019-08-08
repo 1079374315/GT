@@ -136,7 +136,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.7.23
+ * 更新时间:2019.8.8
  * <p>
  * 更新内容：
  * 更新 BaseFragment
