@@ -5,10 +5,13 @@
 # 最新版本: 1.0.2
 发布时间：2019年8月8日 星期四 22:22
 
-最后更新类： GT_Fragment
+此次更新类有： 
 
-添加了 BaseFragments 基类，用于辅助 单 Activity 对多 Fragment 开发
-添加了 BaseDialogFragments 基类	用于辅助 开发
+#1.GT_Fragment
+
+##(1)添加了 BaseFragments 基类，用于辅助 单 Activity 对多 Fragment 开发
+
+##(2)添加了 BaseDialogFragments 基类	用于辅助 开发
 
 [使用教程请参关注楼主博客](https://blog.csdn.net/qq_39799899)
 
