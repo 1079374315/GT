@@ -31,8 +31,7 @@
 **1. 项目下app的build.gradle中依赖：**
 
 ````gradle
-第一步 1. 将以下天存储库将其添加到根构建中。存储库末尾的gradle
-Add it in your root build.gradle at the end of repositories:
+第一步 1. 将以下存储库将其添加到根构建中。存储库末尾的gradle
 allprojects {
 		repositories {
 			...
@@ -40,10 +39,11 @@ allprojects {
 		}
 	}
 	
+	
 第二步 2. 添加依赖关系
 dependencies {
 	        implementation 'com.github.1079374315:GT:v1.0.1'
-	}
+		}
 ````
 
 ## [进一步使用、GSLS.SDK，查看GT最新版使用教程](https://#)
