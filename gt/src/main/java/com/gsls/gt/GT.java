@@ -127,12 +127,12 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- * //GT 须依赖的包：
- * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
- * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+     //GT 须依赖的包：
+     implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+     implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+     implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+     implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+     implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
