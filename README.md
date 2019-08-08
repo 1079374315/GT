@@ -36,7 +36,7 @@
 
 
 # 如何使用
-### 注意：以下为androidx的使用方式，如果使用的是android.support包，[点击这里`master`分支](https://#)
+### 注意：以下为android的使用方式
 **1. 项目下app的build.gradle中依赖：**
 
 ````gradle
