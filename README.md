@@ -9,6 +9,7 @@
 
 添加了 BaseFragments 基类，用于辅助 单 Activity 对多 Fragment 开发
 添加了 BaseDialogFragments 基类	用于辅助 开发
+
 [使用教程请参关注楼主博客](https://blog.csdn.net/qq_39799899)
 
 ![](/gif/logo.png)
