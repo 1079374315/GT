@@ -28,7 +28,7 @@
 
 
 
-[GT 的依赖 （第一章）：](http://#)
+[GT 的依赖 （第一章）：](https://blog.csdn.net/qq_39799899/article/details/89679778)
 
 [GT 使用的 log 教程（第二章）：](http://#)
 
