@@ -1,52 +1,29 @@
-# GT
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Fragmentation-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/5937)
-[![Build Status](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://travis-ci.org/YoKeyword/Fragmentation)
-[![Download](https://api.bintray.com/packages/yokeyword/maven/Fragmentationx/images/download.svg) ](https://bintray.com/yokeyword/maven/Fragmentationx/_latestVersion)
-[![Hex.pm](https://img.shields.io/hexpm/l/plug.svg)](https://www.apache.org/licenses/LICENSE-2.0)
+[![CSDN](https://img.shields.io/badge/Android%20Arsenal-Fragmentation-brightgreen.svg?style=flat)](https://blog.csdn.net/qq_39799899)
+[![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
-# FragmentationX
-A powerful library that manage Fragment for Android!
 
-为"单Activity ＋ 多Fragment","多模块Activity + 多Fragment"架构而生，简化开发，轻松解决动画、嵌套、事务相关等问题。
+# 最新版本: 1.0.2
+发布时间：2019年8月8日 星期四 22:22
+
+最后更新类： GT_Fragment
+
+添加了 BaseFragments 基类，用于辅助 单 Activity 对多 Fragment 开发
+添加了 BaseDialogFragments 基类	用于辅助 开发
+(使用教程请参关注楼主博客)
 
 ![](/gif/logo.png)
 
 
 为了更好的使用该库，推荐阅读下面的文章:
 
-[Fragment全解析系列（一）：那些年踩过的坑](http://www.jianshu.com/p/d9143a92ad94)
-
-[Fragment全解析系列（二）：正确的使用姿势](http://www.jianshu.com/p/fd71d65f0ec6)
 
 
-# Demo演示：
-均为单Activity + 多Fragment，第一个为简单流式demo，第二个为仿微信交互的demo(全页面支持滑动退出)，第三个为仿知乎交互的复杂嵌套demo
+[GT 的依赖 （第一章）：正确的使用姿势](http://www.jianshu.com/p/d9143a92ad94)
 
-## [下载APK](https://www.pgyer.com/fragmentation)
+[GT 使用的 log 教程（第二章）：正确的使用姿势](http://www.jianshu.com/p/fd71d65f0ec6)
 
+[GT 待更新 ......](https://github.com/1079374315/GT/tree/master)
 
-<img src="/gif/demo1.gif" width="280px"/> <img src="/gif/demo2.gif" width="280px"/>
- <img src="/gif/demo3.gif" width="280px"/>
-
-# 特性
-
-1、**悬浮球／摇一摇实时查看Fragment的栈视图，降低开发难度**
-
-2、**内部队列机制 解决Fragment多点触控、事务高频次提交异常等问题**
-
-3、**增加启动模式、startForResult等类Activity方法**
-
-4、**类Android事件分发机制的Fragment BACK键机制：onBackPressedSupport()**
-
-5、**提供onSupportVisible()、懒加载onLazyInitView()等生命周期方法，简化嵌套Fragment的开发过程**
-
-6、**提供 Fragment转场动画 系列解决方案，动态改变动画**
-
-7、**提供Activity作用域的EventBus辅助类，Fragment通信更简单、独立(需要使用[EventBusActivityScope库](https://github.com/YoKeyword/Fragmentation/blob/master/eventbus_activity_scope/README.md))**
-
-8、**支持SwipeBack滑动边缘退出(需要使用[Fragmentation_SwipeBack库](https://github.com/YoKeyword/Fragmentation/blob/master/fragmentation_swipeback/README.md))**
-
-<img src="/gif/stack.png" width="150px"/> <img src="/gif/log.png" width="300px"/>     <img src="/gif/SwipeBack.png" width="150px"/>
 
 # 如何使用
 ### 注意：以下为androidx的使用方式，如果使用的是android.support包，[点击这里`master`分支](https://github.com/YoKeyword/Fragmentation/blob/master/README_CN.md)
@@ -100,9 +77,9 @@ public class HomeFragment extends SupportFragment {
 
     private void xxx() {
         // 启动新的Fragment, 另有start(fragment,SINGTASK)、startForResult、startWithPop等启动方法
-        start(DetailFragment.newInstance(HomeBean));
+? ? ? ? start(DetailFragment.newInstance(HomeBean));
         // ... 其他pop, find, 设置动画等等API, 请自行查看WIKI
-    }
+? ? }
 }
 ````
 
@@ -110,13 +87,13 @@ public class HomeFragment extends SupportFragment {
 
 ## LICENSE
 ````
-Copyright 2016 YoKey
+Copyright 2019 GSLS
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+   https://github.com/1079374315/GT/tree/master
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
