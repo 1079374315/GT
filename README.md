@@ -11,9 +11,9 @@
 
 ````
 
-(1)添加了 BaseFragments 基类，用于辅助 单 Activity 对多 Fragment 开发
+(1)添加了 BaseFragments 基类，用于辅助，单 Activity 对多 Fragment 开发
 
-(2)添加了 BaseDialogFragments 基类	用于辅助 开发
+(2)添加了 BaseDialogFragments 基类，用于辅助 开发
 
 ````
 
