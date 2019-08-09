@@ -127,16 +127,16 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
-     //GT 须依赖的包：
-     implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
-     implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
-     implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
-     implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
-     implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ //GT 须依赖的包：
+ implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+ implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+ implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+ implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
- *  更新时间:2019.8.8
+ * 更新时间:2019.8.8
  * <p>
  * 更新内容：
  * 更新 BaseFragment
@@ -461,7 +461,21 @@ public class GT {
     public static void toast_time(Object msg, int time) {
         if (TOAST_TF) {
             if (getGT().CONTEXT != null) {
-                Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_SHORT).show();
+                final Toast toast = Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_LONG);
+                final Timer timer = new Timer();
+                timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        toast.show();
+                    }
+                }, 0, 3000);
+                new Timer().schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        toast.cancel();
+                        timer.cancel();
+                    }
+                }, time );
             } else {
                 if (LOG_TF)//设置为默认输出日志
                     log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
@@ -488,8 +502,24 @@ public class GT {
      * @param msg     object 类型的消息
      */
     public static void toast_time(Context context, Object msg, int time) {
-        if (TOAST_TF)
-            Toast.makeText(context, String.valueOf(msg), time).show();
+        if (TOAST_TF){
+            final Toast toast = Toast.makeText(context, String.valueOf(msg), Toast.LENGTH_LONG);
+            final Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    toast.show();
+                }
+            }, 0, 3000);
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    toast.cancel();
+                    timer.cancel();
+                }
+            }, time );
+
+        }
     }
 
     /**
@@ -503,6 +533,11 @@ public class GT {
         public Toast getToast() {
             return toast;
         }
+
+        public void ShowToast() {
+            toast.show();
+        }
+
 
         public View getView() {
             return view;
@@ -518,6 +553,21 @@ public class GT {
                 if (getGT().CONTEXT != null) {
                     view = LayoutInflater.from(getGT().CONTEXT).inflate(layout, null);
                     toast = new Toast(getGT().CONTEXT);
+                    toast.setView(view);
+                } else {
+                    if (LOG_TF) {//设置为默认输出日志
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                    }
+                }
+            }
+            return this;
+        }
+
+        public ToastView initLayout(int layout,Context context) {
+            if (TOAST_TF) {
+                if (context != null) {
+                    view = LayoutInflater.from(context).inflate(layout, null);
+                    toast = new Toast(context);
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
@@ -550,6 +600,26 @@ public class GT {
             }
             return this;
         }
+
+
+        public ToastView initLayout(int layout, int Gravity,Context context) {
+
+            if (TOAST_TF) {
+                if (context != null) {
+                    view = LayoutInflater.from(context).inflate(layout, null);
+                    toast = new Toast(context);
+                    if (Gravity != 0)
+                        toast.setGravity(Gravity, 0, 0);
+                    toast.setView(view);
+                } else {
+                    if (LOG_TF) {//设置为默认输出日志
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                    }
+                }
+            }
+            return this;
+        }
+
 
     }
 
@@ -612,15 +682,14 @@ public class GT {
          *
          * @param img             图标
          * @param title           标题
-         * @param buttonName      按钮名字
          * @param item            列表项
          * @param onClickListener 单击事件
          * @return 返回对话框对象
          */
-        public AlertDialog.Builder dialogSingleChoiceList(int img, String title, String buttonName, String[] item, DialogInterface.OnClickListener onClickListener) {
+        public AlertDialog.Builder dialogSingleChoiceList(int img, String title, String[] item, DialogInterface.OnClickListener onClickListener) {
             setIcon(img).setTitle(title);
-            if (buttonName != null && onClickListener != null)
-                setPositiveButton(buttonName, onClickListener);//设置按钮
+            if (item != null && onClickListener != null)
+                setSingleChoiceItems(item, 0, onClickListener);//设置按钮
             return this;
         }
 
@@ -629,20 +698,20 @@ public class GT {
          *
          * @param img             图标
          * @param title           标题
-         * @param buttonName      按钮名称
          * @param items           列表
          * @param onClickListener 单击事件
          * @return 返回对话框对象
          */
-        public AlertDialog.Builder dialogMultiChoice(int img, String title, String buttonName, final String[] items, DialogInterface.OnClickListener onClickListener) {
+        public AlertDialog.Builder dialogMultiChoice(int img, String title, final String[] items, DialogInterface.OnMultiChoiceClickListener onClickListener) {
 
             final boolean[] checkedItems = new boolean[items.length];   //初始化选中状态
 
-            for (int i = 0; i < checkedItems.length; i++) checkedItems[i] = false;   //初始化默认选项
+            for (int i = 0; i < checkedItems.length; i++) {
+                checkedItems[i] = false;   //初始化默认选项
+            }
             setIcon(img).setTitle(title);//设置 图标、标题
-            if (buttonName != null && onClickListener != null)
-                setPositiveButton(buttonName, onClickListener);
-
+            if (checkedItems != null && items != null && onClickListener != null)
+                setMultiChoiceItems(items, checkedItems, onClickListener);
             return this;
         }
 

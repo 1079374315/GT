@@ -682,7 +682,6 @@ public class GT {
          *
          * @param img             图标
          * @param title           标题
-         * @param buttonName      按钮名字
          * @param item            列表项
          * @param onClickListener 单击事件
          * @return 返回对话框对象
@@ -699,7 +698,6 @@ public class GT {
          *
          * @param img             图标
          * @param title           标题
-         * @param buttonName      按钮名称
          * @param items           列表
          * @param onClickListener 单击事件
          * @return 返回对话框对象
