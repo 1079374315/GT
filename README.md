@@ -30,7 +30,7 @@
 
 [GT 的依赖 （第一章）：](https://blog.csdn.net/qq_39799899/article/details/89679778)
 
-[GT 使用的 log 教程（第二章）：](http://#)
+[GT 使用的 log 教程（第二章）：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%B8%80%E7%AB%A0%EF%BC%9ALog%20%E5%A4%9A%E7%B1%BB%E5%9E%8B%20%E6%89%93%E5%8D%B0)
 
 [GT 待更新 ......](https://#)
 
