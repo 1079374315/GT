@@ -17,7 +17,7 @@
 
 ````
 
-[使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899)
+[使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
 
 ![](/gif/logo.png)
 
