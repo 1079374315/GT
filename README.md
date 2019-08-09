@@ -5,7 +5,7 @@
 # 最新版本: 1.0.2
 发布时间：2019年8月8日 星期四 22:22
 
-## 此次更新类有： 
+## 此次版本更新： 
 
 ### GT_Fragment
 
@@ -28,7 +28,7 @@
 
 
 
-[GT 的依赖 （第一章）：](http://#)
+[GT 的依赖 （第一章）：](https://blog.csdn.net/qq_39799899/article/details/89679778)
 
 [GT 使用的 log 教程（第二章）：](http://#)
 
@@ -36,26 +36,26 @@
 
 
 # 如何使用
-### 注意：以下为androidx的使用方式，如果使用的是android.support包，[点击这里`master`分支](https://#)
+### 注意：以下为android的使用方式
 **1. 项目下app的build.gradle中依赖：**
 
 ````gradle
 第一步 1. 将以下存储库将其添加到根构建中。存储库末尾的gradle
 allprojects {
-		repositories {
-			...
-			maven { url 'https://jitpack.io' }
-		}
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
 	}
+}
 	
 	
 第二步 2. 添加依赖关系
 dependencies {
-	        implementation 'com.github.1079374315:GT:v1.0.1'
-		}
+	implementation 'com.github.1079374315:GT:v1.0.2'
+}
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.1)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.2)
 
 ## LICENSE
 ````
