@@ -797,7 +797,7 @@ public class GT {
         /**
          * 加载自定义的 对话框 自带去掉边框
          */
-        static abstract class Loading_view extends ProgressDialog {
+        public static abstract class Loading_view extends ProgressDialog {
 
             public Loading_view(Context context) {
                 super(context);
@@ -818,14 +818,14 @@ public class GT {
              *
              * @param context
              */
-            abstract void loadLayout(Context context);
+            protected abstract void loadLayout(Context context);
 
             /**
              * 初始化布局
              *
              * @return
              */
-            abstract int initLayout();
+            public abstract int initLayout();
 
             private void init(Context context) {
                 setCancelable(true);
@@ -870,8 +870,9 @@ public class GT {
          *
          * @param NotifyId
          */
-        public void setNotifyId(int NotifyId) {
+        public GT_Notification setNotifyId(int NotifyId) {
             NOTIFYID = NotifyId;
+            return this;
         }
 
         /**
@@ -879,8 +880,9 @@ public class GT {
          *
          * @param ChanelId
          */
-        public void setChanelId(String ChanelId) {
+        public GT_Notification setChanelId(String ChanelId) {
             CHANEL_ID = ChanelId;
+            return this;
         }
 
         /**
@@ -888,8 +890,9 @@ public class GT {
          *
          * @param ChanelDescription
          */
-        public void setChanelDescription(String ChanelDescription) {
+        public GT_Notification setChanelDescription(String ChanelDescription) {
             CHANEL_DESCRIPTION = ChanelDescription;
+            return this;
         }
 
         /**
@@ -897,8 +900,9 @@ public class GT {
          *
          * @param ChanelName
          */
-        public void setChanelName(String ChanelName) {
+        public GT_Notification setChanelName(String ChanelName) {
             CHANEL_NAME = ChanelName;
+            return this;
         }
 
         private Activity activity;
@@ -1018,20 +1022,6 @@ public class GT {
     public static void startAct(Context context, Class activityClass) {
         if (context != null) {
             context.startActivity(new Intent(context, activityClass));//跳转 Activity
-        }
-    }
-
-    /**
-     * 跳转 Activity
-     *
-     * @param context 上下文
-     * @param intent  intent
-     */
-    public static void startAct(Context context, Intent intent) {
-        if (context != null && intent != null) {
-            context.startActivity(intent); //跳转 Activity
-        } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
         }
     }
 
@@ -1785,7 +1775,7 @@ public class GT {
          * @return boolean  true 为当前网络正常    false 则反之
          */
         @SuppressLint("MissingPermission")
-        public boolean netWorkStatus(Context context) {
+        public static boolean netWorkStatus(Context context) {
             ConnectivityManager cwjManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (cwjManager.getActiveNetworkInfo() != null) {
                 return cwjManager.getActiveNetworkInfo().isAvailable();
@@ -1799,7 +1789,7 @@ public class GT {
          * @param context 上下文
          * @return String   返回当前 ip 地址
          */
-        public String getIPAddress(Context context) {
+        public static String getIPAddress(Context context) {
             @SuppressLint("MissingPermission") NetworkInfo info = ((ConnectivityManager) context
                     .getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             if (info != null && info.isConnected()) {
@@ -1839,7 +1829,7 @@ public class GT {
         }
 
         //检测当前手机是否可上网
-        public boolean isInternet(Context context) {
+        public static boolean isInternet(Context context) {
             ConnectivityManager manager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
             NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
             if (info == null || !manager.getBackgroundDataSetting()) {
@@ -2261,7 +2251,7 @@ public class GT {
          * @param webView 网页对象
          * @param url     要加载的网页
          */
-        public void setWebViewLoadPC(WebView webView, String url) {
+        public static void setWebViewLoadPC(WebView webView, String url) {
 
             if (webView != null) {
                 webView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
@@ -2283,7 +2273,7 @@ public class GT {
 
         }
 
-        public class MyWeb extends WebViewClient {
+        private static class MyWeb extends WebViewClient {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);//在这里设置对应的操作
@@ -2846,6 +2836,7 @@ public class GT {
         public static void startGameWindow(Activity activity) {
             Window.light(activity);//屏幕常亮
             Window.immersionMode(activity);//沉浸式模式
+            Window.hideActionBar((AppCompatActivity) activity);//隐藏ActionBar
             Window.Close_virtualButton(activity);//关闭虚拟按钮
         }
 
