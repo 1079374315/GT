@@ -30,7 +30,6 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
-
     //GT 须依赖的包：
     implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
     implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
