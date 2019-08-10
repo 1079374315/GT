@@ -52,6 +52,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -69,6 +70,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.gsls.gtlibrary.R;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -136,10 +138,10 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.8
+ * 更新时间:2019.8.10
  * <p>
  * 更新内容：
- * 更新 BaseFragment
+ * 修复 在继承 GT.GT_Fragment.BaseFragments 类时，用户设置的背景失效。
  * <p>
  * <p>
  * <p>
@@ -3430,9 +3432,16 @@ public class GT {
          *
          * @param view
          */
+        @SuppressLint("NewApi")
         public void initBaseFragment(View view) {
-            //解决 Fragment 的透明问题
-            view.setBackgroundColor(Color.WHITE);
+
+            ColorDrawable colorDrawable= (ColorDrawable) view.getBackground();//获取 View 背景颜色
+
+            if(colorDrawable != null){
+                view.setBackground(colorDrawable);//设置 用户指定的颜色
+            }else{
+                view.setBackgroundColor(Color.WHITE);// 设置为 默认的 白色
+            }
 
             //解决 Fragment 点击事件穿透问题
             view.setOnTouchListener(new View.OnTouchListener() {
@@ -4019,7 +4028,7 @@ public class GT {
         }
 
         //Spiritleve 屏幕旋转监听
-        public static class Spiritleve implements SensorEventListener {
+        public abstract static class Spiritleve implements SensorEventListener {
             /**
              * * 用法如下：
              * * //屏幕旋转监听 内部类
@@ -4387,7 +4396,7 @@ public class GT {
          * @param map
          * @return
          */
-        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+        @SuppressLint("NewApi")
         public GT_SoundPool initMusic(Map<String, Integer> map) {
             if (map != null) {
                 this.map = map;
@@ -4512,15 +4521,15 @@ public class GT {
         /**
          * 播放音频
          *
-         * @param key
-         * @param loop
-         * @param rate
+         * @param key   指定播放的音频key
+         * @param loop  是否循环 false为不循环, true 为循环
+         * @param rate  速率 为正常速率 1  最低为 0.5，最高为 2
          * @return
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
             //播放所选音频
             soundPool.play(
-                    mapMusic.get(key),           //指定播放的音频id
+                    mapMusic.get(key),           //指定播放的音频 key
                     1,              //左声道 为0.0 到 1.0
                     1,             //右声道 为0.0 到 1.0
                     0,                 //优先级 0
