@@ -2,19 +2,19 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
 
-# 最新版本: 1.0.2
-发布时间：2019年8月8日 星期四 22:22
+# 最新版本: 1.0.3
+发布时间：2019年8月10日 星期四 18:00
 
 ## 此次版本更新： 
 
 ### GT_Fragment
 
 ````
-
-(1)添加了 BaseFragments 基类，用于辅助，单 Activity 对多 Fragment 开发
-
-(2)添加了 BaseDialogFragments 基类，用于辅助 开发
-
+* 更新时间:2019.8.10
+ * <p>
+ * 更新内容：
+ * 修复 在继承 GT.GT_Fragment.BaseFragments 类时，用户设置的背景失效。
+ * 修复 对话框 一些已经失效的方法。
 ````
 
 [使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
@@ -59,6 +59,14 @@
 
 [GT 第十五章：  GT_Fragment 框架 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%BA%94%E7%AB%A0%EF%BC%9A%C2%A0%20GT_Fragment%20%E6%A1%86%E6%9E%B6)
 
+[GT 第十六章： DeviceListening  设备监听类 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E5%85%AD%E7%AB%A0%EF%BC%9A)
+
+[GT 第十七章： 超简单的 多媒体 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B8%83%E7%AB%A0%EF%BC%9A)
+
+[GT 第十八章： Thread 更新UI线程 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E5%85%AB%E7%AB%A0%EF%BC%9A)
+
+[GT 第十九章： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
+
 
 
 # 如何使用
@@ -77,11 +85,11 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.0.2'
+	implementation 'com.github.1079374315:GT:v1.0.3'
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.2)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.3)
 
 ## LICENSE
 ````
