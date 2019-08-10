@@ -140,8 +140,11 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * 更新时间:2019.8.10
  * <p>
+ * 更新时间:2019.8.10
+ * <p>
  * 更新内容：
  * 修复 在继承 GT.GT_Fragment.BaseFragments 类时，用户设置的背景失效。
+ * 修复 对话框 一些已经失效的方法。
  * <p>
  * <p>
  * <p>
