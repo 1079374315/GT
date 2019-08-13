@@ -38,6 +38,7 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -52,7 +53,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -70,7 +70,6 @@ import androidx.fragment.app.FragmentTransaction;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.gsls.gtlibrary.R;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -129,22 +128,22 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
-     //GT 须依赖的包：
-     implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
-     implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
-     implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
-     implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
-     implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ //GT 须依赖的包：
+ implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+ implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+ implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+ implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.10
+ * 更新时间:2019.8.14
  * <p>
- * 更新时间:2019.8.10
+ * 更新时间:2019.8.14
  * <p>
  * 更新内容：
- * 修复 在继承 GT.GT_Fragment.BaseFragments 类时，用户设置的背景失效。
- * 修复 对话框 一些已经失效的方法。
+ 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
+ 2.更新 AlertDialog 类中设置全屏的方法。
  * <p>
  * <p>
  * <p>
@@ -720,6 +719,9 @@ public class GT {
             return this;
         }
 
+        /**
+         * 自定义的 Dialog
+         */
         public static class ViewDialog {
 
             private Dialog dialog;
@@ -731,6 +733,28 @@ public class GT {
 
             public View getView() {
                 return view;
+            }
+
+            /**
+             * 设置 ViewDialog 全屏 该方法需要在 show() 方法之后调用
+             * @param activity
+             * @return
+             *
+             * 用法如下：
+             *  GT.GT_AlertDialog.ViewDialog viewDialog = new GT.GT_AlertDialog.ViewDialog()
+             *                 .initLayout(activity, R.layout.item_load, R.style.dialogNoBg, true, -1, 0, 0);
+             *         viewDialog.getDialog().show();
+             *         viewDialog.allWindow(activity);//放到此处
+             *
+             */
+            public ViewDialog allWindow(Activity activity){
+                WindowManager windowManager = activity.getWindowManager();
+                Display display = windowManager.getDefaultDisplay();
+                WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+                lp.width = display.getWidth(); //设置宽度
+                lp.height = display.getHeight(); //设置宽度
+                dialog.getWindow().setAttributes(lp);
+                return this;
             }
 
             /**
@@ -768,6 +792,15 @@ public class GT {
              * @param X             显示的 X 轴位置
              * @param Y             显示的 Y 轴位置
              * @return 当前类的对象
+             *
+             * style 样式 参考：
+             *      <style name="dialogNoBg">
+             *         <item name="android:background">#00000000</item>
+             *         <item name="android:windowBackground">@android:color/transparent</item>
+             *         <item name="android:windowNoTitle">true</item>
+             *         <item name="android:windowFullscreen">true</item>
+             *         <item name="android:windowIsFloating">true</item>
+             *     </style>
              */
             public ViewDialog initLayout(Context context, int layout, int Style, boolean clickExternal, int transparency, int X, int Y) {
 
@@ -795,9 +828,7 @@ public class GT {
                 return this;
             }
 
-
         }
-
 
         /**
          * 加载自定义的 对话框 自带去掉边框
@@ -856,7 +887,6 @@ public class GT {
             }
 
         }
-
 
     }
 
@@ -2703,7 +2733,10 @@ public class GT {
          */
         public static void hideActionBar(AppCompatActivity activity) {
             ActionBar actionBar = activity.getSupportActionBar();
-            actionBar.hide();
+            GT.log_e("测试:" + actionBar);
+            if(activity != null){
+                actionBar.hide();
+            }
         }
 
         /**
@@ -2841,7 +2874,7 @@ public class GT {
         public static void startGameWindow(Activity activity) {
             Window.light(activity);//屏幕常亮
             Window.immersionMode(activity);//沉浸式模式
-            Window.hideActionBar((AppCompatActivity) activity);//隐藏ActionBar
+//            Window.hideActionBar((AppCompatActivity) activity);//隐藏ActionBar
             Window.Close_virtualButton(activity);//关闭虚拟按钮
         }
 
@@ -2943,12 +2976,6 @@ public class GT {
             protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
 
             /**
-             * 主要实现的功能
-             */
-            protected void function() {
-            }
-
-            /**
              * 用户在初始化布局前设置必要的参数 当前方法可不重写
              *
              * @param view
@@ -3002,6 +3029,12 @@ public class GT {
                 View view = inflater.inflate(loadLayout(), container, false);
                 createView(view);
                 return view;
+            }
+
+            /**
+             * 主要实现的功能
+             */
+            protected void function() {
             }
 
             @Override
