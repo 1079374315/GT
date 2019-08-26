@@ -1,7 +1,6 @@
 package com.gsls.gtlibrary.util;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -92,6 +91,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
@@ -128,12 +132,12 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- //GT 须依赖的包：
- implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
- implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ * //GT 须依赖的包：
+ * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
@@ -142,8 +146,8 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 更新时间:2019.8.14
  * <p>
  * 更新内容：
- 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
- 2.更新 AlertDialog 类中设置全屏的方法。
+ * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
+ * 2.更新 AlertDialog 类中设置全屏的方法。
  * <p>
  * <p>
  * <p>
@@ -163,6 +167,7 @@ public class GT {
     private static Boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
     private static Boolean TOAST_TF = true;      //控制外部所有的 toast 显示
     private static Boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
+    private Boolean isAnnotation = true;         //控制是否进行默认注入注解
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
 
 
@@ -239,6 +244,9 @@ public class GT {
      */
     public void setCONTEXT(Context CONTEXT) {
         this.CONTEXT = CONTEXT;
+        if(isAnnotation){
+            initGT();   //默认初始化必要的 GT 工具
+        }
     }
 
     /**
@@ -275,6 +283,22 @@ public class GT {
      */
     public void setGtToastTf(Boolean gtToastTf) {
         GT_TOAST_TF = gtToastTf;
+    }
+
+    //======================================= 默认 GT 初始化 ======================  =================
+
+    /**
+     * 默认初始化 GT 必要的工具
+     */
+    private void initGT(){
+
+        Context context = getCONTEXT();
+        if(context != null){
+
+            AnnotationAssist.injectAll((Activity) context); //初始化 注解
+
+        }
+
     }
 
     //============================================= 提示类 =========================================
@@ -479,7 +503,7 @@ public class GT {
                         toast.cancel();
                         timer.cancel();
                     }
-                }, time );
+                }, time);
             } else {
                 if (LOG_TF)//设置为默认输出日志
                     log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
@@ -506,7 +530,7 @@ public class GT {
      * @param msg     object 类型的消息
      */
     public static void toast_time(Context context, Object msg, int time) {
-        if (TOAST_TF){
+        if (TOAST_TF) {
             final Toast toast = Toast.makeText(context, String.valueOf(msg), Toast.LENGTH_LONG);
             final Timer timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -521,7 +545,7 @@ public class GT {
                     toast.cancel();
                     timer.cancel();
                 }
-            }, time );
+            }, time);
 
         }
     }
@@ -567,7 +591,7 @@ public class GT {
             return this;
         }
 
-        public ToastView initLayout(int layout,Context context) {
+        public ToastView initLayout(int layout, Context context) {
             if (TOAST_TF) {
                 if (context != null) {
                     view = LayoutInflater.from(context).inflate(layout, null);
@@ -606,7 +630,7 @@ public class GT {
         }
 
 
-        public ToastView initLayout(int layout, int Gravity,Context context) {
+        public ToastView initLayout(int layout, int Gravity, Context context) {
 
             if (TOAST_TF) {
                 if (context != null) {
@@ -737,17 +761,15 @@ public class GT {
 
             /**
              * 设置 ViewDialog 全屏 该方法需要在 show() 方法之后调用
+             *
              * @param activity
-             * @return
-             *
-             * 用法如下：
-             *  GT.GT_AlertDialog.ViewDialog viewDialog = new GT.GT_AlertDialog.ViewDialog()
-             *                 .initLayout(activity, R.layout.item_load, R.style.dialogNoBg, true, -1, 0, 0);
-             *         viewDialog.getDialog().show();
-             *         viewDialog.allWindow(activity);//放到此处
-             *
+             * @return 用法如下：
+             * GT.GT_AlertDialog.ViewDialog viewDialog = new GT.GT_AlertDialog.ViewDialog()
+             * .initLayout(activity, R.layout.item_load, R.style.dialogNoBg, true, -1, 0, 0);
+             * viewDialog.getDialog().show();
+             * viewDialog.allWindow(activity);//放到此处
              */
-            public ViewDialog allWindow(Activity activity){
+            public ViewDialog allWindow(Activity activity) {
                 WindowManager windowManager = activity.getWindowManager();
                 Display display = windowManager.getDefaultDisplay();
                 WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
@@ -792,15 +814,15 @@ public class GT {
              * @param X             显示的 X 轴位置
              * @param Y             显示的 Y 轴位置
              * @return 当前类的对象
-             *
+             * <p>
              * style 样式 参考：
-             *      <style name="dialogNoBg">
-             *         <item name="android:background">#00000000</item>
-             *         <item name="android:windowBackground">@android:color/transparent</item>
-             *         <item name="android:windowNoTitle">true</item>
-             *         <item name="android:windowFullscreen">true</item>
-             *         <item name="android:windowIsFloating">true</item>
-             *     </style>
+             * <style name="dialogNoBg">
+             * <item name="android:background">#00000000</item>
+             * <item name="android:windowBackground">@android:color/transparent</item>
+             * <item name="android:windowNoTitle">true</item>
+             * <item name="android:windowFullscreen">true</item>
+             * <item name="android:windowIsFloating">true</item>
+             * </style>
              */
             public ViewDialog initLayout(Context context, int layout, int Style, boolean clickExternal, int transparency, int X, int Y) {
 
@@ -1866,7 +1888,7 @@ public class GT {
         //检测当前手机是否可上网
         public static boolean isInternet(Context context) {
             ConnectivityManager manager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
-            NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
+            @SuppressLint("MissingPermission") NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
             if (info == null || !manager.getBackgroundDataSetting()) {
                 return false;
             }
@@ -2734,7 +2756,7 @@ public class GT {
         public static void hideActionBar(AppCompatActivity activity) {
             ActionBar actionBar = activity.getSupportActionBar();
             GT.log_e("测试:" + actionBar);
-            if(activity != null){
+            if (activity != null) {
                 actionBar.hide();
             }
         }
@@ -2824,9 +2846,6 @@ public class GT {
          *
          * @param activity
          */
-        @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-        @SuppressLint("InlinedApi")
         public static void AutoLandscapeAndPortrait(Activity activity, int one_three) {
             switch (one_three) {
                 case 0:
@@ -2876,6 +2895,30 @@ public class GT {
             Window.immersionMode(activity);//沉浸式模式
 //            Window.hideActionBar((AppCompatActivity) activity);//隐藏ActionBar
             Window.Close_virtualButton(activity);//关闭虚拟按钮
+        }
+
+        /**
+         * 开启永久的游戏窗口模式
+         * 开启线程去一直开启全屏模式
+         * 除非必要，否则勿用该方法
+         *
+         * @param activity
+         */
+        public static void startGameWindows(final Activity activity) {
+            GT.Thread.runJava(new Runnable() {
+                @Override
+                public void run() {
+                    while (true){
+                        GT.Thread.sleep(1000);
+                        GT.Thread.runAndroid(new Runnable() {
+                            @Override
+                            public void run() {
+                                GT.Game.startGameWindow(activity);//开启游戏窗口
+                            }
+                        });
+                    }
+                }
+            });
         }
 
 
@@ -3471,11 +3514,11 @@ public class GT {
         @SuppressLint("NewApi")
         public void initBaseFragment(View view) {
 
-            ColorDrawable colorDrawable= (ColorDrawable) view.getBackground();//获取 View 背景颜色
+            ColorDrawable colorDrawable = (ColorDrawable) view.getBackground();//获取 View 背景颜色
 
-            if(colorDrawable != null){
+            if (colorDrawable != null) {
                 view.setBackground(colorDrawable);//设置 用户指定的颜色
-            }else{
+            } else {
                 view.setBackgroundColor(Color.WHITE);// 设置为 默认的 白色
             }
 
@@ -4557,9 +4600,9 @@ public class GT {
         /**
          * 播放音频
          *
-         * @param key   指定播放的音频key
-         * @param loop  是否循环 false为不循环, true 为循环
-         * @param rate  速率 为正常速率 1  最低为 0.5，最高为 2
+         * @param key  指定播放的音频key
+         * @param loop 是否循环 false为不循环, true 为循环
+         * @param rate 速率 为正常速率 1  最低为 0.5，最高为 2
          * @return
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
@@ -4713,30 +4756,210 @@ public class GT {
      */
     public static class Annotations {
 
-        //Toast 注解:用于获取调用 GT.Toast的类对象
+        /**
+         * 为给 Activity 类 标的注解
+         * 用法如下：
+         *  @GT_Activity(R.layout.activity_main)
+         *  public class MainActivity extends AppCompatActivity {....}
+         */
+        @Target(ElementType.TYPE)
         @Retention(RetentionPolicy.RUNTIME)
-        @Target(value = {ElementType.TYPE})
-        public @interface Toast {
+        public @interface GT_Activity {
+            int value();
         }
+
+        /**
+         * 为给 View 组件标的注解
+         * 用法如下：
+         * @GT_View(R.id.ioc_tv)
+         * private TextView tv;
+         */
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_View {
+            int value();
+        }
+
+
+        /**
+         * 为给 单击方法 标的注解
+         * 用法如下：
+         * @GT_Click({R.id.ioc_btn01,R.id.ioc_btn02,R.id.ioc_btn03})
+         *     public void setButtonOnClickListener(View view){
+         *         switch (view.getId()){
+         *             case R.id.ioc_btn01:
+         *                 Log.e(TAG, "单击 1 号" );
+         *                 break;
+         *             case R.id.ioc_btn02:
+         *                 Log.e(TAG, "单击 2 号" );
+         *                 break;
+         *             case R.id.ioc_btn03:
+         *                 Log.e(TAG, "单击 3 号" );
+         *                 break;
+         *         }
+         *     }
+         */
+        @Target(ElementType.METHOD)
+        @Retention(RetentionPolicy.RUNTIME)
+        @OnClickEvent(listenerType = View.OnClickListener.class,listenerSetter = "setOnClickListener",methodName = "onClick")
+        public @interface GT_Click {
+            int[] value();
+        }
+
+        /**
+         * 用于协助 单击方法的注解
+         */
+        @Target(ElementType.ANNOTATION_TYPE)
+        @Retention(RetentionPolicy.RUNTIME)
+        private @interface OnClickEvent {
+            Class<?> listenerType();//接口类型
+            String listenerSetter();//设置的方法
+            String methodName();//接口里面要实现的方法
+        }
+
+
 
     }
 
     /**
-     * 判断注解类
+     * 注解工具类
      */
     public static class AnnotationAssist {
+
+        public static final String ACTIVITY_MAIN_CONTENTVIEW="setContentView";
+        public static final String ACTIVITY_MAIN_FINDVIEWBYID="findViewById";
+
+        /**
+         * 注入所有
+         * @param activity
+         */
+        public static void injectAll(Activity activity){
+            injectContentView(activity);//为加载 Activity 布局初始化
+            injectControl(activity);//为加载 组件 初始化
+            injectOnClickListener(activity);//为加载 组件单击 初始化
+        }
+
+        /**
+         * 注入 ContextView
+         * @param activity
+         */
+        public static void injectContentView(Activity activity){
+            Class<? extends Activity> mClass = activity.getClass();//获取该类信息
+            Annotations.GT_Activity contentView = mClass.getAnnotation(Annotations.GT_Activity.class);//获取该类 ContextView 的注解类
+            //如果有注解
+            if(contentView != null){
+                int viewId = contentView.value();//获取注解类参数
+                try {
+                    Method method = mClass.getMethod(ACTIVITY_MAIN_CONTENTVIEW,int.class);//获取该方法的信息
+                    method.setAccessible(true);//获取该方法的访问权限
+                    method.invoke(activity,viewId);//调用该方法的，并设置该方法参数
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        /**
+         *注入控件
+         * @param activity
+         */
+        public static void injectControl(Activity activity){
+            Class<? extends Activity> clazz = activity.getClass();//获取该类信息
+            Field[] fields=clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field:fields) {
+                Annotations.GT_View injectControl = field.getAnnotation( Annotations.GT_View.class);
+                if(injectControl!=null){
+                    int viewId=injectControl.value();
+                    try {
+                        Method method=clazz.getMethod(ACTIVITY_MAIN_FINDVIEWBYID, int.class);
+                        method.setAccessible(true);
+                        field.setAccessible(true);
+                        Object object=method.invoke(activity, viewId);
+                        field.set(activity,object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+
+        /**
+         * 注入点击事件
+         * @param activity
+         */
+        public static void injectOnClickListener(Activity activity){
+            Class<? extends Activity> clazz = activity.getClass();
+            Method[] methods= clazz.getMethods();//获取所有声明为公有的方法
+            for (Method method:methods){//遍历所有公有方法
+                Annotation[] annotations = method.getAnnotations();//获取该公有方法的所有注解
+                for (Annotation annotation:annotations){//遍历所有注解
+                    Class<? extends Annotation> annotationType = annotation.annotationType();//获取具体的注解类
+                    Annotations.OnClickEvent onClickEvent = annotationType.getAnnotation( Annotations.OnClickEvent.class);//取出注解的onClickEvent注解
+                    if(onClickEvent!=null){//如果不为空
+                        try {
+                            Method valueMethod=annotationType.getDeclaredMethod("value");//获取注解InjectOnClick的value方法
+                            int[] viewIds= (int[]) valueMethod.invoke(annotation,null);//获取控件值
+                            Class<?> listenerType = onClickEvent.listenerType();//获取接口类型
+                            String listenerSetter = onClickEvent.listenerSetter();//获取set方法
+                            String methodName = onClickEvent.methodName();//获取接口需要实现的方法
+                            MyInvocationHandler handler = new MyInvocationHandler(activity);//自己实现的代码，负责调用
+                            handler.setMethodMap(methodName,method);//设置方法及设置方法
+                            Object object= Proxy.newProxyInstance(listenerType.getClassLoader(),new Class<?>[]{listenerType},handler);//创建动态代理对象类
+                            for (int viewId:viewIds){//遍历要设置监听的控件
+                                View view=activity.findViewById(viewId);//获取该控件
+                                Method m=view.getClass().getMethod(listenerSetter, listenerType);//获取方法
+                                m.invoke(view,object);//调用方法
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        /**
+         * 初始化注解帮助类
+         */
+        private static class MyInvocationHandler implements InvocationHandler {
+
+            private Object object;
+            private Map<String, Method> methodMap = new HashMap<>(1);
+            public MyInvocationHandler(Object object) {
+                this.object = object;
+            }
+            public void setMethodMap(String name, Method method) {
+                this.methodMap.put(name, method);
+            }
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                if (object != null) {
+                    String name = method.getName();
+                    method= this.methodMap.get(name);
+                    if (method != null) {
+                        return method.invoke(object, args);
+                    }
+                }
+                return null;
+            }
+
+        }
+
 
         /**
          * 目的：用于判断 当前类是否被 当前的注解注解过
          * 用例：new GT.AnnotationAssist(LogActivity.class, GT.Annotations.Toast.class);
-         * 第一个参数：任意被
+         * 第一个参数：任意对象
+         * 第二个参数：被注解的类
          * 再打开 GT 内部的 Log 日志
-         */
-        @SuppressWarnings("unchecked")
-        /**
-         * 用于判断 当前类是否被 当前的注解注解过
-         * @param obj
-         * @param annotation
          */
         public AnnotationAssist(Object obj, Object annotation) {
 
