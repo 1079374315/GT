@@ -141,13 +141,13 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.14
  * <p>
- * 更新时间:2019.8.14
+ * 更新时间:2019.8.27
  * <p>
- * 更新内容：
+ * 更新内容：（1.0.4版本 大更新）
  * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
  * 2.更新 AlertDialog 类中设置全屏的方法。
+ * 3.新增 GT 注解注入 具体使用 请参考官网
  * <p>
  * <p>
  * <p>
@@ -295,7 +295,7 @@ public class GT {
         Context context = getCONTEXT();
         if(context != null){
 
-            AnnotationAssist.injectAll((Activity) context); //初始化 注解
+            AnnotationAssist.injectAll((Activity) context); //初始化 IOC 注解
 
         }
 
@@ -4783,7 +4783,7 @@ public class GT {
 
         /**
          * 为给 单击方法 标的注解
-         * 用法如下：
+         * 用法如下：切记 单击方法一定要是 public 的修饰符
          * @GT_Click({R.id.ioc_btn01,R.id.ioc_btn02,R.id.ioc_btn03})
          *     public void setButtonOnClickListener(View view){
          *         switch (view.getId()){
@@ -4818,6 +4818,70 @@ public class GT {
         }
 
 
+        /**
+         * 用于注解 普通成员变量的注解 可携带 参数
+         * 注意：如果是 对象 那么 构造函数一定不能设置为 单例（构造函数修饰符不能为 private 私有的）否则会注解注入失败！
+         */
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_Object {
+
+            /**
+             * 定义当前注解 支持的参数类型
+             */
+            interface TYPE {
+                String BYTE = "byte";
+                String SHORT = "short";
+                String INT = "int";
+                String LONG = "long";
+                String FLOAT = "float";
+                String DOUBLE = "double";
+                String BOOLEAN = "boolean";
+                String CHAR = "char";
+                String STRING = "String";
+
+                String BYTES = "bytes";
+                String SHORTS = "shorts";
+                String INTS = "ints";
+                String LONGS = "longs";
+                String FLOATS = "floats";
+                String DOUBLES = "doubles";
+                String BOOLEANS = "booleans";
+                String CHARS = "chars";
+                String STRINGS = "Strings";
+            }
+
+            /** 单参数的传递 **/
+            byte        valueByte()     default 0;
+            short       valueShort()    default 0;
+            int         valueInt()      default 0;
+            long        valueLong()     default 0L;
+            float       valueFloat()    default 0.0f;
+            double      valueDouble()   default 0.0d;
+            boolean     valueBoolean()  default false;
+            char        valueChar()     default 0;
+            String      valueString()   default "";
+
+            /** 多参数的传递 **/
+            byte[]      valueBytes()     default {};
+            short[]     valueShorts()    default {};
+            int[]       valueInts()      default {};
+            long[]      valueLongs()     default {};
+            float[]     valueFloats()    default {};
+            double[]    valueDoubles()   default {};
+            boolean[]   valueBooleans()  default {};
+            char[]      valueChars()     default {};
+            String[]    valueStrings()   default {};
+
+            /** 修改参数的类型 **/
+            String      type()           default "";
+            String[]    types()          default {};
+
+            /** 要赋值的方法 **/
+            String      function()       default "";
+            String[]    functions()      default {};
+
+        }
 
     }
 
@@ -4834,17 +4898,309 @@ public class GT {
          * @param activity
          */
         public static void injectAll(Activity activity){
-            injectContentView(activity);//为加载 Activity 布局初始化
-            injectControl(activity);//为加载 组件 初始化
-            injectOnClickListener(activity);//为加载 组件单击 初始化
+            Class<? extends Activity> mClass = activity.getClass(); //获取该类信息
+            initObject(activity,mClass);                            //为加载 Object 成员变量初始化
+            injectContentView(activity,mClass);                     //为加载 Activity 布局初始化
+            injectControl(activity,mClass);                         //为加载 组件 初始化
+            injectOnClickListener(activity,mClass);                 //为加载 组件单击 初始化
         }
+
+        /**
+         * 参数版
+         * @param activity
+         */
+        private static void initObject(Activity activity, Class<? extends Activity> mClass){
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field:fields) {
+                Annotations.GT_Object injectControl = field.getAnnotation(Annotations.GT_Object.class);
+
+                if(injectControl != null){
+
+                    //获取 完整的类路径
+                    String classPage = field.toString();
+                    String[] s = classPage.split(" ");
+                    classPage = s[1];
+
+                    //实例化一个对象
+                    Object object = null;
+                    try {
+                        object = Class.forName(classPage).newInstance();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    //获取参数的值类型
+                    String type = injectControl.type();
+                    String[] types = injectControl.types();
+
+
+                    //创建保存 参数类型的容器
+                    List<Object> valueList = new ArrayList<>();
+                    if(type.length() != 0){
+                        valueType(type,valueList,injectControl,0);//将当前的单个数据赋值到 listView 中
+                    }else if(types.length != 0){
+                        for(int i = 0; i < types.length; i++){
+                            valueType(types[i],valueList,injectControl,i);//将当前的多个数据赋值到 listView 中
+                        }
+                    }
+
+                    /** 获取注解传递过来的参数 **/
+                    String function = injectControl.function();
+                    String[] functions = injectControl.functions();
+
+                    /**
+                     * 获取当前方法所有方法
+                     */
+                    if(function.length() != 0 && valueList.size() != 0){
+                        functionValue(field,object,function,valueList,0);//对相应的方法进行赋值
+                    }else if(functions.length != 0 && valueList.size() != 0){
+                        for(int i = 0; i < functions.length; i++){
+                            functionValue(field,object,functions[i],valueList,i);//对相应的方法进行赋值
+                        }
+                    }
+
+
+                    //给注解下面的 成员变量注入值
+                    try {
+                        field.setAccessible(true);
+                        field.set(activity,object);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+
+        private static void functionValue(Field field, Object object, String functionName, List<Object> valueList, int index){
+
+            if(functionName.length() != 0 && valueList.size() != 0){
+
+                Class<?> aClass = object.getClass();
+                Method[] methods = aClass.getMethods();
+
+                //获取当前类中所有方法
+                for(int i = methods.length-1; i >= 0 ; i--){
+                    String name = methods[i].getName();
+                    if(name.equals(functionName)){
+                        try {
+                            Method method = getAllValueTypeMethod(valueList.get(index),functionName,aClass);
+                            method.setAccessible(true);
+                            field.setAccessible(true);
+                            method.invoke(object, valueList.get(index));
+                        } catch (Exception e) {
+                            if(getGT().getGtLogTf()){
+                                GT.log_e(getGT().getLineInfo(),"注解注入失败 ！");
+                            }
+//                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+        }
+
+
+        /**
+         * 自获取当前传入数据的类型
+         * @param data
+         * @param functionName
+         * @param aClass
+         * @return
+         */
+        private static Method getAllValueTypeMethod(Object data, String functionName, Class<?> aClass){
+
+            Method method = null;
+
+            Class<?> aClass1 = data.getClass();
+            switch (aClass1.toString()){
+                case "class java.lang.Byte":
+                    try {
+                        method =  aClass.getMethod(functionName, byte.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 byte 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Short":
+                    try {
+                        method =  aClass.getMethod(functionName, short.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Short 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Integer":
+                    try {
+                        method =  aClass.getMethod(functionName, int.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 int 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Long":
+                    try {
+                        method =  aClass.getMethod(functionName, long.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Long 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Float":
+                    try {
+                        method =  aClass.getMethod(functionName, float.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Float 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Double":
+                    try {
+                        method =  aClass.getMethod(functionName, double.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Double 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Boolean":
+                    try {
+                        method =  aClass.getMethod(functionName, boolean.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Boolean 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Character":
+                    try {
+                        method =  aClass.getMethod(functionName, char.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 Character 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.String":
+                    try {
+                        method =  aClass.getMethod(functionName, String.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if(getGT().getGtLogTf()){
+                            GT.log_e(getGT().getLineInfo(),"注解 赋值 String 类型数据 报错");
+                        }
+                    }
+                    break;
+            }
+            return method;
+        }
+
+
+        /**
+         * 给 listView 赋值
+         * @param type
+         * @param list
+         * @param values
+         */
+        private static void valueType(String type, List<Object> list, Annotations.GT_Object values, int index){
+
+            switch (type){
+
+                /** 单个参数的赋值 **/
+                case "byte":
+                    list.add(values.valueByte());
+                    break;
+                case "short":
+                    list.add(values.valueShort());
+                    break;
+                case "int":
+                    list.add(values.valueInt());
+                    break;
+                case "long":
+                    list.add(values.valueLong());
+                    break;
+                case "float":
+                    list.add(values.valueFloat());
+                    break;
+                case "double":
+                    list.add(values.valueDouble());
+                    break;
+                case "boolean":
+                    list.add(values.valueBoolean());
+                    break;
+                case "char":
+                    list.add(values.valueChar());
+                    break;
+                case "String":
+                    list.add(values.valueString());
+                    break;
+
+                /** 多个参数的赋值 **/
+                case "bytes":
+                    byte[] bytes = values.valueBytes();
+                    for(byte value:bytes){
+                        list.add(value);
+                    }
+                    break;
+                case "shorts":
+                    short[] shorts = values.valueShorts();
+                    list.add(shorts[index]);
+                    break;
+                case "ints":
+                    int[] ints = values.valueInts();
+                    list.add(ints[index]);
+                    break;
+                case "longs":
+                    long[] longs = values.valueLongs();
+                    list.add(longs[index]);
+                    break;
+                case "floats":
+                    float[] floats = values.valueFloats();
+                    list.add(floats[index]);
+                    break;
+                case "doubles":
+                    double[] doubles = values.valueDoubles();
+                    list.add(doubles[index]);
+                    break;
+                case "booleans":
+                    boolean[] booleans = values.valueBooleans();
+                    list.add(booleans[index]);
+                    break;
+                case "chars":
+                    char[] chars = values.valueChars();
+                    list.add(chars[index]);
+                    break;
+                case "Strings":
+                    String[] strings = values.valueStrings();
+                    list.add(strings[index]);
+                    break;
+            }
+
+        }
+
 
         /**
          * 注入 ContextView
          * @param activity
          */
-        public static void injectContentView(Activity activity){
-            Class<? extends Activity> mClass = activity.getClass();//获取该类信息
+        public static void injectContentView(Activity activity, Class<? extends Activity>  mClass){
             Annotations.GT_Activity contentView = mClass.getAnnotation(Annotations.GT_Activity.class);//获取该类 ContextView 的注解类
             //如果有注解
             if(contentView != null){
@@ -4868,7 +5224,7 @@ public class GT {
          *注入控件
          * @param activity
          */
-        public static void injectControl(Activity activity){
+        public static void injectControl(Activity activity, Class<? extends Activity>  mClass){
             Class<? extends Activity> clazz = activity.getClass();//获取该类信息
             Field[] fields=clazz.getDeclaredFields();//获致所有成员变更
             for (Field field:fields) {
@@ -4893,7 +5249,7 @@ public class GT {
          * 注入点击事件
          * @param activity
          */
-        public static void injectOnClickListener(Activity activity){
+        public static void injectOnClickListener(Activity activity, Class<? extends Activity>  mClass){
             Class<? extends Activity> clazz = activity.getClass();
             Method[] methods= clazz.getMethods();//获取所有声明为公有的方法
             for (Method method:methods){//遍历所有公有方法
