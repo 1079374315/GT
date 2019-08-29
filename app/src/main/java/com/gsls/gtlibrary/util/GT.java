@@ -148,11 +148,13 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * 更新时间:2019.8.27
  * <p>
+ *
  * 更新内容：（1.0.4版本 大更新）
  * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
  * 2.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
  * 4.新增 BaseActivity、AnnotationActivity 类 具体使用 请参考官网
+ *
  * <p>
  * <p>
  * <p>
