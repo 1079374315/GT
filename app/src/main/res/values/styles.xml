@@ -1,34 +1,11 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-    </style>
-
-    <!--dialog去阴影-->
-    <style name="dialogNoBg">
-        <item name="android:background">#00000000</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowIsFloating">true</item>
-    </style>
-
-    <!-- 全屏style -->
-    <style name="MyDialog" parent="@android:style/Theme.NoTitleBar.Fullscreen">
-        <!-- 是否有边框 -->
-        <item name="android:windowFrame">@null</item>
-        <!--是否在悬浮Activity之上  -->
-        <item name="android:windowIsFloating">true</item>
-        <!--标题  -->
-        <item name="android:windowNoTitle">true</item>
-        <!--阴影  -->
-        <item name="android:windowIsTranslucent">true</item><!--半透明-->
-        <!-- 点外边可以消失  -->
-        <item name="android:windowCloseOnTouchOutside">false</item>
     </style>
 
 </resources>

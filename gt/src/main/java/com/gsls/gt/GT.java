@@ -1,7 +1,6 @@
 package com.gsls.gt;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -20,6 +19,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -38,6 +38,7 @@ import android.os.Environment;
 import android.os.PowerManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -46,6 +47,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -91,6 +94,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
@@ -105,6 +113,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -127,20 +136,22 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- //GT 须依赖的包：
- implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
- implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ * //GT 须依赖的包：
+ * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.10
  * <p>
- * 更新内容：
- * 修复 在继承 GT.GT_Fragment.BaseFragments 类时，用户设置的背景失效。
- * 修复 对话框 一些已经失效的方法。
+ * 更新时间:2019.8.27
+ * <p>
+ * 更新内容：（1.0.4版本 大更新）
+ * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
+ * 2.更新 AlertDialog 类中设置全屏的方法。
+ * 3.新增 GT 注解注入 具体使用 请参考官网
  * <p>
  * <p>
  * <p>
@@ -156,10 +167,11 @@ public class GT {
 
     @SuppressLint("StaticFieldLeak")
     private static GT gt = null;                 //定义 GT 对象
-    private static Boolean LOG_TF = true;        //控制外部所有的 Log 显示
-    private static Boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
-    private static Boolean TOAST_TF = true;      //控制外部所有的 toast 显示
-    private static Boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
+    private static boolean LOG_TF = true;        //控制外部所有的 Log 显示
+    private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
+    private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
+    private static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
+    private boolean isAnnotation = true;         //默认加载注解
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
 
 
@@ -234,8 +246,19 @@ public class GT {
      *
      * @param CONTEXT
      */
-    public void setCONTEXT(Context CONTEXT) {
+    public void build(Context CONTEXT) {
         this.CONTEXT = CONTEXT;
+        initGTUtilActivity();//初始化 GT 必要的工具
+    }
+
+    /**
+     * 为外部提供访问 GT Context 接口
+     *
+     * @param object
+     * @param view
+     */
+    public void build(Object object, View view) {
+        initGTUtilFragment(object, view);//初始化 GT 必要的工具
     }
 
     /**
@@ -272,6 +295,42 @@ public class GT {
      */
     public void setGtToastTf(Boolean gtToastTf) {
         GT_TOAST_TF = gtToastTf;
+    }
+
+    /**
+     * 返回当前 是否加载注解
+     *
+     * @return
+     */
+    public boolean isAnnotation() {
+        return isAnnotation;
+    }
+
+    /**
+     * 设置是否加载注解
+     *
+     * @param annotation
+     */
+    public void setAnnotation(boolean annotation) {
+        isAnnotation = annotation;
+    }
+
+    //============================================= 加载 GT 必要的工具 =============================
+
+    //初始化 GT 必要的工具 主要用于  Activity 的页面
+    private void initGTUtilActivity() {
+        //是否加载注解
+        if (isAnnotation) {
+            AnnotationAssist.initAll((Activity) CONTEXT); //初始化 IOC 注解
+        }
+    }
+
+    //初始化 GT 必要的工具  主要用于 非 Activity 的页面 如：Fragment、DialogFragment 等页面
+    private void initGTUtilFragment(Object object, View view) {
+        //是否加载注解
+        if (isAnnotation) {
+            AnnotationAssist.initAll(object, view); //初始化 IOC 注解
+        }
     }
 
     //============================================= 提示类 =========================================
@@ -447,7 +506,7 @@ public class GT {
                 Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_SHORT).show();
             } else {
                 if (LOG_TF)//设置为默认输出日志
-                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
         }
@@ -476,10 +535,10 @@ public class GT {
                         toast.cancel();
                         timer.cancel();
                     }
-                }, time );
+                }, time);
             } else {
                 if (LOG_TF)//设置为默认输出日志
-                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
         }
@@ -503,7 +562,7 @@ public class GT {
      * @param msg     object 类型的消息
      */
     public static void toast_time(Context context, Object msg, int time) {
-        if (TOAST_TF){
+        if (TOAST_TF) {
             final Toast toast = Toast.makeText(context, String.valueOf(msg), Toast.LENGTH_LONG);
             final Timer timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -518,7 +577,7 @@ public class GT {
                     toast.cancel();
                     timer.cancel();
                 }
-            }, time );
+            }, time);
 
         }
     }
@@ -557,14 +616,14 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
             return this;
         }
 
-        public ToastView initLayout(int layout,Context context) {
+        public ToastView initLayout(int layout, Context context) {
             if (TOAST_TF) {
                 if (context != null) {
                     view = LayoutInflater.from(context).inflate(layout, null);
@@ -572,7 +631,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -595,7 +654,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -603,7 +662,7 @@ public class GT {
         }
 
 
-        public ToastView initLayout(int layout, int Gravity,Context context) {
+        public ToastView initLayout(int layout, int Gravity, Context context) {
 
             if (TOAST_TF) {
                 if (context != null) {
@@ -614,7 +673,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。");
+                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -716,6 +775,9 @@ public class GT {
             return this;
         }
 
+        /**
+         * 自定义的 Dialog
+         */
         public static class ViewDialog {
 
             private Dialog dialog;
@@ -727,6 +789,26 @@ public class GT {
 
             public View getView() {
                 return view;
+            }
+
+            /**
+             * 设置 ViewDialog 全屏 该方法需要在 show() 方法之后调用
+             *
+             * @param activity
+             * @return 用法如下：
+             * GT.GT_AlertDialog.ViewDialog viewDialog = new GT.GT_AlertDialog.ViewDialog()
+             * .initLayout(activity, R.layout.item_load, R.style.dialogNoBg, true, -1, 0, 0);
+             * viewDialog.getDialog().show();
+             * viewDialog.allWindow(activity);//放到此处
+             */
+            public ViewDialog allWindow(Activity activity) {
+                WindowManager windowManager = activity.getWindowManager();
+                Display display = windowManager.getDefaultDisplay();
+                WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
+                lp.width = display.getWidth(); //设置宽度
+                lp.height = display.getHeight(); //设置宽度
+                dialog.getWindow().setAttributes(lp);
+                return this;
             }
 
             /**
@@ -764,6 +846,15 @@ public class GT {
              * @param X             显示的 X 轴位置
              * @param Y             显示的 Y 轴位置
              * @return 当前类的对象
+             * <p>
+             * style 样式 参考：
+             * <style name="dialogNoBg">
+             * <item name="android:background">#00000000</item>
+             * <item name="android:windowBackground">@android:color/transparent</item>
+             * <item name="android:windowNoTitle">true</item>
+             * <item name="android:windowFullscreen">true</item>
+             * <item name="android:windowIsFloating">true</item>
+             * </style>
              */
             public ViewDialog initLayout(Context context, int layout, int Style, boolean clickExternal, int transparency, int X, int Y) {
 
@@ -791,9 +882,7 @@ public class GT {
                 return this;
             }
 
-
         }
-
 
         /**
          * 加载自定义的 对话框 自带去掉边框
@@ -852,7 +941,6 @@ public class GT {
             }
 
         }
-
 
     }
 
@@ -1832,7 +1920,7 @@ public class GT {
         //检测当前手机是否可上网
         public static boolean isInternet(Context context) {
             ConnectivityManager manager = (ConnectivityManager) context.getSystemService(context.CONNECTIVITY_SERVICE);
-            NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
+            @SuppressLint("MissingPermission") NetworkInfo info = manager.getActiveNetworkInfo();// 检查网络连接，如果无网络可用，就不需要进行连网操作等
             if (info == null || !manager.getBackgroundDataSetting()) {
                 return false;
             }
@@ -2699,7 +2787,10 @@ public class GT {
          */
         public static void hideActionBar(AppCompatActivity activity) {
             ActionBar actionBar = activity.getSupportActionBar();
-            actionBar.hide();
+            GT.log_e("测试:" + actionBar);
+            if (activity != null) {
+                actionBar.hide();
+            }
         }
 
         /**
@@ -2787,9 +2878,6 @@ public class GT {
          *
          * @param activity
          */
-        @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-        @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-        @SuppressLint("InlinedApi")
         public static void AutoLandscapeAndPortrait(Activity activity, int one_three) {
             switch (one_three) {
                 case 0:
@@ -2835,10 +2923,38 @@ public class GT {
          * @param activity
          */
         public static void startGameWindow(Activity activity) {
-            Window.light(activity);//屏幕常亮
-            Window.immersionMode(activity);//沉浸式模式
-            Window.hideActionBar((AppCompatActivity) activity);//隐藏ActionBar
-            Window.Close_virtualButton(activity);//关闭虚拟按钮
+            try {
+                Window.light(activity);//屏幕常亮
+                Window.immersionMode(activity);//沉浸式模式
+                Window.Close_virtualButton(activity);//关闭虚拟按钮
+                GT.Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
+            } catch (Exception e) {
+                GT.log_e(getGT().getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
+            }
+        }
+
+        /**
+         * 开启永久的游戏窗口模式
+         * 开启线程去一直开启全屏模式
+         * 除非必要，否则勿用该方法
+         *
+         * @param activity
+         */
+        public static void startGameWindows(final Activity activity) {
+            GT.Thread.runJava(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        GT.Thread.sleep(1000);
+                        GT.Thread.runAndroid(new Runnable() {
+                            @Override
+                            public void run() {
+                                GT.Game.startGameWindow(activity);//开启游戏窗口
+                            }
+                        });
+                    }
+                }
+            });
         }
 
 
@@ -2882,7 +2998,7 @@ public class GT {
     }
 
     /**
-     * 封装 Fragment管理器 类
+     * 封装 Fragment 管理器
      */
     public static class GT_Fragment {
 
@@ -2939,12 +3055,6 @@ public class GT {
             protected abstract void initView(@NonNull View view, @Nullable Bundle savedInstanceState);
 
             /**
-             * 主要实现的功能
-             */
-            protected void function() {
-            }
-
-            /**
              * 用户在初始化布局前设置必要的参数 当前方法可不重写
              *
              * @param view
@@ -2998,6 +3108,12 @@ public class GT {
                 View view = inflater.inflate(loadLayout(), container, false);
                 createView(view);
                 return view;
+            }
+
+            /**
+             * 主要实现的功能
+             */
+            protected void function() {
             }
 
             @Override
@@ -3434,11 +3550,11 @@ public class GT {
         @SuppressLint("NewApi")
         public void initBaseFragment(View view) {
 
-            ColorDrawable colorDrawable= (ColorDrawable) view.getBackground();//获取 View 背景颜色
+            ColorDrawable colorDrawable = (ColorDrawable) view.getBackground();//获取 View 背景颜色
 
-            if(colorDrawable != null){
+            if (colorDrawable != null) {
                 view.setBackground(colorDrawable);//设置 用户指定的颜色
-            }else{
+            } else {
                 view.setBackgroundColor(Color.WHITE);// 设置为 默认的 白色
             }
 
@@ -3636,6 +3752,9 @@ public class GT {
 
     }
 
+    /**
+     * 封装 Activity 管理器
+     */
 
     //============================================= 设备监听类 ======================================
 
@@ -4520,9 +4639,9 @@ public class GT {
         /**
          * 播放音频
          *
-         * @param key   指定播放的音频key
-         * @param loop  是否循环 false为不循环, true 为循环
-         * @param rate  速率 为正常速率 1  最低为 0.5，最高为 2
+         * @param key  指定播放的音频key
+         * @param loop 是否循环 false为不循环, true 为循环
+         * @param rate 速率 为正常速率 1  最低为 0.5，最高为 2
          * @return
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
@@ -4676,30 +4795,1311 @@ public class GT {
      */
     public static class Annotations {
 
-        //Toast 注解:用于获取调用 GT.Toast的类对象
+
+        /**
+         * 为给 Activity 类 标的注解
+         * 用法如下：
+         *
+         * @Activity(R.layout.activity_main) public class MainActivity extends AppCompatActivity {....}
+         */
+        @Target(ElementType.TYPE)
         @Retention(RetentionPolicy.RUNTIME)
-        @Target(value = {ElementType.TYPE})
-        public @interface Toast {
+        public @interface Activity {
+            int value();
         }
+
+
+        /**
+         * 为给 View 组件标的注解
+         * 用法如下：
+         *
+         * @GT_View(R.id.ioc_tv) private TextView tv;
+         */
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface View {
+            int value();
+        }
+
+
+        /**
+         * 为给 单击方法 标的注解
+         * 用法如下：切记 单击方法一定要是 public 的修饰符
+         *
+         * @Click({R.id.ioc_btn01,R.id.ioc_btn02,R.id.ioc_btn03}) public void setButtonOnClickListener(View view){
+         * switch (view.getId()){
+         * case R.id.ioc_btn01:
+         * Log.e(TAG, "单击 1 号" );
+         * break;
+         * case R.id.ioc_btn02:
+         * Log.e(TAG, "单击 2 号" );
+         * break;
+         * case R.id.ioc_btn03:
+         * Log.e(TAG, "单击 3 号" );
+         * break;
+         * }
+         * }
+         */
+        @Target(ElementType.METHOD)
+        @Retention(RetentionPolicy.RUNTIME)
+        @OnClickEvent(listenerType = android.view.View.OnClickListener.class, listenerSetter = "setOnClickListener", methodName = "onClick")
+        public @interface Click {
+            int[] value();
+        }
+
+
+        /**
+         * 用于协助 单击方法的注解
+         */
+        @Target(ElementType.ANNOTATION_TYPE)
+        @Retention(RetentionPolicy.RUNTIME)
+        private @interface OnClickEvent {
+            Class<?> listenerType();//接口类型
+
+            String listenerSetter();//设置的方法
+
+            String methodName();//接口里面要实现的方法
+        }
+
+
+        /**
+         * 用于注解 普通成员变量的注解 可携带 参数
+         * 注意：如果是 对象 那么 构造函数一定不能设置为 单例（构造函数修饰符不能为 private 私有的）否则会注解注入失败！
+         */
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface Object {
+
+            /**
+             * 定义当前注解 支持的参数类型
+             */
+            interface TYPE {
+                String BYTE = "byte";
+                String SHORT = "short";
+                String INT = "int";
+                String LONG = "long";
+                String FLOAT = "float";
+                String DOUBLE = "double";
+                String BOOLEAN = "boolean";
+                String CHAR = "char";
+                String STRING = "String";
+
+                String BYTES = "bytes";
+                String SHORTS = "shorts";
+                String INTS = "ints";
+                String LONGS = "longs";
+                String FLOATS = "floats";
+                String DOUBLES = "doubles";
+                String BOOLEANS = "booleans";
+                String CHARS = "chars";
+                String STRINGS = "Strings";
+            }
+
+            /**
+             * 单参数的传递
+             **/
+            byte valueByte() default 0;
+
+            short valueShort() default 0;
+
+            int valueInt() default 0;
+
+            long valueLong() default 0L;
+
+            float valueFloat() default 0.0f;
+
+            double valueDouble() default 0.0d;
+
+            boolean valueBoolean() default false;
+
+            char valueChar() default 0;
+
+            String valueString() default "";
+
+            /**
+             * 多参数的传递
+             **/
+            byte[] valueBytes() default {};
+
+            short[] valueShorts() default {};
+
+            int[] valueInts() default {};
+
+            long[] valueLongs() default {};
+
+            float[] valueFloats() default {};
+
+            double[] valueDoubles() default {};
+
+            boolean[] valueBooleans() default {};
+
+            char[] valueChars() default {};
+
+            String[] valueStrings() default {};
+
+            /**
+             * 修改参数的类型
+             **/
+            String type() default "";
+
+            String[] types() default {};
+
+            /**
+             * 要赋值的方法
+             **/
+            String function() default "";
+
+            String[] functions() default {};
+
+        }
+
+
+        /**
+         * 资源注解
+         */
+        public @interface Res {
+
+            /**
+             * 字符串 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface String {
+                int value();
+            }
+
+            /**
+             * 颜色 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Color {
+                int value();
+            }
+
+            /**
+             * 尺寸 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Dimen {
+                int value();
+            }
+
+            /**
+             * 图片 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Drawable {
+                int value();
+            }
+
+            /**
+             * 动画 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Animation {
+                int value();
+            }
+
+            /**
+             * 字符串数组 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface StringArray {
+                int value();
+            }
+
+            /**
+             * 整数数组 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface IntArray {
+                int value();
+            }
+
+            /**
+             * 将 xml 文件解析成 View 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Layout {
+                int value();
+            }
+
+        }
+
+        /**
+         * 集合注解
+         */
+        public @interface Collection {
+
+            /**
+             * List 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface List {
+                Class[] value();
+            }
+
+
+            /**
+             * Map 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Map {
+                Class[] value();
+            }
+
+
+            /**
+             * Set 注解
+             */
+            @Target(ElementType.FIELD)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface Set {
+                Class[] value();
+            }
+
+        }
+
+
+        /**
+         * 注解初始化 GT 库
+         */
+        @Target(ElementType.METHOD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface Build {
+        }
+
 
     }
 
     /**
-     * 判断注解类
+     * 注解工具类
      */
     public static class AnnotationAssist {
+
+        //================================   下面是 初始化 注解内容   ==============================
+
+        //主要用于注解 非 Activity 以外的
+        public static void initAll(Object object, View view) {
+
+            Class<? extends Object> mClass = object.getClass();
+
+            // Java 注解部分
+            initObject(object, mClass);                    //为加载 Object 成员变量初始化
+            initList(object, mClass);                      //为加载 List 成员变量初始化
+            initMap(object, mClass);                       //为加载 Map 成员变量初始化
+            initSet(object, mClass);                       //为加载 Set 成员变量初始化
+
+            // 组件、事件 注解
+            initView(object, mClass, view);                 //为加载 组件 初始化
+            initClick(object, mClass, view);                //为加载 组件单击 初始化
+
+            //资源 注解
+            initAnimation(object, mClass, view);            //为加载 Animation 资源初始化
+            initDimen(object, mClass, view);                //为加载 Dimen 资源初始化
+            initDrawable(object, mClass, view);             //为加载 Style 资源初始化
+            initColor(object, mClass, view);                //为加载 Color 资源初始化
+            initString(object, mClass, view);               //为加载 String 资源初始化
+            initIntArray(object, mClass, view);             //为加载 IntArray 资源初始化
+            initStringArray(object, mClass, view);          //为加载 StringArray 资源初始化
+            initLayout(object, mClass, view);               //为加载 Layout 资源初始化
+
+        }
+
+        //主要用于注解 Activity
+        private static void initAll(Activity activity) {
+
+            Class<? extends Activity> mClass = activity.getClass();
+
+            // Java 注解
+            initObject(activity, mClass);               //为加载 Object 成员变量初始化
+            initList(activity, mClass);                 //为加载 List 成员变量初始化
+            initMap(activity, mClass);                  //为加载 Map 成员变量初始化
+            initSet(activity, mClass);                  //为加载 Set 成员变量初始化
+
+            // Activity、组件、事件 注解
+            initActivity(activity, mClass);             //为加载 Activity 布局初始化
+            initView(activity, mClass);                 //为加载 组件 初始化
+            initClick(activity, mClass);                //为加载 组件单击 初始化
+
+            //资源 注解
+            initAnimation(activity, mClass);            //为加载 Animation 资源初始化
+            initDimen(activity, mClass);                //为加载 Dimen 资源初始化
+            initDrawable(activity, mClass);             //为加载 Style 资源初始化
+            initColor(activity, mClass);                //为加载 Color 资源初始化
+            initString(activity, mClass);               //为加载 String 资源初始化
+            initIntArray(activity, mClass);             //为加载 IntArray 资源初始化
+            initStringArray(activity, mClass);          //为加载 StringArray 资源初始化
+            initLayout(activity, mClass);               //为加载 Layout 资源初始化
+
+        }
+
+
+        //================================   下面是 Java 的注解内容   ==============================
+
+        /**
+         * 参数版
+         *
+         * @param object
+         */
+        private static void initObject(Object object, Class<? extends Object> mClass) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Object initView = field.getAnnotation(Annotations.Object.class);
+
+                if (initView != null) {
+
+                    //获取 完整的类路径
+                    String classPage = field.toString();
+                    String[] s = classPage.split(" ");
+                    classPage = s[1];
+
+                    //实例化一个对象
+                    Object object2 = null;
+                    try {
+                        object2 = Class.forName(classPage).newInstance();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    //获取参数的值类型
+                    String type = initView.type();
+                    String[] types = initView.types();
+
+
+                    //创建保存 参数类型的容器
+                    List<Object> valueList = new ArrayList<>();
+                    if (type.length() != 0) {
+                        valueType(type, valueList, initView, 0);//将当前的单个数据赋值到 listView 中
+                    } else if (types.length != 0) {
+                        for (int i = 0; i < types.length; i++) {
+                            valueType(types[i], valueList, initView, i);//将当前的多个数据赋值到 listView 中
+                        }
+                    }
+
+                    /** 获取注解传递过来的参数 **/
+                    String function = initView.function();
+                    String[] functions = initView.functions();
+
+                    /**
+                     * 获取当前方法所有方法
+                     */
+                    if (function.length() != 0 && valueList.size() != 0) {
+                        functionValue(field, object2, function, valueList, 0);//对相应的方法进行赋值
+                    } else if (functions.length != 0 && valueList.size() != 0) {
+                        for (int i = 0; i < functions.length; i++) {
+                            functionValue(field, object2, functions[i], valueList, i);//对相应的方法进行赋值
+                        }
+                    }
+
+
+                    //给注解下面的 成员变量注入值
+                    try {
+                        field.setAccessible(true);
+                        field.set(object, object2);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 List 资源字符串
+         **/
+        private static void initList(Object object, Class<? extends Object> mClass) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Collection.List initView = field.getAnnotation(Annotations.Collection.List.class);
+                if (initView != null) {
+                    Class[] classes = initView.value();
+                    List<Object> objectList = new ArrayList<>();//创建一个 ListView
+                    for (Class cla : classes) {
+
+                        String classPage = cla.toString();
+                        String[] s = classPage.split(" ");
+                        classPage = s[1];
+
+                        //实例化一个对象
+                        Object object2 = null;
+                        try {
+                            object2 = Class.forName(classPage).newInstance();
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        } catch (InstantiationException e) {
+                            e.printStackTrace();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        objectList.add(object2);//添加每一个经过反射得到的 对象
+                    }
+                    try {
+                        field.setAccessible(true);
+                        field.set(object, objectList);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 Map 资源字符串
+         **/
+        private static void initMap(Object object, Class<? extends Object> mClass) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Collection.Map initView = field.getAnnotation(Annotations.Collection.Map.class);
+                if (initView != null) {
+                    Class[] classes = initView.value();
+                    Map<Object, Object> objectMap = new HashMap<>();//创建一个 Map
+                    for (Class cla : classes) {
+
+                        String classPage = cla.toString();
+                        String[] s = classPage.split(" ");
+                        classPage = s[1];
+
+                        //实例化一个对象
+                        Object object2 = null;
+                        try {
+                            object2 = Class.forName(classPage).newInstance();
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        } catch (InstantiationException e) {
+                            e.printStackTrace();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        objectMap.put(cla, object2);//保存每个创建出来的 对象 key 为 每个对象的 class
+                    }
+                    try {
+                        field.setAccessible(true);
+                        field.set(object, objectMap);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 Set 资源字符串
+         **/
+        private static void initSet(Object object, Class<? extends Object> mClass) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Collection.Set initView = field.getAnnotation(Annotations.Collection.Set.class);
+                if (initView != null) {
+                    Class[] classes = initView.value();
+                    Set<Object> objectSet = new HashSet<>();//创建一个 Set
+                    for (Class cla : classes) {
+
+                        String classPage = cla.toString();
+                        String[] s = classPage.split(" ");
+                        classPage = s[1];
+
+                        //实例化一个对象
+                        Object object2 = null;
+                        try {
+                            object2 = Class.forName(classPage).newInstance();
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                        } catch (InstantiationException e) {
+                            e.printStackTrace();
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                        objectSet.add(object2);//保存每个创建出来的 对象
+                    }
+                    try {
+                        field.setAccessible(true);
+                        field.set(object, objectSet);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+
+        //================================   下面是 Fragment 的注解内容   ==========================
+
+
+        /**
+         * 注入控件
+         *
+         * @param object
+         * @param mClass
+         * @param view
+         */
+        private static void initView(Object object, Class<? extends Object> mClass, View view) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.View initView = field.getAnnotation(Annotations.View.class);
+                if (initView != null) {
+                    int viewId = initView.value();
+                    try {
+                        View viewById = view.findViewById(viewId);
+                        field.setAccessible(true);
+                        field.set(object, viewById);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入点击事件
+         */
+        private static void initClick(Object object, Class<? extends Object> mClass, View view) {
+            Method[] methods = mClass.getMethods();//获取所有声明为公有的方法
+            for (Method method : methods) {//遍历所有公有方法
+                Annotation[] annotations = method.getAnnotations();//获取该公有方法的所有注解
+                for (Annotation annotation : annotations) {//遍历所有注解
+                    Class<? extends Annotation> annotationType = annotation.annotationType();//获取具体的注解类
+                    Annotations.OnClickEvent onClickEvent = annotationType.getAnnotation(Annotations.OnClickEvent.class);//取出注解的onClickEvent注解
+                    if (onClickEvent != null) {//如果不为空
+                        try {
+                            Method valueMethod = annotationType.getDeclaredMethod("value");//获取注解InjectOnClick的value方法
+                            int[] viewIds = (int[]) valueMethod.invoke(annotation, (Object[]) null);//获取控件值
+                            Class<?> listenerType = onClickEvent.listenerType();//获取接口类型
+                            String listenerSetter = onClickEvent.listenerSetter();//获取set方法
+                            String methodName = onClickEvent.methodName();//获取接口需要实现的方法
+                            MyInvocationHandler handler = new MyInvocationHandler(object);//自己实现的代码，负责调用
+                            handler.setMethodMap(methodName, method);//设置方法及设置方法
+                            Object object2 = Proxy.newProxyInstance(listenerType.getClassLoader(), new Class<?>[]{listenerType}, handler);//创建动态代理对象类
+                            for (int viewId : viewIds) {//遍历要设置监听的控件
+                                View view2 = view.findViewById(viewId);//获取该控件
+                                Method m = view2.getClass().getMethod(listenerSetter, listenerType);//获取方法
+                                m.invoke(view2, object2);//调用方法
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Animation 资源字符串
+         **/
+        private static void initAnimation(Object object, Class<? extends Object> mClass, View view) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Animation initView = field.getAnnotation(Annotations.Res.Animation.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        Context context = view.getContext();
+                        if (context != null) {
+                            Animation animation = AnimationUtils.loadAnimation(context, viewRes);
+                            field.setAccessible(true);
+                            field.set(object, animation);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Dimen 资源字符串
+         **/
+        private static void initDimen(Object object, Class<? extends Object> mClass, View view) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Dimen initView = field.getAnnotation(Annotations.Res.Dimen.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        float dimension = view.getResources().getDimension(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, dimension);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Drawable 资源字符串
+         **/
+        private static void initDrawable(Object object, Class<? extends Object> mClass, View view) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Drawable initView = field.getAnnotation(Annotations.Res.Drawable.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        Drawable drawable = view.getResources().getDrawable(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, drawable);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Color 资源字符串
+         **/
+        private static void initColor(Object object, Class<? extends Object> mClass, View view) {
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Color initView = field.getAnnotation(Annotations.Res.Color.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        int color = view.getResources().getColor(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, color);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 String 资源字符串
+         **/
+        private static void initString(Object object, Class<? extends Object> mClass, View view) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.String initView = field.getAnnotation(Annotations.Res.String.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        String string = view.getResources().getString(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, string);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 Int 资源字符串数组
+         **/
+        private static void initIntArray(Object object, Class<? extends Object> mClass, View view) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.IntArray initView = field.getAnnotation(Annotations.Res.IntArray.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        int[] intArray = view.getResources().getIntArray(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, intArray);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 String 资源字符串数组
+         **/
+        private static void initStringArray(Object object, Class<? extends Object> mClass, View view) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.StringArray initView = field.getAnnotation(Annotations.Res.StringArray.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        String[] stringArray = view.getResources().getStringArray(viewRes);
+                        field.setAccessible(true);
+                        field.set(object, stringArray);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 解析 Layout 资源文件成 View
+         **/
+        private static void initLayout(Object object, Class<? extends Object> mClass, View view) {
+
+            Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Layout initView = field.getAnnotation(Annotations.Res.Layout.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        Context context = view.getContext();
+                        if (context != null) {
+                            View viewLayout = LayoutInflater.from(context).inflate(viewRes, null);
+                            field.setAccessible(true);
+                            field.set(object, viewLayout);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+
+        //================================   下面是 Activity 的注解内容   ==========================
+
+
+        /**
+         * 解析 Layout 资源文件成 View
+         **/
+        private static void initLayout(Activity activity, Class<? extends Activity> clazz) {
+
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Layout initView = field.getAnnotation(Annotations.Res.Layout.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        View view = LayoutInflater.from(activity).inflate(viewRes, null);
+                        field.setAccessible(true);
+                        field.set(activity, view);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 Int 资源字符串数组
+         **/
+        private static void initIntArray(Activity activity, Class<? extends Activity> clazz) {
+
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.IntArray initView = field.getAnnotation(Annotations.Res.IntArray.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        int[] intArray = activity.getResources().getIntArray(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, intArray);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 String 资源字符串数组
+         **/
+        private static void initStringArray(Activity activity, Class<? extends Activity> clazz) {
+
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.StringArray initView = field.getAnnotation(Annotations.Res.StringArray.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        String[] stringArray = activity.getResources().getStringArray(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, stringArray);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+        /**
+         * 注入 Animation 资源字符串
+         **/
+        private static void initAnimation(Activity activity, Class<? extends Activity> clazz) {
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Animation initView = field.getAnnotation(Annotations.Res.Animation.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        Animation animation = AnimationUtils.loadAnimation(activity, viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, animation);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Dimen 资源字符串
+         **/
+        private static void initDimen(Activity activity, Class<? extends Activity> clazz) {
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Dimen initView = field.getAnnotation(Annotations.Res.Dimen.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        float dimension = activity.getResources().getDimension(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, dimension);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Drawable 资源字符串
+         **/
+        private static void initDrawable(Activity activity, Class<? extends Activity> clazz) {
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Drawable initView = field.getAnnotation(Annotations.Res.Drawable.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        Drawable drawable = activity.getResources().getDrawable(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, drawable);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 Color 资源字符串
+         **/
+        private static void initColor(Activity activity, Class<? extends Activity> clazz) {
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.Color initView = field.getAnnotation(Annotations.Res.Color.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        int color = activity.getResources().getColor(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, color);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+        /**
+         * 注入 String 资源字符串
+         **/
+        private static void initString(Activity activity, Class<? extends Activity> clazz) {
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.Res.String initView = field.getAnnotation(Annotations.Res.String.class);
+                if (initView != null) {
+                    int viewRes = initView.value();
+                    try {
+                        String string = activity.getResources().getString(viewRes);
+                        field.setAccessible(true);
+                        field.set(activity, string);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
+
+
+        /**
+         * 单击注解 帮助方法
+         *
+         * @param field
+         * @param object
+         * @param functionName
+         * @param valueList
+         * @param index
+         */
+        private static void functionValue(Field field, Object object, String functionName, List<Object> valueList, int index) {
+
+            if (functionName.length() != 0 && valueList.size() != 0) {
+
+                Class<?> aClass = object.getClass();
+                Method[] methods = aClass.getMethods();
+
+                //获取当前类中所有方法
+                for (int i = methods.length - 1; i >= 0; i--) {
+                    String name = methods[i].getName();
+                    if (name.equals(functionName)) {
+                        try {
+                            Method method = getAllValueTypeMethod(valueList.get(index), functionName, aClass);
+                            method.setAccessible(true);
+                            field.setAccessible(true);
+                            method.invoke(object, valueList.get(index));
+                        } catch (Exception e) {
+                            if (getGT().getGtLogTf()) {
+                                GT.log_e(getGT().getLineInfo(), "注解注入失败 ！");
+                            }
+//                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+        }
+
+
+        /**
+         * 自获取当前传入数据的类型
+         *
+         * @param data
+         * @param functionName
+         * @param aClass
+         * @return
+         */
+        private static Method getAllValueTypeMethod(Object data, String functionName, Class<?> aClass) {
+
+            Method method = null;
+
+            Class<?> aClass1 = data.getClass();
+            switch (aClass1.toString()) {
+                case "class java.lang.Byte":
+                    try {
+                        method = aClass.getMethod(functionName, byte.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 byte 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Short":
+                    try {
+                        method = aClass.getMethod(functionName, short.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Short 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Integer":
+                    try {
+                        method = aClass.getMethod(functionName, int.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 int 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Long":
+                    try {
+                        method = aClass.getMethod(functionName, long.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Long 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Float":
+                    try {
+                        method = aClass.getMethod(functionName, float.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Float 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Double":
+                    try {
+                        method = aClass.getMethod(functionName, double.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Double 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Boolean":
+                    try {
+                        method = aClass.getMethod(functionName, boolean.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Boolean 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.Character":
+                    try {
+                        method = aClass.getMethod(functionName, char.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Character 类型数据 报错");
+                        }
+                    }
+                    break;
+                case "class java.lang.String":
+                    try {
+                        method = aClass.getMethod(functionName, String.class);
+                    } catch (NoSuchMethodException e) {
+//                    e.printStackTrace();
+                        if (getGT().getGtLogTf()) {
+                            GT.log_e(getGT().getLineInfo(), "注解 赋值 String 类型数据 报错");
+                        }
+                    }
+                    break;
+            }
+            return method;
+        }
+
+
+        /**
+         * 给 listView 赋值
+         *
+         * @param type
+         * @param list
+         * @param values
+         */
+        private static void valueType(String type, List<Object> list, Annotations.Object values, int index) {
+
+            switch (type) {
+
+                /** 单个参数的赋值 **/
+                case "byte":
+                    list.add(values.valueByte());
+                    break;
+                case "short":
+                    list.add(values.valueShort());
+                    break;
+                case "int":
+                    list.add(values.valueInt());
+                    break;
+                case "long":
+                    list.add(values.valueLong());
+                    break;
+                case "float":
+                    list.add(values.valueFloat());
+                    break;
+                case "double":
+                    list.add(values.valueDouble());
+                    break;
+                case "boolean":
+                    list.add(values.valueBoolean());
+                    break;
+                case "char":
+                    list.add(values.valueChar());
+                    break;
+                case "String":
+                    list.add(values.valueString());
+                    break;
+
+                /** 多个参数的赋值 **/
+                case "bytes":
+                    byte[] bytes = values.valueBytes();
+                    for (byte value : bytes) {
+                        list.add(value);
+                    }
+                    break;
+                case "shorts":
+                    short[] shorts = values.valueShorts();
+                    list.add(shorts[index]);
+                    break;
+                case "ints":
+                    int[] ints = values.valueInts();
+                    list.add(ints[index]);
+                    break;
+                case "longs":
+                    long[] longs = values.valueLongs();
+                    list.add(longs[index]);
+                    break;
+                case "floats":
+                    float[] floats = values.valueFloats();
+                    list.add(floats[index]);
+                    break;
+                case "doubles":
+                    double[] doubles = values.valueDoubles();
+                    list.add(doubles[index]);
+                    break;
+                case "booleans":
+                    boolean[] booleans = values.valueBooleans();
+                    list.add(booleans[index]);
+                    break;
+                case "chars":
+                    char[] chars = values.valueChars();
+                    list.add(chars[index]);
+                    break;
+                case "Strings":
+                    String[] strings = values.valueStrings();
+                    list.add(strings[index]);
+                    break;
+            }
+
+        }
+
+
+        /**
+         * 注入 ContextView
+         *
+         * @param activity
+         */
+        private static void initActivity(Activity activity, Class<? extends Activity> mClass) {
+            Annotations.Activity contentView = mClass.getAnnotation(Annotations.Activity.class);//获取该类 ContextView 的注解类
+            //如果有注解
+            if (contentView != null) {
+                int viewId = contentView.value();//获取注解类参数
+                try {
+                    Method method = mClass.getMethod("setContentView", int.class);//获取该方法的信息
+                    method.setAccessible(true);//获取该方法的访问权限
+                    method.invoke(activity, viewId);//调用该方法的，并设置该方法参数
+                } catch (NoSuchMethodException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+
+        /**
+         * 注入控件
+         *
+         * @param activity
+         */
+        private static void initView(Activity activity, Class<? extends Activity> mClass) {
+            Class<? extends Activity> clazz = activity.getClass();//获取该类信息
+            Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
+            for (Field field : fields) {
+                Annotations.View initView = field.getAnnotation(Annotations.View.class);
+                if (initView != null) {
+                    int viewId = initView.value();
+                    try {
+                        Method method = clazz.getMethod("findViewById", int.class);
+                        method.setAccessible(true);
+                        field.setAccessible(true);
+                        Object object = method.invoke(activity, viewId);
+                        field.set(activity, object);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+
+        /**
+         * 注入点击事件
+         *
+         * @param activity
+         */
+        private static void initClick(Activity activity, Class<? extends Activity> mClass) {
+            Method[] methods = mClass.getMethods();//获取所有声明为公有的方法
+            for (Method method : methods) {//遍历所有公有方法
+                Annotation[] annotations = method.getAnnotations();//获取该公有方法的所有注解
+                for (Annotation annotation : annotations) {//遍历所有注解
+                    Class<? extends Annotation> annotationType = annotation.annotationType();//获取具体的注解类
+                    Annotations.OnClickEvent onClickEvent = annotationType.getAnnotation(Annotations.OnClickEvent.class);//取出注解的onClickEvent注解
+                    if (onClickEvent != null) {//如果不为空
+                        try {
+                            Method valueMethod = annotationType.getDeclaredMethod("value");//获取注解InjectOnClick的value方法
+                            int[] viewIds = (int[]) valueMethod.invoke(annotation, (Object[]) null);//获取控件值
+                            Class<?> listenerType = onClickEvent.listenerType();//获取接口类型
+                            String listenerSetter = onClickEvent.listenerSetter();//获取set方法
+                            String methodName = onClickEvent.methodName();//获取接口需要实现的方法
+                            MyInvocationHandler handler = new MyInvocationHandler(activity);//自己实现的代码，负责调用
+                            handler.setMethodMap(methodName, method);//设置方法及设置方法
+                            Object object = Proxy.newProxyInstance(listenerType.getClassLoader(), new Class<?>[]{listenerType}, handler);//创建动态代理对象类
+                            for (int viewId : viewIds) {//遍历要设置监听的控件
+                                View view = activity.findViewById(viewId);//获取该控件
+                                Method m = view.getClass().getMethod(listenerSetter, listenerType);//获取方法
+                                m.invoke(view, object);//调用方法
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * 初始化注解帮助类
+         */
+        private static class MyInvocationHandler implements InvocationHandler {
+
+            private Object object;
+            private Map<String, Method> methodMap = new HashMap<>(1);
+
+            public MyInvocationHandler(Object object) {
+                this.object = object;
+            }
+
+            public void setMethodMap(String name, Method method) {
+                this.methodMap.put(name, method);
+            }
+
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                if (object != null) {
+                    String name = method.getName();
+                    method = this.methodMap.get(name);
+                    if (method != null) {
+                        return method.invoke(object, args);
+                    }
+                }
+                return null;
+            }
+
+        }
 
         /**
          * 目的：用于判断 当前类是否被 当前的注解注解过
          * 用例：new GT.AnnotationAssist(LogActivity.class, GT.Annotations.Toast.class);
-         * 第一个参数：任意被
+         * 第一个参数：任意对象
+         * 第二个参数：被注解的类
          * 再打开 GT 内部的 Log 日志
-         */
-        @SuppressWarnings("unchecked")
-        /**
-         * 用于判断 当前类是否被 当前的注解注解过
-         * @param obj
-         * @param annotation
          */
         public AnnotationAssist(Object obj, Object annotation) {
 
@@ -4711,7 +6111,7 @@ public class GT {
             /**
              * 获取所有注解
              */
-            obj = ObjectClassToObject(obj);
+            obj = classToObject(obj);
             Annotation[] annotations = obj.getClass().getAnnotations();
             if (GT_LOG_TF) log_i("---------------该类有所的注解---------------------");
             for (Annotation annotation1 : annotations) if (GT_LOG_TF) log_i(annotation1);
@@ -4739,7 +6139,7 @@ public class GT {
          * @param obj
          * @return
          */
-        public Object ObjectClassToObject(Object obj) {
+        private Object classToObject(Object obj) {
             String[] strs = obj.toString().split(" ");
             String str = strs[1];
             Class<?> clazz = getClass();
