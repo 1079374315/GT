@@ -64,9 +64,9 @@
 
 [GT 第十八章： Thread 更新UI线程 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E5%85%AB%E7%AB%A0%EF%BC%9A)
 
-[GT 第十九章： BaseActivity、AnnotationActivity 类的继承 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
+[GT 第十九章： BaseActivity、AnnotationActivity 类的继承 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A%C2%A0BaseActivity%EF%BC%8CAnnotationActivity%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%EF%BC%9A)
 
-[GT 第二十章： GT注解的调用 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
+[GT 第二十章： GT注解的调用 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E7%AB%A0%EF%BC%9A%C2%A0GT%E6%B3%A8%E8%A7%A3%E7%9A%84%E8%B0%83%E7%94%A8%EF%BC%9A)
 
 [GT 第二十一章： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
 
