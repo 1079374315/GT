@@ -2,7 +2,7 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
 
-# 最新版本: 1.0.4
+# 最新版本: 1.0.5
 发布时间：2019年8月30日 
 
 ## 此次版本更新： 
@@ -10,7 +10,7 @@
  * 更新时间:2019.8.30
  * <p>
  *
- * 更新内容：（1.0.4版本 更新）
+ * 更新内容：（1.0.5版本 更新）
  * 1.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
  * 4.新增 BaseActivity、AnnotationActivity 类 具体使用 请参考官网
@@ -64,9 +64,9 @@
 
 [GT 第十八章： Thread 更新UI线程 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E5%85%AB%E7%AB%A0%EF%BC%9A)
 
-[GT 第十九章： BaseActivity、AnnotationActivity 类的继承 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
+[GT 第十九章： BaseActivity、AnnotationActivity 类的继承 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A%C2%A0BaseActivity%EF%BC%8CAnnotationActivity%E7%B1%BB%E7%9A%84%E7%BB%A7%E6%89%BF%EF%BC%9A)
 
-[GT 第二十章： GT注解的调用 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
+[GT 第二十章： GT注解的调用 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E7%AB%A0%EF%BC%9A%C2%A0GT%E6%B3%A8%E8%A7%A3%E7%9A%84%E8%B0%83%E7%94%A8%EF%BC%9A)
 
 [GT 第二十一章： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E4%B9%9D%E7%AB%A0%EF%BC%9A)
 
@@ -89,17 +89,17 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.0.4'
+	implementation 'com.github.1079374315:GT:v1.0.5'
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.4)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.5)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.0.4 (the "License");
+Licensed under the Apache License, Version 1.0.5 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
