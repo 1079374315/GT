@@ -149,7 +149,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 更新时间:2019.8.30
  * <p>
  *
- * 更新内容：（1.0.4版本 大更新）
+ * 更新内容：（1.0.4版本 更新）
  * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
  * 2.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
@@ -3941,7 +3941,7 @@ public class GT {
         protected void initDrawView(){}
 
         /** 初始化 UI */
-        protected abstract void initView();
+        protected abstract void initView(Bundle savedInstanceState);
 
         /** 功能方法 */
         protected void function(){}
@@ -3950,7 +3950,7 @@ public class GT {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             initDrawView();//设置绘制前的数据
-            initView();//初始化 UI
+            initView(savedInstanceState);//初始化 UI
             function();//功能方法
         }
 

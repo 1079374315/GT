@@ -3941,7 +3941,7 @@ public class GT {
         protected void initDrawView(){}
 
         /** 初始化 UI */
-        protected abstract void initView();
+        protected abstract void initView(Bundle savedInstanceState);
 
         /** 功能方法 */
         protected void function(){}
@@ -3950,7 +3950,7 @@ public class GT {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             initDrawView();//设置绘制前的数据
-            initView();//初始化 UI
+            initView(savedInstanceState);//初始化 UI
             function();//功能方法
         }
 
