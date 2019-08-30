@@ -1,24 +1,25 @@
 package com.gsls.gtlibrary.fragment;
 
 import android.os.Bundle;
+import android.view.View;
 
-import androidx.fragment.app.Fragment;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.gsls.gtlibrary.R;
 import com.gsls.gtlibrary.util.GT;
 
 
-public class Fragment_1 extends Fragment {
+public class Fragment_1 extends GT.GT_Fragment.BaseFragments {
 
-    public static Fragment_1 newInstance() {
-        Bundle args = new Bundle();
-        GT.log_i("Fragment_1 newInstance");
-        Fragment_1 fragment = new Fragment_1();
-        fragment.setArguments(args);
-        return fragment;
+    @Override
+    protected int loadLayout() {
+        return R.layout.fragment1_my;
     }
 
-    public Fragment_1(){
-        GT.log_i("Fragment_1");
+    @Override
+    protected void initView(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        build(this,view);
     }
 
 }

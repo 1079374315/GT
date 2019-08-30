@@ -146,10 +146,10 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.30
+ * 更新时间:2019.8.27
  * <p>
  *
- * 更新内容：（1.0.4版本 更新）
+ * 更新内容：（1.0.4版本 大更新）
  * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
  * 2.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
@@ -3021,75 +3021,6 @@ public class GT {
         }
 
         /**
-         * 构建 GT 工具包
-         * @param object
-         * @param view
-         */
-        protected void build(Object object,View view){
-            GT.getGT().build(object,view);
-        }
-
-        /**
-         * 普通日志
-         * @param object
-         */
-        protected void log(Object object){
-            GT.log_i(object);
-        }
-
-        /**
-         * 带 TAG 的普通日志
-         * @param tag
-         * @param object
-         */
-        protected void log(Object tag,Object object){
-            GT.log_i(tag,object);
-        }
-
-        /**
-         * 错误日志
-         * @param object
-         */
-        protected void err(Object object){
-            GT.log_e(object);
-        }
-
-        /**
-         * 带 TAG 的错误日志
-         * @param tag
-         * @param object
-         */
-        protected void err(Object tag,Object object){
-            GT.log_e(tag,object);
-        }
-
-        /**
-         * 普通的 Toast
-         * @param object
-         */
-        protected void toast(Object object){
-            GT.toast_s(object);
-        }
-
-        /**
-         * 带 Context 的 Toast
-         * @param context
-         * @param object
-         */
-        protected void toast(Context context, Object object){
-            GT.toast_s(context,object);
-        }
-
-        /**
-         * 带 延时的 的 Toast
-         * @param time
-         * @param object
-         */
-        protected void toast(long time, Object object){
-            GT.toast_time(object,time);
-        }
-
-        /**
          * 用于辅助 Fragment
          */
         public abstract static class BaseFragments extends Fragment {
@@ -3195,6 +3126,83 @@ public class GT {
                 function();
             }
 
+            /**
+             * 构建 GT 工具包
+             * @param object
+             * @param view
+             */
+            protected void build(Object object,View view){
+                GT.getGT().build(object,view);
+            }
+
+            /**
+             * 跳转 Activity
+             * @param activityClass
+             */
+            protected void startActivity(Class activityClass){
+                GT.startAct(activityClass);
+            }
+
+            /**
+             * 普通日志
+             * @param object
+             */
+            protected void log(Object object){
+                GT.log_i(object);
+            }
+
+            /**
+             * 带 TAG 的普通日志
+             * @param tag
+             * @param object
+             */
+            protected void log(Object tag,Object object){
+                GT.log_i(tag,object);
+            }
+
+            /**
+             * 错误日志
+             * @param object
+             */
+            protected void err(Object object){
+                GT.log_e(object);
+            }
+
+            /**
+             * 带 TAG 的错误日志
+             * @param tag
+             * @param object
+             */
+            protected void err(Object tag,Object object){
+                GT.log_e(tag,object);
+            }
+
+            /**
+             * 普通的 Toast
+             * @param object
+             */
+            protected void toast(Object object){
+                GT.toast_s(object);
+            }
+
+            /**
+             * 带 Context 的 Toast
+             * @param context
+             * @param object
+             */
+            protected void toast(Context context, Object object){
+                GT.toast_s(context,object);
+            }
+
+            /**
+             * 带 延时的 的 Toast
+             * @param time
+             * @param object
+             */
+            protected void toast(long time, Object object){
+                GT.toast_time(object,time);
+            }
+
         }
 
 
@@ -3249,10 +3257,6 @@ public class GT {
                 dismiss();
             }
 
-            protected void build(Object object,View view){
-                GT.getGT().build(object,view);
-            }
-
             public void startDialogFragment(DialogFragment dialogFragment) {
                 dialogFragment.show(getFragmentManager(), dialogFragment.getClass().toString());//弹出退出提示
             }
@@ -3274,6 +3278,82 @@ public class GT {
                 function();
             }
 
+            /**
+             * 构建 GT 工具包
+             * @param object
+             * @param view
+             */
+            protected void build(Object object,View view){
+                GT.getGT().build(object,view);
+            }
+
+            /**
+             * 跳转 Activity
+             * @param activityClass
+             */
+            protected void startActivity(Class activityClass){
+                GT.startAct(activityClass);
+            }
+
+            /**
+             * 普通日志
+             * @param object
+             */
+            protected void log(Object object){
+                GT.log_i(object);
+            }
+
+            /**
+             * 带 TAG 的普通日志
+             * @param tag
+             * @param object
+             */
+            protected void log(Object tag,Object object){
+                GT.log_i(tag,object);
+            }
+
+            /**
+             * 错误日志
+             * @param object
+             */
+            protected void err(Object object){
+                GT.log_e(object);
+            }
+
+            /**
+             * 带 TAG 的错误日志
+             * @param tag
+             * @param object
+             */
+            protected void err(Object tag,Object object){
+                GT.log_e(tag,object);
+            }
+
+            /**
+             * 普通的 Toast
+             * @param object
+             */
+            protected void toast(Object object){
+                GT.toast_s(object);
+            }
+
+            /**
+             * 带 Context 的 Toast
+             * @param context
+             * @param object
+             */
+            protected void toast(Context context, Object object){
+                GT.toast_s(context,object);
+            }
+
+            /**
+             * 带 延时的 的 Toast
+             * @param time
+             * @param object
+             */
+            protected void toast(long time, Object object){
+                GT.toast_time(object,time);
+            }
 
         }
 
