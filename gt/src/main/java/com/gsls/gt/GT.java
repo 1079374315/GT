@@ -140,18 +140,21 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
  * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
  * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.8.0'   //加载图片的 glide
+ * implementation 'com.github.bumptech.glide:glide:4.9.0'   //加载图片的 glide
  * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
  * <p>
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.27
+ * 更新时间:2019.8.30
  * <p>
+ *
  * 更新内容：（1.0.4版本 大更新）
  * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
  * 2.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
+ * 4.新增 BaseActivity、AnnotationActivity 类 具体使用 请参考官网
+ *
  * <p>
  * <p>
  * <p>
@@ -518,7 +521,7 @@ public class GT {
      * @param msg  消息
      * @param time 显示时间
      */
-    public static void toast_time(Object msg, int time) {
+    public static void toast_time(Object msg, long time) {
         if (TOAST_TF) {
             if (getGT().CONTEXT != null) {
                 final Toast toast = Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_LONG);
@@ -3017,6 +3020,74 @@ public class GT {
             return gt_fragment;
         }
 
+        /**
+         * 构建 GT 工具包
+         * @param object
+         * @param view
+         */
+        protected void build(Object object,View view){
+            GT.getGT().build(object,view);
+        }
+
+        /**
+         * 普通日志
+         * @param object
+         */
+        protected void log(Object object){
+            GT.log_i(object);
+        }
+
+        /**
+         * 带 TAG 的普通日志
+         * @param tag
+         * @param object
+         */
+        protected void log(Object tag,Object object){
+            GT.log_i(tag,object);
+        }
+
+        /**
+         * 错误日志
+         * @param object
+         */
+        protected void err(Object object){
+            GT.log_e(object);
+        }
+
+        /**
+         * 带 TAG 的错误日志
+         * @param tag
+         * @param object
+         */
+        protected void err(Object tag,Object object){
+            GT.log_e(tag,object);
+        }
+
+        /**
+         * 普通的 Toast
+         * @param object
+         */
+        protected void toast(Object object){
+            GT.toast_s(object);
+        }
+
+        /**
+         * 带 Context 的 Toast
+         * @param context
+         * @param object
+         */
+        protected void toast(Context context, Object object){
+            GT.toast_s(context,object);
+        }
+
+        /**
+         * 带 延时的 的 Toast
+         * @param time
+         * @param object
+         */
+        protected void toast(long time, Object object){
+            GT.toast_time(object,time);
+        }
 
         /**
          * 用于辅助 Fragment
@@ -3176,6 +3247,10 @@ public class GT {
              */
             public void finish() {
                 dismiss();
+            }
+
+            protected void build(Object object,View view){
+                GT.getGT().build(object,view);
             }
 
             public void startDialogFragment(DialogFragment dialogFragment) {
@@ -3753,8 +3828,209 @@ public class GT {
     }
 
     /**
-     * 封装 Activity 管理器
+     * 封装普通的 Activity 管理器
      */
+    public abstract static class BaseActivity extends AppCompatActivity{
+
+        /** 初始化 加载布局 */
+        protected abstract int initLayout(Bundle savedInstanceState);
+
+        /** 在绘制完 View 之前设置数据 */
+        protected void initDrawView(){}
+
+        /** 初始化 UI */
+        protected abstract void initView();
+
+        /** 功能方法 */
+        protected void function(){}
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            initDrawView();//设置绘制前的数据
+            setContentView(initLayout(savedInstanceState));//加载布局
+            initView();//初始化 UI
+            function();//功能方法
+        }
+
+        /**
+         * 构建 GT 工具包
+         * @param context
+         */
+        protected void build(Context context){
+            GT.getGT().build(context);
+        }
+
+        /**
+         * 跳转 Activity
+         * @param activityClass
+         */
+        protected void startActivity(Class activityClass){
+            GT.startAct(activityClass);
+        }
+
+        /**
+         * 普通日志
+         * @param object
+         */
+        protected void log(Object object){
+            GT.log_i(object);
+        }
+
+        /**
+         * 带 TAG 的普通日志
+         * @param tag
+         * @param object
+         */
+        protected void log(Object tag,Object object){
+            GT.log_i(tag,object);
+        }
+
+        /**
+         * 错误日志
+         * @param object
+         */
+        protected void err(Object object){
+            GT.log_e(object);
+        }
+
+        /**
+         * 带 TAG 的错误日志
+         * @param tag
+         * @param object
+         */
+        protected void err(Object tag,Object object){
+            GT.log_e(tag,object);
+        }
+
+        /**
+         * 普通的 Toast
+         * @param object
+         */
+        protected void toast(Object object){
+            GT.toast_s(object);
+        }
+
+        /**
+         * 带 Context 的 Toast
+         * @param context
+         * @param object
+         */
+        protected void toast(Context context, Object object){
+            GT.toast_s(context,object);
+        }
+
+        /**
+         * 带 延时的 的 Toast
+         * @param time
+         * @param object
+         */
+        protected void toast(long time, Object object){
+            GT.toast_time(object,time);
+        }
+
+
+    }
+
+    /**
+     * 封装注解的 Activity 管理器
+     */
+    public abstract static class AnnotationActivity extends AppCompatActivity{
+
+        /** 在绘制完 View 之前设置数据 */
+        protected void initDrawView(){}
+
+        /** 初始化 UI */
+        protected abstract void initView();
+
+        /** 功能方法 */
+        protected void function(){}
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            initDrawView();//设置绘制前的数据
+            initView();//初始化 UI
+            function();//功能方法
+        }
+
+        /**
+         * 构建 GT 工具包
+         * @param context
+         */
+        protected void build(Context context){
+            GT.getGT().build(context);
+        }
+
+        /**
+         * 跳转 Activity
+         * @param activityClass
+         */
+        protected void startActivity(Class activityClass){
+            GT.startAct(activityClass);
+        }
+
+        /**
+         * 普通日志
+         * @param object
+         */
+        protected void log(Object object){
+            GT.log_i(object);
+        }
+
+        /**
+         * 带 TAG 的普通日志
+         * @param tag
+         * @param object
+         */
+        protected void log(Object tag,Object object){
+            GT.log_i(tag,object);
+        }
+
+        /**
+         * 错误日志
+         * @param object
+         */
+        protected void err(Object object){
+            GT.log_e(object);
+        }
+
+        /**
+         * 带 TAG 的错误日志
+         * @param tag
+         * @param object
+         */
+        protected void err(Object tag,Object object){
+            GT.log_e(tag,object);
+        }
+
+        /**
+         * 普通的 Toast
+         * @param object
+         */
+        protected void toast(Object object){
+            GT.toast_s(object);
+        }
+
+        /**
+         * 带 Context 的 Toast
+         * @param context
+         * @param object
+         */
+        protected void toast(Context context, Object object){
+            GT.toast_s(context,object);
+        }
+
+        /**
+         * 带 延时的 的 Toast
+         * @param time
+         * @param object
+         */
+        protected void toast(long time, Object object){
+            GT.toast_time(object,time);
+        }
+
+    }
 
     //============================================= 设备监听类 ======================================
 
@@ -4787,7 +5063,6 @@ public class GT {
         }
     }
 
-
     //======================================= Run GT 的内部注解 =====================================
 
     /**
@@ -4804,7 +5079,7 @@ public class GT {
          */
         @Target(ElementType.TYPE)
         @Retention(RetentionPolicy.RUNTIME)
-        public @interface Activity {
+        public @interface GT_Activity {
             int value();
         }
 
@@ -4817,7 +5092,7 @@ public class GT {
          */
         @Target(ElementType.FIELD)
         @Retention(RetentionPolicy.RUNTIME)
-        public @interface View {
+        public @interface GT_View {
             int value();
         }
 
@@ -4843,7 +5118,7 @@ public class GT {
         @Target(ElementType.METHOD)
         @Retention(RetentionPolicy.RUNTIME)
         @OnClickEvent(listenerType = android.view.View.OnClickListener.class, listenerSetter = "setOnClickListener", methodName = "onClick")
-        public @interface Click {
+        public @interface GT_Click {
             int[] value();
         }
 
@@ -4868,7 +5143,7 @@ public class GT {
          */
         @Target(ElementType.FIELD)
         @Retention(RetentionPolicy.RUNTIME)
-        public @interface Object {
+        public @interface GT_Object {
 
             /**
              * 定义当前注解 支持的参数类型
@@ -4957,14 +5232,14 @@ public class GT {
         /**
          * 资源注解
          */
-        public @interface Res {
+        public @interface GT_Res {
 
             /**
              * 字符串 注解
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface String {
+            @interface GT_String {
                 int value();
             }
 
@@ -4973,7 +5248,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Color {
+            @interface GT_Color {
                 int value();
             }
 
@@ -4982,7 +5257,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Dimen {
+            @interface GT_Dimen {
                 int value();
             }
 
@@ -4991,7 +5266,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Drawable {
+            @interface GT_Drawable {
                 int value();
             }
 
@@ -5000,7 +5275,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Animation {
+            @interface GT_Animation {
                 int value();
             }
 
@@ -5009,7 +5284,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface StringArray {
+            @interface GT_StringArray {
                 int value();
             }
 
@@ -5018,7 +5293,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface IntArray {
+            @interface GT_IntArray {
                 int value();
             }
 
@@ -5027,7 +5302,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Layout {
+            @interface GT_Layout {
                 int value();
             }
 
@@ -5036,14 +5311,14 @@ public class GT {
         /**
          * 集合注解
          */
-        public @interface Collection {
+        public @interface GT_Collection {
 
             /**
              * List 注解
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface List {
+            @interface GT_List {
                 Class[] value();
             }
 
@@ -5053,7 +5328,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Map {
+            @interface GT_Map {
                 Class[] value();
             }
 
@@ -5063,7 +5338,7 @@ public class GT {
              */
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface Set {
+            @interface GT_Set {
                 Class[] value();
             }
 
@@ -5154,7 +5429,7 @@ public class GT {
         private static void initObject(Object object, Class<? extends Object> mClass) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Object initView = field.getAnnotation(Annotations.Object.class);
+                Annotations.GT_Object initView = field.getAnnotation(Annotations.GT_Object.class);
 
                 if (initView != null) {
 
@@ -5224,7 +5499,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Collection.List initView = field.getAnnotation(Annotations.Collection.List.class);
+                Annotations.GT_Collection.GT_List initView = field.getAnnotation(Annotations.GT_Collection.GT_List.class);
                 if (initView != null) {
                     Class[] classes = initView.value();
                     List<Object> objectList = new ArrayList<>();//创建一个 ListView
@@ -5265,7 +5540,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Collection.Map initView = field.getAnnotation(Annotations.Collection.Map.class);
+                Annotations.GT_Collection.GT_Map initView = field.getAnnotation(Annotations.GT_Collection.GT_Map.class);
                 if (initView != null) {
                     Class[] classes = initView.value();
                     Map<Object, Object> objectMap = new HashMap<>();//创建一个 Map
@@ -5306,7 +5581,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Collection.Set initView = field.getAnnotation(Annotations.Collection.Set.class);
+                Annotations.GT_Collection.GT_Set initView = field.getAnnotation(Annotations.GT_Collection.GT_Set.class);
                 if (initView != null) {
                     Class[] classes = initView.value();
                     Set<Object> objectSet = new HashSet<>();//创建一个 Set
@@ -5354,7 +5629,7 @@ public class GT {
         private static void initView(Object object, Class<? extends Object> mClass, View view) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.View initView = field.getAnnotation(Annotations.View.class);
+                Annotations.GT_View initView = field.getAnnotation(Annotations.GT_View.class);
                 if (initView != null) {
                     int viewId = initView.value();
                     try {
@@ -5407,7 +5682,7 @@ public class GT {
         private static void initAnimation(Object object, Class<? extends Object> mClass, View view) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Animation initView = field.getAnnotation(Annotations.Res.Animation.class);
+                Annotations.GT_Res.GT_Animation initView = field.getAnnotation(Annotations.GT_Res.GT_Animation.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5430,7 +5705,7 @@ public class GT {
         private static void initDimen(Object object, Class<? extends Object> mClass, View view) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Dimen initView = field.getAnnotation(Annotations.Res.Dimen.class);
+                Annotations.GT_Res.GT_Dimen initView = field.getAnnotation(Annotations.GT_Res.GT_Dimen.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5450,7 +5725,7 @@ public class GT {
         private static void initDrawable(Object object, Class<? extends Object> mClass, View view) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Drawable initView = field.getAnnotation(Annotations.Res.Drawable.class);
+                Annotations.GT_Res.GT_Drawable initView = field.getAnnotation(Annotations.GT_Res.GT_Drawable.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5470,7 +5745,7 @@ public class GT {
         private static void initColor(Object object, Class<? extends Object> mClass, View view) {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Color initView = field.getAnnotation(Annotations.Res.Color.class);
+                Annotations.GT_Res.GT_Color initView = field.getAnnotation(Annotations.GT_Res.GT_Color.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5491,7 +5766,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.String initView = field.getAnnotation(Annotations.Res.String.class);
+                Annotations.GT_Res.GT_String initView = field.getAnnotation(Annotations.GT_Res.GT_String.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5513,7 +5788,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.IntArray initView = field.getAnnotation(Annotations.Res.IntArray.class);
+                Annotations.GT_Res.GT_IntArray initView = field.getAnnotation(Annotations.GT_Res.GT_IntArray.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5535,7 +5810,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.StringArray initView = field.getAnnotation(Annotations.Res.StringArray.class);
+                Annotations.GT_Res.GT_StringArray initView = field.getAnnotation(Annotations.GT_Res.GT_StringArray.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5557,7 +5832,7 @@ public class GT {
 
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Layout initView = field.getAnnotation(Annotations.Res.Layout.class);
+                Annotations.GT_Res.GT_Layout initView = field.getAnnotation(Annotations.GT_Res.GT_Layout.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5586,7 +5861,7 @@ public class GT {
 
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Layout initView = field.getAnnotation(Annotations.Res.Layout.class);
+                Annotations.GT_Res.GT_Layout initView = field.getAnnotation(Annotations.GT_Res.GT_Layout.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5608,7 +5883,7 @@ public class GT {
 
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.IntArray initView = field.getAnnotation(Annotations.Res.IntArray.class);
+                Annotations.GT_Res.GT_IntArray initView = field.getAnnotation(Annotations.GT_Res.GT_IntArray.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5630,7 +5905,7 @@ public class GT {
 
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.StringArray initView = field.getAnnotation(Annotations.Res.StringArray.class);
+                Annotations.GT_Res.GT_StringArray initView = field.getAnnotation(Annotations.GT_Res.GT_StringArray.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5651,7 +5926,7 @@ public class GT {
         private static void initAnimation(Activity activity, Class<? extends Activity> clazz) {
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Animation initView = field.getAnnotation(Annotations.Res.Animation.class);
+                Annotations.GT_Res.GT_Animation initView = field.getAnnotation(Annotations.GT_Res.GT_Animation.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5671,7 +5946,7 @@ public class GT {
         private static void initDimen(Activity activity, Class<? extends Activity> clazz) {
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Dimen initView = field.getAnnotation(Annotations.Res.Dimen.class);
+                Annotations.GT_Res.GT_Dimen initView = field.getAnnotation(Annotations.GT_Res.GT_Dimen.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5691,7 +5966,7 @@ public class GT {
         private static void initDrawable(Activity activity, Class<? extends Activity> clazz) {
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Drawable initView = field.getAnnotation(Annotations.Res.Drawable.class);
+                Annotations.GT_Res.GT_Drawable initView = field.getAnnotation(Annotations.GT_Res.GT_Drawable.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5711,7 +5986,7 @@ public class GT {
         private static void initColor(Activity activity, Class<? extends Activity> clazz) {
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.Color initView = field.getAnnotation(Annotations.Res.Color.class);
+                Annotations.GT_Res.GT_Color initView = field.getAnnotation(Annotations.GT_Res.GT_Color.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5731,7 +6006,7 @@ public class GT {
         private static void initString(Activity activity, Class<? extends Activity> clazz) {
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.Res.String initView = field.getAnnotation(Annotations.Res.String.class);
+                Annotations.GT_Res.GT_String initView = field.getAnnotation(Annotations.GT_Res.GT_String.class);
                 if (initView != null) {
                     int viewRes = initView.value();
                     try {
@@ -5901,7 +6176,7 @@ public class GT {
          * @param list
          * @param values
          */
-        private static void valueType(String type, List<Object> list, Annotations.Object values, int index) {
+        private static void valueType(String type, List<Object> list, Annotations.GT_Object values, int index) {
 
             switch (type) {
 
@@ -5984,7 +6259,7 @@ public class GT {
          * @param activity
          */
         private static void initActivity(Activity activity, Class<? extends Activity> mClass) {
-            Annotations.Activity contentView = mClass.getAnnotation(Annotations.Activity.class);//获取该类 ContextView 的注解类
+            Annotations.GT_Activity contentView = mClass.getAnnotation(Annotations.GT_Activity.class);//获取该类 ContextView 的注解类
             //如果有注解
             if (contentView != null) {
                 int viewId = contentView.value();//获取注解类参数
@@ -6012,7 +6287,7 @@ public class GT {
             Class<? extends Activity> clazz = activity.getClass();//获取该类信息
             Field[] fields = clazz.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
-                Annotations.View initView = field.getAnnotation(Annotations.View.class);
+                Annotations.GT_View initView = field.getAnnotation(Annotations.GT_View.class);
                 if (initView != null) {
                     int viewId = initView.value();
                     try {
