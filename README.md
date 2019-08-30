@@ -2,7 +2,7 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
 
-# 最新版本: 1.0.5
+# 最新版本: 1.0.6
 发布时间：2019年8月30日 
 
 ## 此次版本更新： 
@@ -10,10 +10,12 @@
  * 更新时间:2019.8.30
  * <p>
  *
- * 更新内容：（1.0.5版本 更新）
- * 1.更新 AlertDialog 类中设置全屏的方法。
+ * 更新内容：（1.0.6版本 大更新）
+ * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
+ * 2.更新 AlertDialog 类中设置全屏的方法。
  * 3.新增 GT 注解注入 具体使用 请参考官网
  * 4.新增 BaseActivity、AnnotationActivity 类 具体使用 请参考官网
+ * 5.优化继承 GT.GT_Fragment.BaseFragments、GT.GT_Fragment.BaseDialogFragments 基类内部可直接调用GT工具
 ````
 
 [使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
@@ -89,17 +91,17 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.0.5'
+	implementation 'com.github.1079374315:GT:v1.0.6'
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.5)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.6)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.0.5 (the "License");
+Licensed under the Apache License, Version 1.0.6 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
