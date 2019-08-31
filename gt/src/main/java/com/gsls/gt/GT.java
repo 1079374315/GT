@@ -69,6 +69,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -107,11 +108,14 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -119,8 +123,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -146,14 +153,11 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.27
+ * 更新时间:2019.8.31
  * <p>
  *
- * 更新内容：（1.0.4版本 大更新）
- * 1.修复 调用 GT.Game.startGameWindow(); 时出现的问题。
- * 2.更新 AlertDialog 类中设置全屏的方法。
- * 3.新增 GT 注解注入 具体使用 请参考官网
- * 4.新增 BaseActivity、AnnotationActivity 类 具体使用 请参考官网
+ * 更新内容：（1.0.7版本 大更新）
+ * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
  *
  * <p>
  * <p>
@@ -174,7 +178,7 @@ public class GT {
     private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
     private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
     private static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
-    private boolean isAnnotation = true;         //默认加载注解
+    private static boolean isGTUtil = true;             //默认加载注解
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
 
 
@@ -306,34 +310,44 @@ public class GT {
      * @return
      */
     public boolean isAnnotation() {
-        return isAnnotation;
+        return isGTUtil;
     }
 
     /**
-     * 设置是否加载注解
-     *
-     * @param annotation
+     * 设置是否初始化 GT 必要初始化的工具包
+     * @param isGTUtil
      */
-    public void setAnnotation(boolean annotation) {
-        isAnnotation = annotation;
+    public static void setIsGTUtil(boolean isGTUtil) {
+        GT.isGTUtil = isGTUtil;
     }
 
     //============================================= 加载 GT 必要的工具 =============================
 
     //初始化 GT 必要的工具 主要用于  Activity 的页面
     private void initGTUtilActivity() {
+
+        //GT 包内部默认加载的工具包
+        AnnotationAssist.initAll((Activity) CONTEXT); //初始化 IOC 注解
+
         //是否加载注解
-        if (isAnnotation) {
-            AnnotationAssist.initAll((Activity) CONTEXT); //初始化 IOC 注解
+        if (isGTUtil) {//默认是加载的
+            Utils.init(CONTEXT);//初始化强大的 Utiles 工具
         }
+
+
     }
 
     //初始化 GT 必要的工具  主要用于 非 Activity 的页面 如：Fragment、DialogFragment 等页面
     private void initGTUtilFragment(Object object, View view) {
+
+        //GT 包内部默认加载的工具包
+        AnnotationAssist.initAll(object, view); //初始化 IOC 注解
+
         //是否加载注解
-        if (isAnnotation) {
-            AnnotationAssist.initAll(object, view); //初始化 IOC 注解
+        if (isGTUtil) {//默认是加载的
+            Utils.init(CONTEXT);//初始化强大的 Utiles 工具
         }
+
     }
 
     //============================================= 提示类 =========================================
@@ -2394,28 +2408,153 @@ public class GT {
      */
     public static class GT_Date {
 
+        /**
+         * 使用案例
+         * long currentTimeMillis = System.currentTimeMillis();
+         *
+         *	输出：输入的时间：1567233280386
+         System.out.println("输入的时间：" + currentTimeMillis);
+
+         currentTimeMillis = 1538364324000L;
+
+         Lunar lunar = new Lunar(currentTimeMillis);//初始化高级功能
+         节气: 如果指定的日期有节气则返回当天节气，如果没有则返回 "" 空字符串 不是 null
+         System.out.println("节气:" + lunar.getTermString());
+
+         生肖:狗
+         System.out.println("生肖:" + lunar.getAnimalString());
+
+         星期：2
+         System.out.println("星期：" + lunar.getDayOfWeek());//星期几(星期日为:1, 星期六为:7)
+
+         干支历:戊戌年辛酉月丙寅日
+         System.out.println("干支历:" + lunar.getCyclicalDateString());
+
+         农历:戊戌年八月廿二日
+         System.out.println("农历:" + lunar.getLunarDateString());
+
+         当前是否为 农历节日:true
+         boolean lFestival = lunar.isLFestival();
+         System.out.println("当前是否为 农历节日:" + lFestival);
+
+         农历节日:燃灯佛诞
+         if(lFestival){
+         System.out.println("农历节日:" + lunar.getLFestivalName());
+         }
+
+         当前是否为公历节日:true
+         boolean sFestival = lunar.isSFestival();
+         System.out.println("当前是否为公历节日:" + lFestival);
+         if(sFestival){
+         公历节日:国庆节
+         System.out.println("公历节日:" + lunar.getSFestivalName());
+         }
+
+         当前是否为节日:true
+         boolean festival = lunar.isFestival();
+         System.out.println("当前是否为节日:" + festival);
+
+         当前是否放假:true
+         boolean holiday = lunar.isHoliday();
+         System.out.println("当前是否放假:" + holiday);
+
+
+         Date[] jieqi = Lunar.jieqilist(2019);
+         for (int i = 0; i < Lunar.solarTerm.length; i++) {
+         System.out.print(Lunar.solarTerm[i]);
+         @SuppressWarnings("deprecation")
+         int month = jieqi[i].getMonth();
+         month += 1;
+         System.out.print(month + "月");
+         System.out.println(jieqi[i].getDate());
+         }
+         //对应结果
+         小寒1月6
+         大寒1月20
+         立春2月4
+         雨水2月19
+         惊蛰3月6
+         春分3月21
+         清明4月5
+         谷雨4月21
+         立夏5月6
+         小满5月22
+         芒种6月6
+         夏至6月22
+         小暑7月8
+         大暑7月23
+         立秋8月8
+         处暑8月24
+         白露9月8
+         秋分9月24
+         寒露10月9
+         霜降10月24
+         立冬11月8
+         小雪11月23
+         大雪12月8
+         冬至12月22
+         */
+
+        private Lunar lunar = null;
+
+        /**
+         * @return the lunar
+         */
+        public Lunar getLunar() {
+            return lunar;
+        }
+
+        /**
+         * @param lunar the lunar to set
+         */
+        public void setLunar(Lunar lunar) {
+            this.lunar = lunar;
+        }
+
+        /**
+         * 初始化时间 基础功能
+         */
+        public GT_Date() {
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+            time = df.format(new Date());   //获取当时间
+            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");  	//分割年月日 数组
+            hms = times[1].split(":");  	//分割时分秒 数组
+        }
+
+        /**
+         * 初始化时间 高级功能
+         */
+        public GT_Date(long timestamp) {
+
+            //初始化基本的时间
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+            time = df.format(new Date());   //获取当时间
+            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");  	//分割年月日 数组
+            hms = times[1].split(":");  	//分割时分秒 数组
+
+            //初始化高级功能
+            lunar = new Lunar(timestamp);
+
+        }
+
+
+        /**
+         * ***************日历工具的基础功能*******************
+         */
+
         private String time;        //定义返回的 时间整体字符串
         private String[] times;     //定义分割后产生的 年月日 / 时分秒 数组
         private String[] ymd;       //定义分割后产生的 年月日 数组
         private String[] hms;       //定义分割后产生的 时分秒 数组
 
         /**
-         * 初始化时间 数据
-         */
-        public GT_Date() {
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
-            time = df.format(new Date());   //获取当时间
-            times = time.split(" ");    //分割时间 年月日 / 时分秒 数组
-            ymd = times[0].split("-");  //分割年月日 数组
-            hms = times[1].split(":");  //分割时分秒 数组
-        }
-
-        /**
          * 获取当前星期
          *
          * @return
          */
-        public String getWeekOfDate() {
+        public String getWeekOfDateString() {
             String[] weekDays = {"星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"};
             Calendar cal = Calendar.getInstance();
             cal.setTime(new Date());
@@ -2424,6 +2563,24 @@ public class GT {
                 w = 0;
             return weekDays[w];
         }
+
+
+
+        /**
+         * 获取当前星期
+         *
+         * @return
+         */
+        public int getWeekOfDateInt() {
+            int[] weekDays = {0, 1, 2, 3, 4, 5, 6};
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(new Date());
+            int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+            if (w < 0)
+                w = 0;
+            return weekDays[w];
+        }
+
 
         /**
          * 获取当前时间
@@ -2615,6 +2772,1122 @@ public class GT {
             String time = formatter.format(date);
             return time;
         }
+
+
+        /**
+         * ***********************日历的高级功能***********************
+         */
+
+        public static class Lunar {
+
+            /**
+             * 获得某天前个节气日期差
+             *
+             * @return 日期数
+             */
+            public static long getbeforesolarTerm(int year, Date date) {
+                List<Date> jieqi =Alljieqi(year);
+                int[] jieqibeforeafter = getnearsolarTerm(year, date);
+                return MyDate.DateDays(date, jieqi.get(jieqibeforeafter[0]));
+            }
+
+            /**
+             * 获得某天后个节气日期差
+             *
+             * @return 日期数
+             */
+            public static long getaftersolarTerm(int year, Date date) {
+                List<Date> jieqi = Alljieqi(year);
+                int[] jieqibeforeafter = getnearsolarTerm(year, date);
+                return MyDate.DateDays(date, jieqi.get(jieqibeforeafter[1]));
+
+            }
+
+            public static List<Date> Alljieqi(int year){
+
+                List<Date> jieqi = new  ArrayList<Date>();
+                Date[] temp ;
+                temp = jieqilist(year - 1);
+                jieqi.addAll(Arrays.asList(temp));
+                temp = jieqilist(year);
+                jieqi.addAll(Arrays.asList(temp));
+                temp = jieqilist(year+1);
+                jieqi.addAll(Arrays.asList(temp));
+                return jieqi;
+            }
+
+
+            /**
+             * 获得某天前后两个节气序号
+             *
+             * @return
+             */
+            public static int[] getnearsolarTerm(int year, Date date) {
+                List<Date> jieqi =Alljieqi(year);
+
+                int[] returnValue = new int[2];
+                for (int i = 0; i < jieqi.size(); i++) {
+                    if (date.getTime() > jieqi.get(i).getTime()) {
+                        continue;
+                    }
+                    if (i % 2 == 0) {//只管气
+                        returnValue[0] = i - 2;
+                        returnValue[1] = i;
+                    } else {
+                        returnValue[0] = i - 1;
+                        returnValue[1] = i + 1;
+
+                    }
+                    break;
+                }
+
+                return returnValue;
+            }
+
+
+            /**
+             * 获得某年中所有节气Date
+             *
+             * @return
+             */
+            public static Date[] jieqilist(int year) {
+                Date[] returnvalue = new Date[solarTerm.length];
+
+                for (int i = 0; i < solarTerm.length; i++) {
+
+                    Date t = getSolarTermCalendar(year, i);
+                    returnvalue[i] = t;
+
+                }
+                return returnvalue;
+            }
+
+
+            private final static int[] lunarInfo = {
+                    0x4bd8, 0x4ae0, 0xa570, 0x54d5, 0xd260, 0xd950, 0x5554, 0x56af,
+                    0x9ad0, 0x55d2, 0x4ae0, 0xa5b6, 0xa4d0, 0xd250, 0xd295, 0xb54f,
+                    0xd6a0, 0xada2, 0x95b0, 0x4977, 0x497f, 0xa4b0, 0xb4b5, 0x6a50,
+                    0x6d40, 0xab54, 0x2b6f, 0x9570, 0x52f2, 0x4970, 0x6566, 0xd4a0,
+                    0xea50, 0x6a95, 0x5adf, 0x2b60, 0x86e3, 0x92ef, 0xc8d7, 0xc95f,
+                    0xd4a0, 0xd8a6, 0xb55f, 0x56a0, 0xa5b4, 0x25df, 0x92d0, 0xd2b2,
+                    0xa950, 0xb557, 0x6ca0, 0xb550, 0x5355, 0x4daf, 0xa5b0, 0x4573,
+                    0x52bf, 0xa9a8, 0xe950, 0x6aa0, 0xaea6, 0xab50, 0x4b60, 0xaae4,
+                    0xa570, 0x5260, 0xf263, 0xd950, 0x5b57, 0x56a0, 0x96d0, 0x4dd5,
+                    0x4ad0, 0xa4d0, 0xd4d4, 0xd250, 0xd558, 0xb540, 0xb6a0, 0x95a6,
+                    0x95bf, 0x49b0, 0xa974, 0xa4b0, 0xb27a, 0x6a50, 0x6d40, 0xaf46,
+                    0xab60, 0x9570, 0x4af5, 0x4970, 0x64b0, 0x74a3, 0xea50, 0x6b58,
+                    0x5ac0, 0xab60, 0x96d5, 0x92e0, 0xc960, 0xd954, 0xd4a0, 0xda50,
+                    0x7552, 0x56a0, 0xabb7, 0x25d0, 0x92d0, 0xcab5, 0xa950, 0xb4a0,
+                    0xbaa4, 0xad50, 0x55d9, 0x4ba0, 0xa5b0, 0x5176, 0x52bf, 0xa930,
+                    0x7954, 0x6aa0, 0xad50, 0x5b52, 0x4b60, 0xa6e6, 0xa4e0, 0xd260,
+                    0xea65, 0xd530, 0x5aa0, 0x76a3, 0x96d0, 0x4afb, 0x4ad0, 0xa4d0,
+                    0xd0b6, 0xd25f, 0xd520, 0xdd45, 0xb5a0, 0x56d0, 0x55b2, 0x49b0,
+                    0xa577, 0xa4b0, 0xaa50, 0xb255, 0x6d2f, 0xada0, 0x4b63, 0x937f,
+                    0x49f8, 0x4970, 0x64b0, 0x68a6, 0xea5f, 0x6b20, 0xa6c4, 0xaaef,
+                    0x92e0, 0xd2e3, 0xc960, 0xd557, 0xd4a0, 0xda50, 0x5d55, 0x56a0,
+                    0xa6d0, 0x55d4, 0x52d0, 0xa9b8, 0xa950, 0xb4a0, 0xb6a6, 0xad50,
+                    0x55a0, 0xaba4, 0xa5b0, 0x52b0, 0xb273, 0x6930, 0x7337, 0x6aa0,
+                    0xad50, 0x4b55, 0x4b6f, 0xa570, 0x54e4, 0xd260, 0xe968, 0xd520,
+                    0xdaa0, 0x6aa6, 0x56df, 0x4ae0, 0xa9d4, 0xa4d0, 0xd150, 0xf252, 0xd520
+            };
+
+
+            private final static int[] solarTermInfo = {
+                    0, 21208, 42467, 63836, 85337, 107014, 128867, 150921,
+                    173149, 195551, 218072, 240693, 263343, 285989, 308563, 331033,
+                    353350, 375494, 397447, 419210, 440795, 462224, 483532, 504758
+            };
+            public final static String[] Tianan = {
+                    "甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"
+            };
+            public final static String[] Deqi = {
+                    "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"
+            };
+            public final static String[] Animals = {
+                    "鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"
+            };
+            public final static String[] solarTerm = {
+                    "小寒", "大寒", "立春", "雨水", "惊蛰", "春分",
+                    "清明", "谷雨", "立夏", "小满", "芒种", "夏至",
+                    "小暑", "大暑", "立秋", "处暑", "白露", "秋分",
+                    "寒露", "霜降", "立冬", "小雪", "大雪", "冬至"
+            };
+            public final static String[] lunarString1 = {
+                    "零", "一", "二", "三", "四", "五", "六", "七", "八", "九"
+            };
+            public final static String[] lunarString2 = {
+                    "初", "十", "廿", "卅", "正", "腊", "冬", "闰"
+            };
+            /**
+             * 国历节日 *表示放假日
+             */
+            private final static String[] sFtv = {
+                    "0101*元旦", "0214 情人节", "0308 妇女节", "0312 植树节",
+                    "0315 消费者权益日", "0401 愚人节", "0501*劳动节", "0504 青年节",
+                    "0509 郝维节", "0512 护士节", "0601 儿童节", "0701 建党节 香港回归纪念",
+                    "0801 建军节", "0808 父亲节", "0816 燕衔泥节", "0909 毛泽东逝世纪念",
+                    "0910 教师节", "0928 孔子诞辰", "1001*国庆节", "1006 老人节",
+                    "1024 联合国日", "1111 光棍节", "1112 孙中山诞辰纪念", "1220 澳门回归纪念",
+                    "1225 圣诞节", "1226 毛泽东诞辰纪念"
+            };
+            /**
+             * 农历节日 *表示放假日
+             */
+            private final static String[] lFtv = {
+                    "0101*春节、弥勒佛诞", "0106 定光佛诞", "0115 元宵节",
+                    "0208 释迦牟尼佛出家", "0215 释迦牟尼佛涅槃", "0209 海空上师诞",
+                    "0219 观世音菩萨诞", "0221 普贤菩萨诞", "0316 准提菩萨诞",
+                    "0404 文殊菩萨诞", "0408 释迦牟尼佛诞", "0415 佛吉祥日——释迦牟尼佛诞生、成道、涅槃三期同一庆(即南传佛教国家的卫塞节)",
+                    "0505 端午节", "0513 伽蓝菩萨诞", "0603 护法韦驮尊天菩萨诞",
+                    "0619 观世音菩萨成道——此日放生、念佛，功德殊胜",
+                    "0707 七夕情人节", "0713 大势至菩萨诞", "0715 中元节",
+                    "0724 龙树菩萨诞", "0730 地藏菩萨诞", "0815 中秋节",
+                    "0822 燃灯佛诞", "0909 重阳节", "0919 观世音菩萨出家纪念日",
+                    "0930 药师琉璃光如来诞", "1005 达摩祖师诞", "1107 阿弥陀佛诞",
+                    "1208 释迦如来成道日，腊八节", "1224 小年",
+                    "1229 华严菩萨诞", "0100*除夕"
+            };
+            /**
+             * 某月的第几个星期几
+             */
+            private static String[] wFtv = {
+                    "0520 母亲节", "0716 合作节", "0730 被奴役国家周"
+            };
+
+            private static int toInt(String str) {
+                try {
+                    return Integer.parseInt(str);
+                } catch (Exception e) {
+                    return -1;
+                }
+            }
+            private final static Pattern sFreg = Pattern.compile("^(\\d{2})(\\d{2})([\\s\\*])(.+)$");
+            private final static Pattern wFreg = Pattern.compile("^(\\d{2})(\\d)(\\d)([\\s\\*])(.+)$");
+
+            private synchronized void findFestival() {
+                System.out.println("进入节日获取");
+                int sM = this.getSolarMonth();
+                int sD = this.getSolarDay();
+                int lM = this.getLunarMonth();
+                int lD = this.getLunarDay();
+                int sy = this.getSolarYear();
+                Matcher m;
+                for (int i = 0; i < Lunar.sFtv.length; i++) {
+                    m = Lunar.sFreg.matcher(Lunar.sFtv[i]);
+
+                    if (m.find()) {
+                        if (sM == Lunar.toInt(m.group(1)) && sD == Lunar.toInt(m.group(2))) {
+                            this.isSFestival = true;
+                            this.sFestivalName = m.group(4);
+                            if ("*".equals(m.group(3))) {
+                                this.isHoliday = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+                for (int i = 0; i < Lunar.lFtv.length; i++) {
+                    m = Lunar.sFreg.matcher(Lunar.lFtv[i]);
+                    if (m.find()) {
+                        if (lM == Lunar.toInt(m.group(1)) && lD == Lunar.toInt(m.group(2))) {
+                            this.isLFestival = true;
+                            this.lFestivalName = m.group(4);
+                            if ("*".equals(m.group(3))) {
+                                this.isHoliday = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+                // 月周节日
+                int w, d;
+                for (int i = 0; i < Lunar.wFtv.length; i++) {
+                    m = Lunar.wFreg.matcher(Lunar.wFtv[i]);
+                    if (m.find()) {
+                        if (this.getSolarMonth() == Lunar.toInt(m.group(1))) {
+                            w = Lunar.toInt(m.group(2));
+                            d = Lunar.toInt(m.group(3));
+                            if (this.solar.get(Calendar.WEEK_OF_MONTH) == w
+                                    && this.solar.get(Calendar.DAY_OF_WEEK) == d) {
+                                this.isSFestival = true;
+                                this.sFestivalName += "|" + m.group(5);
+                                if ("*".equals(m.group(4))) {
+                                    this.isHoliday = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (sy > 1874 && sy < 1909) {
+                    this.description = "光绪" + (((sy - 1874) == 1) ? "元" : "" + (sy - 1874));
+                }
+                if (sy > 1908 && sy < 1912) {
+                    this.description = "宣统" + (((sy - 1908) == 1) ? "元" : String.valueOf(sy - 1908));
+                }
+                if (sy > 1911 && sy < 1950) {
+                    this.description = "民国" + (((sy - 1911) == 1) ? "元" : String.valueOf(sy - 1911));
+                }
+                if (sy > 1949) {
+                    this.description = "共和国" + (((sy - 1949) == 1) ? "元" : String.valueOf(sy - 1949));
+                }
+                this.description += "年";
+                this.sFestivalName = this.sFestivalName.replaceFirst("^\\|", "");
+                this.isFinded = true;
+            }
+
+            private boolean isFinded = false;
+            private boolean isSFestival = false;
+            private boolean isLFestival = false;
+            private String sFestivalName = "";
+            private String lFestivalName = "";
+            private String description = "";
+            private boolean isHoliday = false;
+
+            /**
+             * 返回农历年闰月月份
+             *
+             * @param lunarYear 指定农历年份(数字)
+             * @return 该农历年闰月的月份(数字,没闰返回0)
+             */
+            private static int getLunarLeapMonth(int lunarYear) {
+                // 数据表中,每个农历年用16bit来表示,
+                // 前12bit分别表示12个月份的大小月,最后4bit表示闰月
+                // 若4bit全为1或全为0,表示没闰, 否则4bit的值为闰月月份
+                int leapMonth = Lunar.lunarInfo[lunarYear - 1900] & 0xf;
+                leapMonth = (leapMonth == 0xf ? 0 : leapMonth);
+                return leapMonth;
+            }
+
+
+            /**
+             * 返回农历年闰月的天数
+             *
+             * @param lunarYear 指定农历年份(数字)
+             * @return 该农历年闰月的天数(数字)
+             */
+            private static int getLunarLeapDays(int lunarYear) {
+                // 下一年最后4bit为1111,返回30(大月)
+                // 下一年最后4bit不为1111,返回29(小月)
+                // 若该年没有闰月,返回0
+                return Lunar.getLunarLeapMonth(lunarYear) > 0 ? ((Lunar.lunarInfo[lunarYear - 1899] & 0xf) == 0xf ? 30
+                        : 29)
+                        : 0;
+            }
+
+            /**
+             * 返回农历年的总天数
+             *
+             * @param lunarYear 指定农历年份(数字)
+             * @return 该农历年的总天数(数字)
+             */
+            private static int getLunarYearDays(int lunarYear) {
+                // 按小月计算,农历年最少有12 * 29 = 348天
+                int daysInLunarYear = 348;
+                // 数据表中,每个农历年用16bit来表示,
+                // 前12bit分别表示12个月份的大小月,最后4bit表示闰月
+                // 每个大月累加一天
+                for (int i = 0x8000; i > 0x8; i >>= 1) {
+                    daysInLunarYear += ((Lunar.lunarInfo[lunarYear - 1900] & i) != 0) ? 1
+                            : 0;
+                }
+                // 加上闰月天数
+                daysInLunarYear += Lunar.getLunarLeapDays(lunarYear);
+
+                return daysInLunarYear;
+            }
+
+            /**
+             * 返回农历年正常月份的总天数
+             *
+             * @param lunarYear 指定农历年份(数字)
+             * @param lunarMonth 指定农历月份(数字)
+             * @return 该农历年闰月的月份(数字,没闰返回0)
+             */
+            private static int getLunarMonthDays(int lunarYear, int lunarMonth) {
+                // 数据表中,每个农历年用16bit来表示,
+                // 前12bit分别表示12个月份的大小月,最后4bit表示闰月
+                int daysInLunarMonth = ((Lunar.lunarInfo[lunarYear - 1900] & (0x10000 >> lunarMonth)) != 0) ? 30
+                        : 29;
+                return daysInLunarMonth;
+            }
+
+
+            /**
+             * 取 Date 对象中用全球标准时间 (UTC) 表示的日期
+             *
+             * @param date 指定日期
+             * @return UTC 全球标准时间 (UTC) 表示的日期
+             */
+            public static synchronized int getUTCDay(Date date) {
+                Lunar.makeUTCCalendar();
+                synchronized (utcCal) {
+                    utcCal.clear();
+                    utcCal.setTimeInMillis(date.getTime());
+                    return utcCal.get(Calendar.DAY_OF_MONTH);
+                }
+            }
+            private static GregorianCalendar utcCal = null;
+
+            private static synchronized void makeUTCCalendar() {
+                if (Lunar.utcCal == null) {
+                    Lunar.utcCal = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+                }
+            }
+
+            /**
+             * 返回全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数。
+             *
+             * @param y 指定年份
+             * @param m 指定月份
+             * @param d 指定日期
+             * @param h 指定小时
+             * @param min 指定分钟
+             * @param sec 指定秒数
+             * @return 全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数
+             */
+            public static synchronized long UTC(int y, int m, int d, int h, int min, int sec) {
+                Lunar.makeUTCCalendar();
+                synchronized (utcCal) {
+                    utcCal.clear();
+                    utcCal.set(y, m, d, h, min, sec);
+                    return utcCal.getTimeInMillis();
+                }
+            }
+
+            /**
+             * 返回公历年节气的日期
+             *
+             * @param solarYear 指定公历年份(数字)
+             * @param index 指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字,所在月份的第几天)
+             */
+            private static int getSolarTermDay(int solarYear, int index) {
+
+                return Lunar.getUTCDay(getSolarTermCalendar(solarYear, index));
+            }
+
+            /**
+             * 返回公历年节气的日期
+             *
+             * @param solarYear 指定公历年份(数字)
+             * @param index 指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字,所在月份的第几天)
+             */
+            public static Date getSolarTermCalendar(int solarYear, int index) {
+                long l = (long) 31556925974.7 * (solarYear - 1900)
+                        + solarTermInfo[index] * 60000L;
+                l = l + Lunar.UTC(1900, 0, 6, 2, 5, 0);
+                return new Date(l);
+            }
+
+            private Calendar solar;
+            private int lunarYear;
+            private int lunarMonth;
+            private int lunarDay;
+            private boolean isLeap;
+            private boolean isLeapYear;
+            private int solarYear;
+            private int solarMonth;
+            private int solarDay;
+            private int cyclicalYear = 0;
+            private int cyclicalMonth = 0;
+            private int cyclicalDay = 0;
+            private int maxDayInMonth = 29;
+
+            /**
+             * 通过 Date 对象构建农历信息
+             *
+             * @param date 指定日期对象
+             */
+            public Lunar(Date date) {
+                if (date == null) {
+                    date = new Date();
+                }
+                this.init(date.getTime());
+            }
+
+            /**
+             * 通过 TimeInMillis 构建农历信息
+             *
+             * @param TimeInMillis
+             */
+            public Lunar(long TimeInMillis) {
+                this.init(TimeInMillis);
+            }
+
+            private void init(long TimeInMillis) {
+                this.solar = Calendar.getInstance();
+                this.solar.setTimeInMillis(TimeInMillis);
+                Calendar baseDate = new GregorianCalendar(1900, 0, 31);
+                long offset = (TimeInMillis - baseDate.getTimeInMillis()) / 86400000;
+                // 按农历年递减每年的农历天数，确定农历年份
+                this.lunarYear = 1900;
+                int daysInLunarYear = Lunar.getLunarYearDays(this.lunarYear);
+                while (this.lunarYear < 2100 && offset >= daysInLunarYear) {
+                    offset -= daysInLunarYear;
+                    daysInLunarYear = Lunar.getLunarYearDays(++this.lunarYear);
+                }
+                // 农历年数字
+
+                // 按农历月递减每月的农历天数，确定农历月份
+                int lunarMonth = 1;
+                // 所在农历年闰哪个月,若没有返回0
+                int leapMonth = Lunar.getLunarLeapMonth(this.lunarYear);
+                // 是否闰年
+                this.isLeapYear = leapMonth > 0;
+                // 闰月是否递减
+                boolean leapDec = false;
+                boolean isLeap = false;
+                int daysInLunarMonth = 0;
+                while (lunarMonth < 13 && offset > 0) {
+                    if (isLeap && leapDec) { // 如果是闰年,并且是闰月
+                        // 所在农历年闰月的天数
+                        daysInLunarMonth = Lunar.getLunarLeapDays(this.lunarYear);
+                        leapDec = false;
+                    } else {
+                        // 所在农历年指定月的天数
+                        daysInLunarMonth = Lunar.getLunarMonthDays(this.lunarYear, lunarMonth);
+                    }
+                    if (offset < daysInLunarMonth) {
+                        break;
+                    }
+                    offset -= daysInLunarMonth;
+
+                    if (leapMonth == lunarMonth && isLeap == false) {
+                        // 下个月是闰月
+                        leapDec = true;
+                        isLeap = true;
+                    } else {
+                        // 月份递增
+                        lunarMonth++;
+                    }
+                }
+                this.maxDayInMonth = daysInLunarMonth;
+                // 农历月数字
+                this.lunarMonth = lunarMonth;
+                // 是否闰月
+                this.isLeap = (lunarMonth == leapMonth && isLeap);
+                // 农历日数字
+                this.lunarDay = (int) offset + 1;
+                // 取得干支历
+                this.getCyclicalData();
+            }
+
+            /**
+             * 取干支历 不是历年，历月干支，而是中国的从立春节气开始的节月，是中国的太阳十二宫，阳历的。
+
+             */
+            private void getCyclicalData() {
+                this.solarYear = this.solar.get(Calendar.YEAR);
+                this.solarMonth = this.solar.get(Calendar.MONTH);
+                this.solarDay = this.solar.get(Calendar.DAY_OF_MONTH);
+                // 干支历
+                int cyclicalYear = 0;
+                int cyclicalMonth = 0;
+                int cyclicalDay = 0;
+
+                // 干支年 1900年立春後为庚子年(60进制36)
+                int term2 = Lunar.getSolarTermDay(solarYear, 2); // 立春日期
+                // 依节气调整二月分的年柱, 以立春为界
+                if (solarMonth < 1 || (solarMonth == 1 && solarDay < term2)) {
+                    cyclicalYear = (solarYear - 1900 + 36 - 1) % 60;
+                } else {
+                    cyclicalYear = (solarYear - 1900 + 36) % 60;
+                }
+
+                // 干支月 1900年1月小寒以前为 丙子月(60进制12)
+                int firstNode = Lunar.getSolarTermDay(solarYear, solarMonth * 2); // 传回当月「节」为几日开始
+                // 依节气月柱, 以「节」为界
+                if (solarDay < firstNode) {
+                    cyclicalMonth = ((solarYear - 1900) * 12 + solarMonth + 12) % 60;
+                } else {
+                    cyclicalMonth = ((solarYear - 1900) * 12 + solarMonth + 13) % 60;
+                }
+
+                // 当月一日与 1900/1/1 相差天数
+                // 1900/1/1与 1970/1/1 相差25567日, 1900/1/1 日柱为甲戌日(60进制10)
+                cyclicalDay = (int) (Lunar.UTC(solarYear, solarMonth, solarDay, 0, 0, 0) / 86400000 + 25567 + 10) % 60;
+                this.cyclicalYear = cyclicalYear;
+                this.cyclicalMonth = cyclicalMonth;
+                this.cyclicalDay = cyclicalDay;
+            }
+
+            /**
+             * 取农历年生肖
+             *
+             * @return 农历年生肖(例:龙)
+             */
+            public String getAnimalString() {
+                return Lunar.Animals[(this.lunarYear - 4) % 12];
+            }
+
+            /**
+             * 返回公历日期的节气字符串
+             *
+             * @return 二十四节气字符串,若不是节气日,返回空串(例:冬至)
+             */
+            public String getTermString() {
+                // 二十四节气
+                String termString = "";
+                if (Lunar.getSolarTermDay(solarYear, solarMonth * 2) == solarDay) {
+                    termString = Lunar.solarTerm[solarMonth * 2];
+                } else if (Lunar.getSolarTermDay(solarYear, solarMonth * 2 + 1) == solarDay) {
+                    termString = Lunar.solarTerm[solarMonth * 2 + 1];
+                }
+                return termString;
+            }
+
+            /**
+             * 取得干支历字符串
+             *
+             * @return 干支历字符串(例:甲子年甲子月甲子日)
+             */
+            public String getCyclicalDateString() {
+                return this.getCyclicaYear() + "年" + this.getCyclicaMonth() + "月"
+                        + this.getCyclicaDay() + "日";
+            }
+
+            /**
+             * 年份天干
+             *
+             * @return 年份天干
+             */
+            public int getTiananY() {
+                return Lunar.getTianan(this.cyclicalYear);
+            }
+
+            /**
+             * 月份天干
+             *
+             * @return 月份天干
+             */
+            public int getTiananM() {
+                return Lunar.getTianan(this.cyclicalMonth);
+            }
+
+            /**
+             * 日期天干
+             *
+             * @return 日期天干
+             */
+            public int getTiananD() {
+                return Lunar.getTianan(this.cyclicalDay);
+            }
+
+            /**
+             * 年份地支
+             *
+             * @return 年分地支
+             */
+            public int getDeqiY() {
+                return Lunar.getDeqi(this.cyclicalYear);
+            }
+
+            /**
+             * 月份地支
+             *
+             * @return 月份地支
+             */
+            public int getDeqiM() {
+                return Lunar.getDeqi(this.cyclicalMonth);
+            }
+
+            /**
+             * 日期地支
+             *
+             * @return 日期地支
+             */
+            public int getDeqiD() {
+                return Lunar.getDeqi(this.cyclicalDay);
+            }
+
+            /**
+             * 取得干支年字符串
+             *
+             * @return 干支年字符串
+             */
+            public String getCyclicaYear() {
+                return Lunar.getCyclicalString(this.cyclicalYear);
+            }
+
+            /**
+             * 取得干支月字符串
+             *
+             * @return 干支月字符串
+             */
+            public String getCyclicaMonth() {
+                return Lunar.getCyclicalString(this.cyclicalMonth);
+            }
+
+            /**
+             * 取得干支日字符串
+             *
+             * @return 干支日字符串
+             */
+            public String getCyclicaDay() {
+                return Lunar.getCyclicalString(this.cyclicalDay);
+            }
+
+            /**
+             * 返回农历日期字符串
+             *
+             * @return 农历日期字符串
+             */
+            public String getLunarDayString() {
+                return Lunar.getLunarDayString(this.lunarDay);
+            }
+
+            /**
+             * 返回农历日期字符串
+             *
+             * @return 农历日期字符串
+             */
+            public String getLunarMonthString() {
+                return (this.isLeap() ? "闰" : "") + Lunar.getLunarMonthString(this.lunarMonth);
+            }
+
+            /**
+             * 返回农历日期字符串
+             *
+             * @return 农历日期字符串
+             */
+            public String getLunarYearString() {
+                return Lunar.getLunarYearString(this.lunarYear);
+            }
+
+            /**
+             * 返回农历表示字符串
+             *
+             * @return 农历字符串(例:甲子年正月初三)
+             */
+            public String getLunarDateString() {
+                return this.getLunarYearString() + "年"
+                        + this.getLunarMonthString() + "月"
+                        + this.getLunarDayString() + "日";
+            }
+
+            /**
+             * 农历年是否是闰月
+             *
+             * @return 农历年是否是闰月
+             */
+            public boolean isLeap() {
+                return isLeap;
+            }
+
+            /**
+             * 农历年是否是闰年
+             *
+             * @return 农历年是否是闰年
+             */
+            public boolean isLeapYear() {
+                return isLeapYear;
+            }
+
+            /**
+             * 当前农历月是否是大月
+             *
+             * @return 当前农历月是大月
+             */
+            public boolean isBigMonth() {
+                return this.getMaxDayInMonth() > 29;
+            }
+
+            /**
+             * 当前农历月有多少天
+             *
+             * @return 当前农历月有多少天
+             */
+            public int getMaxDayInMonth() {
+                return this.maxDayInMonth;
+            }
+
+            /**
+             * 农历日期
+             *
+             * @return 农历日期
+             */
+            public int getLunarDay() {
+                return lunarDay;
+            }
+
+            /**
+             * 农历月份
+             *
+             * @return 农历月份
+             */
+            public int getLunarMonth() {
+                return lunarMonth;
+            }
+
+            /**
+             * 农历年份
+             *
+             * @return 农历年份
+             */
+            public int getLunarYear() {
+                return lunarYear;
+            }
+
+            /**
+             * 公历日期
+             *
+             * @return 公历日期
+             */
+            public int getSolarDay() {
+                return solarDay;
+            }
+
+            /**
+             * 公历月份
+             *
+             * @return 公历月份 (不是从0算起)
+             */
+            public int getSolarMonth() {
+                return solarMonth + 1;
+            }
+
+            /**
+             * 公历年份
+             *
+             * @return 公历年份
+             */
+            public int getSolarYear() {
+                return solarYear;
+            }
+
+            /**
+             * 星期几
+             *
+             * @return 星期几(星期日为:1, 星期六为:7)
+             */
+            public int getDayOfWeek() {
+                return this.solar.get(Calendar.DAY_OF_WEEK);
+            }
+
+            /**
+             * 黑色星期五
+             *
+             * @return 是否黑色星期五
+             */
+            public boolean isBlackFriday() {
+                return (this.getSolarDay() == 13 && this.solar.get(Calendar.DAY_OF_WEEK) == 6);
+            }
+
+            /**
+             * 是否是今日
+             *
+             * @return 是否是今日
+             */
+            public boolean isToday() {
+                Calendar clr = Calendar.getInstance();
+                return clr.get(Calendar.YEAR) == this.solarYear
+                        && clr.get(Calendar.MONTH) == this.solarMonth
+                        && clr.get(Calendar.DAY_OF_MONTH) == this.solarDay;
+            }
+
+            /**
+             * 取得公历节日名称
+             *
+             * @return 公历节日名称,如果不是节日返回空串
+             */
+            public String getSFestivalName() {
+                return this.sFestivalName;
+            }
+
+            /**
+             * 取得农历节日名称
+             *
+             * @return 农历节日名称,如果不是节日返回空串
+             */
+            public String getLFestivalName() {
+                return this.lFestivalName;
+            }
+
+            /**
+             * 是否是农历节日
+             *
+             * @return 是否是农历节日
+             */
+            public boolean isLFestival() {
+                if (!this.isFinded) {
+                    this.findFestival();
+                }
+                return this.isLFestival;
+            }
+
+            /**
+             * 是否是公历节日
+             *
+             * @return 是否是公历节日
+             */
+            public boolean isSFestival() {
+                if (!this.isFinded) {
+                    this.findFestival();
+                }
+                return this.isSFestival;
+            }
+
+            /**
+             * 是否是节日
+             *
+             * @return 是否是节日
+             */
+            public boolean isFestival() {
+                return this.isSFestival() || this.isLFestival();
+            }
+
+            /**
+             * 是否是放假日
+             *
+             * @return 是否是放假日
+             */
+            public boolean isHoliday() {
+                if (!this.isFinded) {
+                    this.findFestival();
+                }
+                return this.isHoliday;
+            }
+
+            /**
+             * 其它日期说明
+             *
+             * @return 日期说明(如:民国2年)
+             */
+            public String getDescription() {
+                if (!this.isFinded) {
+                    this.findFestival();
+                }
+                return this.description;
+            }
+
+            /**
+             * 干支字符串
+             *
+             * @param cyclicalNumber 指定干支位置(数字,0为甲子)
+             * @return 干支字符串
+             */
+            private static String getCyclicalString(int cyclicalNumber) {
+                return Lunar.Tianan[Lunar.getTianan(cyclicalNumber)] + Lunar.Deqi[Lunar.getDeqi(cyclicalNumber)];
+            }
+
+            /**
+             * 获得地支
+             *
+             * @param cyclicalNumber
+             * @return 地支 (数字)
+             */
+            private static int getDeqi(int cyclicalNumber) {
+                return cyclicalNumber % 12;
+            }
+
+            /**
+             * 获得天干
+             *
+             * @param cyclicalNumber
+             * @return 天干 (数字)
+             */
+            private static int getTianan(int cyclicalNumber) {
+                return cyclicalNumber % 10;
+            }
+
+            /**
+             * 返回指定数字的农历年份表示字符串
+             *
+             * @param lunarYear 农历年份(数字,0为甲子)
+             * @return 农历年份字符串
+             */
+            private static String getLunarYearString(int lunarYear) {
+                return Lunar.getCyclicalString(lunarYear - 1900 + 36);
+            }
+
+            /**
+             * 返回指定数字的农历月份表示字符串
+             *
+             * @param lunarMonth 农历月份(数字)
+             * @return 农历月份字符串 (例:正)
+             */
+            private static String getLunarMonthString(int lunarMonth) {
+                String lunarMonthString = "";
+                if (lunarMonth == 1) {
+                    lunarMonthString = Lunar.lunarString2[4];
+                } else {
+                    if (lunarMonth > 9) {
+                        lunarMonthString += Lunar.lunarString2[1];
+                    }
+                    if (lunarMonth % 10 > 0) {
+                        lunarMonthString += Lunar.lunarString1[lunarMonth % 10];
+                    }
+                }
+                return lunarMonthString;
+            }
+
+            /**
+             * 返回指定数字的农历日表示字符串
+             *
+             * @param lunarDay 农历日(数字)
+             * @return 农历日字符串 (例: 廿一)
+             */
+            private static String getLunarDayString(int lunarDay) {
+                if (lunarDay < 1 || lunarDay > 30) {
+                    return "";
+                }
+                int i1 = lunarDay / 10;
+                int i2 = lunarDay % 10;
+                String c1 = Lunar.lunarString2[i1];
+                String c2 = Lunar.lunarString1[i2];
+                if (lunarDay < 11) {
+                    c1 = Lunar.lunarString2[0];
+                }
+                if (i2 == 0) {
+                    c2 = Lunar.lunarString2[1];
+                }
+                return c1 + c2;
+            }
+
+
+            //日期工具辅助类
+            private static  class MyDate {
+
+                private static final int[] dayMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+                public int day;
+                @SuppressWarnings("unused")
+                public int dayCyl;
+                @SuppressWarnings("unused")
+                public boolean isLeap;
+                @SuppressWarnings("unused")
+                public int monCyl;
+                public int month;
+                public int year;
+                @SuppressWarnings("unused")
+                public int yearCyl;
+
+                @SuppressWarnings("unused")
+                public MyDate() {
+                }
+
+                @SuppressWarnings("unused")
+                public MyDate(int paramInt1, int paramInt2, int paramInt3) {
+                    this.year = paramInt1;
+                    this.month = paramInt2;
+                    this.day = paramInt3;
+                }
+
+                @SuppressWarnings("unused")
+                public static int GetNumDayOfMonth(int paramInt1, int paramInt2) {
+                    int i = dayMonth[(paramInt2 - 1)];
+                    if ((IsBigYear(paramInt1)) && (paramInt2 == 2)) {
+                        i++;
+                    }
+                    return i;
+                }
+
+                public static boolean IsBigYear(int paramInt) {
+                    if (paramInt % 400 == 0) {
+                        return true;
+                    }
+                    return (paramInt % 4 == 0) && (paramInt % 100 != 0);
+                }
+
+                public static long DateDays(Date aDate, Date aDate2) {
+                    long myTime;
+                    long myTime2;
+                    long days = 0;
+                    myTime = (aDate.getTime() / 1000);
+                    // SimpleDateFormat formatter =new SimpleDateFormat("yyyy-MM-dd");
+                    myTime2 = (aDate2.getTime() / 1000);
+                    if (myTime > myTime2) {
+                        days = (myTime - myTime2) / (1 * 60 * 60 * 24);
+                    } else {
+                        days = (myTime2 - myTime) / (1 * 60 * 60 * 24);
+                    }
+                    return days;
+
+                }
+                // 求2个日期的天数
+
+                @SuppressWarnings("unused")
+                public static long DateDays(String date1, String date2) throws ParseException {
+
+                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                    long myTime;
+                    Date aDate2;
+                    Date aDate;
+                    long myTime2;
+                    long days = 0;
+
+                    aDate = formatter.parse(date1);// 任意日期，包括当前日期
+                    myTime = (aDate.getTime() / 1000);
+
+                    // SimpleDateFormat formatter =new SimpleDateFormat("yyyy-MM-dd");
+                    aDate2 = formatter.parse(date2);// 任意日期，包括当前日期
+                    myTime2 = (aDate2.getTime() / 1000);
+
+                    if (myTime > myTime2) {
+                        days = (myTime - myTime2) / (1 * 60 * 60 * 24);
+                    } else {
+                        days = (myTime2 - myTime) / (1 * 60 * 60 * 24);
+                    }
+
+
+
+                    return days;
+
+                }
+
+                // 求2个日期的天数
+                public static long DateDays2(int year1, int month1, int day1, int year2,
+                                             int month2, int day2) throws ParseException, ParseException {
+
+                    String date1;
+                    String date2;
+                    date1 = year1 + "-" + month1 + "-" + day1;
+                    date2 = year2 + "-" + month2 + "-" + day2;
+                    SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                    long myTime;
+                    Date aDate;
+                    Date aDate2;
+                    long myTime2;
+                    long days = 0;
+
+                    aDate = formatter.parse(date1);// 任意日期，包括当前日期
+                    myTime = (aDate.getTime() / 1000);
+
+                    // SimpleDateFormat formatter =new SimpleDateFormat("yyyy-MM-dd");
+                    aDate2 = formatter.parse(date2);// 任意日期，包括当前日期
+                    myTime2 = (aDate2.getTime() / 1000);
+
+                    if (myTime > myTime2) {
+                        days = (myTime - myTime2) / (1 * 60 * 60 * 24);
+                    } else {
+                        days = (myTime2 - myTime) / (1 * 60 * 60 * 24);
+                    }
+
+
+                    return days;
+
+                }
+
+                public int GetNumDayFrom19000101() {
+                    int day = 0;
+                    try {
+                        day = (int) DateDays2(this.year, this.month, this.day, 1900, 1, 1);
+                    } catch (ParseException ex) {
+                        System.out.println(ex.getMessage());
+                    }
+                    return day;
+                }
+
+                @SuppressWarnings("unused")
+                public long GetSFrom19000101() {
+                    return 86400L * (1L + GetNumDayFrom19000101());
+                }
+
+            }
+
+
+        }
+
 
     }
 
@@ -5445,7 +6718,6 @@ public class GT {
 
         //主要用于注解 非 Activity 以外的
         public static void initAll(Object object, View view) {
-
             Class<? extends Object> mClass = object.getClass();
 
             // Java 注解部分
@@ -6821,6 +8093,667 @@ public class GT {
         public int getInt(int min, int max) {
             return random.nextInt(max) % (max - min + 1) + min;
         }
+
+    }
+
+    //GT 包官网：https://github.com/1079374315/GT
+
+    // 定义 GT 包 简易使用教程
+    public interface CMD{
+
+        /*
+         * 关于 GT 包中的功能使用教程请参考官网详细教程
+         * 官网教程：https://blog.csdn.net/qq_39799899/article/details/98891256
+         */
+
+
+        /*
+         * 关于 AndroidUtilCode 工具包的使用教程如下：
+         *
+         * 教程网址：https://www.jianshu.com/p/72494773aace
+         *
+         * ActivityUtils.java -> Demo 使用参考值
+         * isActivityExists               : 判断 Activity 是否存在
+         * startActivity                  : 启动 Activity
+         * startActivities                : 启动多个 Activity
+         * startHomeActivity              : 回到桌面
+         * getActivityList                : 获取 Activity 栈链表
+         * getLauncherActivity            : 获取启动项 Activity
+         * getTopActivity                 : 获取栈顶 Activity
+         * isActivityExistsInStack        : 判断 Activity 是否存在栈中
+         * finishActivity                 : 结束 Activity
+         * finishToActivity               : 结束到指定 Activity
+         * finishOtherActivities          : 结束所有其他类型的 Activity
+         * finishAllActivities            : 结束所有 Activity
+         * finishAllActivitiesExceptNewest: 结束除最新之外的所有 Activity
+         *
+         *
+         *
+         *
+         *
+         *AppUtils.java -> Demo 使用参考值
+         * isInstallApp         : 判断 App 是否安装
+         * installApp           : 安装 App（支持 8.0）
+         * installAppSilent     : 静默安装 App
+         * uninstallApp         : 卸载 App
+         * uninstallAppSilent   : 静默卸载 App
+         * isAppRoot            : 判断 App 是否有 root 权限
+         * launchApp            : 打开 App
+         * exitApp              : 关闭应用
+         * getAppPackageName    : 获取 App 包名
+         * getAppDetailsSettings: 获取 App 具体设置
+         * getAppName           : 获取 App 名称
+         * getAppIcon           : 获取 App 图标
+         * getAppPath           : 获取 App 路径
+         * getAppVersionName    : 获取 App 版本号
+         * getAppVersionCode    : 获取 App 版本码
+         * isSystemApp          : 判断 App 是否是系统应用
+         * isAppDebug           : 判断 App 是否是 Debug 版本
+         * getAppSignature      : 获取 App 签名
+         * getAppSignatureSHA1  : 获取应用签名的的 SHA1 值
+         * isAppForeground      : 判断 App 是否处于前台
+         * getForegroundApp     : 获取前台应用包名
+         * getAppInfo           : 获取 App 信息
+         * getAppsInfo          : 获取所有已安装 App 信息
+         * cleanAppData         : 清除 App 所有数据
+         *
+         *
+         *
+         * BarUtils.java -> Demo 使用参考值
+         * getStatusBarHeight                   : 获取状态栏高度（px）
+         * setStatusBarVisibility               : 设置状态栏是否可见
+         * isStatusBarVisible                   : 判断状态栏是否可见
+         * addMarginTopEqualStatusBarHeight     : 为 view 增加 MarginTop 为状态栏高度
+         * subtractMarginTopEqualStatusBarHeight: 为 view 减少 MarginTop 为状态栏高度
+         * setStatusBarColor                    : 设置状态栏颜色
+         * setStatusBarAlpha                    : 设置状态栏透明度
+         * setStatusBarColor4Drawer             : 为 DrawerLayout 设置状态栏颜色
+         * setStatusBarAlpha4Drawer             : 为 DrawerLayout 设置状态栏透明度
+         * getActionBarHeight                   : 获取 ActionBar 高度
+         * setNotificationBarVisibility         : 设置通知栏是否可见
+         * getNavBarHeight                      : 获取导航栏高度
+         * setNavBarVisibility                  : 设置导航栏是否可见
+         * setNavBarImmersive                   : 设置导航栏沉浸式
+         * isNavBarVisible                      : 判断导航栏是否可见
+         *
+         *
+         *
+         *
+         *缓存相关 -> CacheUtils.java -> Test
+            getInstance    : 获取缓存实例
+            put            : 缓存中写入数据
+            getBytes       : 缓存中读取字节数组
+            getString      : 缓存中读取 String
+            getJSONObject  : 缓存中读取 JSONObject
+            getJSONArray   : 缓存中读取 JSONArray
+            getBitmap      : 缓存中读取 Bitmap
+            getDrawable    : 缓存中读取 Drawable
+            getParcelable  : 缓存中读取 Parcelable
+            getSerializable: 缓存中读取 Serializable
+            getCacheSize   : 获取缓存大小
+            getCacheCount  : 获取缓存个数
+            remove         : 根据键值移除缓存
+            clear          : 清除所有缓存
+         *
+         *
+         *
+         *
+         *
+         * 清除相关 -> CleanUtils.java -> Demo
+            cleanInternalCache   : 清除内部缓存
+            cleanInternalFiles   : 清除内部文件
+            cleanInternalDbs     : 清除内部数据库
+            cleanInternalDbByName: 根据名称清除数据库
+            cleanInternalSP      : 清除内部 SP
+            cleanExternalCache   : 清除外部缓存
+            cleanCustomCache     : 清除自定义目录下的文件
+            * 关闭相关 -> CloseUtils.java
+            closeIO       : 关闭 IO
+            closeIOQuietly: 安静关闭 IO
+         *
+         *
+         *
+         *
+         *
+         *转换相关 -> ConvertUtils.java -> Test
+            bytes2HexString, hexString2Bytes        : byteArr 与 hexString 互转
+            chars2Bytes, bytes2Chars                : charArr 与 byteArr 互转
+            memorySize2Byte, byte2MemorySize        : 以 unit 为单位的内存大小与字节数互转
+            byte2FitMemorySize                      : 字节数转合适内存大小
+            timeSpan2Millis, millis2TimeSpan        : 以 unit 为单位的时间长度与毫秒时间戳互转
+            millis2FitTimeSpan                      : 毫秒时间戳转合适时间长度
+            bytes2Bits, bits2Bytes                  : bytes 与 bits 互转
+            input2OutputStream, output2InputStream  : inputStream 与 outputStream 互转
+            inputStream2Bytes, bytes2InputStream    : inputStream 与 byteArr 互转
+            outputStream2Bytes, bytes2OutputStream  : outputStream 与 byteArr 互转
+            inputStream2String, string2InputStream  : inputStream 与 string 按编码互转
+            outputStream2String, string2OutputStream: outputStream 与 string 按编码互转
+            bitmap2Bytes, bytes2Bitmap              : bitmap 与 byteArr 互转
+            drawable2Bitmap, bitmap2Drawable        : drawable 与 bitmap 互转
+            drawable2Bytes, bytes2Drawable          : drawable 与 byteArr 互转
+            view2Bitmap                             : view 转 Bitmap
+            dp2px, px2dp                            : dp 与 px 互转
+            sp2px, px2sp                            : sp 与 px 互转
+         *
+         *
+         *
+         *
+         *
+         *
+         * 设备相关 -> DeviceUtils.java -> Demo
+            isDeviceRooted   : 判断设备是否 rooted
+            getSDKVersion    : 获取设备系统版本号
+            getAndroidID     : 获取设备 AndroidID
+            getMacAddress    : 获取设备 MAC 地址
+            getManufacturer  : 获取设备厂商
+            getModel         : 获取设备型号
+            shutdown         : 关机
+            reboot           : 重启
+            reboot2Recovery  : 重启到 recovery
+            reboot2Bootloader: 重启到 bootloader
+         *
+         *
+         *
+         *
+         *
+         *
+         *判空相关 -> EmptyUtils.java -> Test
+            isEmpty   : 判断对象是否为空
+            isNotEmpty: 判断对象是否非空
+         *
+         *
+         *
+         *
+         *
+         *编码解码相关 -> EncodeUtils.java -> Test
+            urlEncode          : URL 编码
+            urlDecode          : URL 解码
+            base64Encode       : Base64 编码
+            base64Encode2String: Base64 编码
+            base64Decode       : Base64 解码
+            base64UrlSafeEncode: Base64URL 安全编码
+            htmlEncode         : Html 编码
+            htmlDecode         : Html 解码
+
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *加密解密相关 -> EncryptUtils.java -> Test
+            encryptMD2, encryptMD2ToString                        : MD2 加密
+            encryptMD5, encryptMD5ToString                        : MD5 加密
+            encryptMD5File, encryptMD5File2String                 : MD5 加密文件
+            encryptSHA1, encryptSHA1ToString                      : SHA1 加密
+            encryptSHA224, encryptSHA224ToString                  : SHA224 加密
+            encryptSHA256, encryptSHA256ToString                  : SHA256 加密
+            encryptSHA384, encryptSHA384ToString                  : SHA384 加密
+            encryptSHA512, encryptSHA512ToString                  : SHA512 加密
+            encryptHmacMD5, encryptHmacMD5ToString                : HmacMD5 加密
+            encryptHmacSHA1, encryptHmacSHA1ToString              : HmacSHA1 加密
+            encryptHmacSHA224, encryptHmacSHA224ToString          : HmacSHA224 加密
+            encryptHmacSHA256, encryptHmacSHA256ToString          : HmacSHA256 加密
+            encryptHmacSHA384, encryptHmacSHA384ToString          : HmacSHA384 加密
+            encryptHmacSHA512, encryptHmacSHA512ToString          : HmacSHA512 加密
+            encryptDES, encryptDES2HexString, encryptDES2Base64   : DES 加密
+            decryptDES, decryptHexStringDES, decryptBase64DES     : DES 解密
+            encrypt3DES, encrypt3DES2HexString, encrypt3DES2Base64: 3DES 加密
+            decrypt3DES, decryptHexString3DES, decryptBase64_3DES : 3DES 解密
+            encryptAES, encryptAES2HexString, encryptAES2Base64   : AES 加密
+            decryptAES, decryptHexStringAES, decryptBase64AES     : AES 解密
+
+
+
+            文件相关 -> FileIOUtils.java -> Test
+            writeFileFromIS            : 将输入流写入文件
+            writeFileFromBytesByStream : 将字节数组写入文件
+            writeFileFromBytesByChannel: 将字节数组写入文件
+            writeFileFromBytesByMap    : 将字节数组写入文件
+            writeFileFromString        : 将字符串写入文件
+            readFile2List              : 读取文件到字符串链表中
+            readFile2String            : 读取文件到字符串中
+            readFile2BytesByStream     : 读取文件到字节数组中
+            readFile2BytesByChannel    : 读取文件到字节数组中
+            readFile2BytesByMap        : 读取文件到字节数组中
+            setBufferSize              : 设置缓冲区尺寸
+
+
+
+            文件相关 -> FileUtils.java -> Test
+            getFileByPath             : 根据文件路径获取文件
+            isFileExists              : 判断文件是否存在
+            rename                    : 重命名文件
+            isDir                     : 判断是否是目录
+            isFile                    : 判断是否是文件
+            createOrExistsDir         : 判断目录是否存在，不存在则判断是否创建成功
+            createOrExistsFile        : 判断文件是否存在，不存在则判断是否创建成功
+            createFileByDeleteOldFile : 判断文件是否存在，存在则在创建之前删除
+            copyDir                   : 复制目录
+            copyFile                  : 复制文件
+            moveDir                   : 移动目录
+            moveFile                  : 移动文件
+            deleteDir                 : 删除目录
+            deleteFile                : 删除文件
+            deleteAllInDir            : 删除目录下所有东西
+            deleteFilesInDir          : 删除目录下所有文件
+            deleteFilesInDirWithFilter: 删除目录下所有过滤的文件
+            listFilesInDir            : 获取目录下所有文件
+            listFilesInDirWithFilter  : 获取目录下所有过滤的文件
+            getFileLastModified       : 获取文件最后修改的毫秒时间戳
+            getFileCharsetSimple      : 简单获取文件编码格式
+            getFileLines              : 获取文件行数
+            getDirSize                : 获取目录大小
+            getFileSize               : 获取文件大小
+            getDirLength              : 获取目录长度
+            getFileLength             : 获取文件长度
+            getFileMD5                : 获取文件的 MD5 校验码
+            getFileMD5ToString        : 获取文件的 MD5 校验码
+            getDirName                : 根据全路径获取最长目录
+            getFileName               : 根据全路径获取文件名
+            getFileNameNoExtension    : 根据全路径获取文件名不带拓展名
+            getFileExtension          : 根据全路径获取文件拓展名
+
+
+
+            Fragment 相关 -> FragmentUtils.java -> Demo
+            add                   : 新增 fragment
+            show                  : 显示 fragment
+            hide                  : 隐藏 fragment
+            showHide              : 先显示后隐藏 fragment
+            replace               : 替换 fragment
+            pop                   : 出栈 fragment
+            popTo                 : 出栈到指定 fragment
+            popAll                : 出栈所有 fragment
+            remove                : 移除 fragment
+            removeTo              : 移除到指定 fragment
+            removeAll             : 移除所有 fragment
+            getTop                : 获取顶部 fragment
+            getTopInStack         : 获取栈中顶部 fragment
+            getTopShow            : 获取顶部可见 fragment
+            getTopShowInStack     : 获取栈中顶部可见 fragment
+            getFragments          : 获取同级别的 fragment
+            getFragmentsInStack   : 获取同级别栈中的 fragment
+            getAllFragments       : 获取所有 fragment
+            getAllFragmentsInStack: 获取栈中所有 fragment
+            findFragment          : 查找 fragment
+            dispatchBackPress     : 处理 fragment 回退键
+            setBackgroundColor    : 设置背景色
+            setBackgroundResource : 设置背景资源
+            setBackground         : 设置背景
+
+
+
+            图片相关 -> ImageUtils.java -> Demo
+            bitmap2Bytes, bytes2Bitmap      : bitmap 与 byteArr 互转
+            drawable2Bitmap, bitmap2Drawable: drawable 与 bitmap 互转
+            drawable2Bytes, bytes2Drawable  : drawable 与 byteArr 互转
+            view2Bitmap                     : view 转 bitmap
+            getBitmap                       : 获取 bitmap
+            scale                           : 缩放图片
+            clip                            : 裁剪图片
+            skew                            : 倾斜图片
+            rotate                          : 旋转图片
+            getRotateDegree                 : 获取图片旋转角度
+            toRound                         : 转为圆形图片
+            toRoundCorner                   : 转为圆角图片
+            addCornerBorder                 : 添加圆角边框
+            addCircleBorder                 : 添加圆形边框
+            addReflection                   : 添加倒影
+            addTextWatermark                : 添加文字水印
+            addImageWatermark               : 添加图片水印
+            toAlpha                         : 转为 alpha 位图
+            toGray                          : 转为灰度图片
+            fastBlur                        : 快速模糊
+            renderScriptBlur                : renderScript 模糊图片
+            stackBlur                       : stack 模糊图片
+            save                            : 保存图片
+            isImage                         : 根据文件名判断文件是否为图片
+            getImageType                    : 获取图片类型
+            compressByScale                 : 按缩放压缩
+            compressByQuality               : 按质量压缩
+            compressBySampleSize            : 按采样大小压缩
+
+
+
+            意图相关 -> IntentUtils.java
+            getInstallAppIntent        : 获取安装 App（支持 6.0）的意图
+            getUninstallAppIntent      : 获取卸载 App 的意图
+            getLaunchAppIntent         : 获取打开 App 的意图
+            getAppDetailsSettingsIntent: 获取 App 具体设置的意图
+            getShareTextIntent         : 获取分享文本的意图
+            getShareImageIntent        : 获取分享图片的意图
+            getComponentIntent         : 获取其他应用组件的意图
+            getShutdownIntent          : 获取关机的意图
+            getCaptureIntent           : 获取拍照的意图
+
+
+
+            键盘相关 -> KeyboardUtils.java -> Demo
+            showSoftInput                   : 动态显示软键盘
+            hideSoftInput                   : 动态隐藏软键盘
+            toggleSoftInput                 : 切换键盘显示与否状态
+            isSoftInputVisible              : 判断软键盘是否可见
+            registerSoftInputChangedListener: 注册软键盘改变监听器
+            clickBlankArea2HideSoftInput    : 点击屏幕空白区域隐藏软键盘
+
+
+
+            日志相关 -> LogUtils.java -> Demo
+            getConfig               : 获取 log 配置
+            Config.setLogSwitch     : 设置 log 总开关
+            Config.setConsoleSwitch : 设置 log 控制台开关
+            Config.setGlobalTag     : 设置 log 全局 tag
+            Config.setLogHeadSwitch : 设置 log 头部信息开关
+            Config.setLog2FileSwitch: 设置 log 文件开关
+            Config.setDir           : 设置 log 文件存储目录
+            Config.setFilePrefix    : 设置 log 文件前缀
+            Config.setBorderSwitch  : 设置 log 边框开关
+            Config.setConsoleFilter : 设置 log 控制台过滤器
+            Config.setFileFilter    : 设置 log 文件过滤器
+            Config.setStackDeep     : 设置 log 栈深度
+            v                       : tag 为类名的 Verbose 日志
+            vTag                    : 自定义 tag 的 Verbose 日志
+            d                       : tag 为类名的 Debug 日志
+            dTag                    : 自定义 tag 的 Debug 日志
+            i                       : tag 为类名的 Info 日志
+            iTag                    : 自定义 tag 的 Info 日志
+            w                       : tag 为类名的 Warn 日志
+            wTag                    : 自定义 tag 的 Warn 日志
+            e                       : tag 为类名的 Error 日志
+            eTag                    : 自定义 tag 的 Error 日志
+            a                       : tag 为类名的 Assert 日志
+            aTag                    : 自定义 tag 的 Assert 日志
+            file                    : log 到文件
+            json                    : log 字符串之 json
+            xml                     : log 字符串之 xml
+
+
+
+            网络相关 -> NetworkUtils.java -> Demo
+            openWirelessSettings  : 打开网络设置界面
+            isConnected           : 判断网络是否连接
+            isAvailableByPing     : 判断网络是否可用
+            getMobileDataEnabled  : 判断移动数据是否打开
+            setMobileDataEnabled  : 打开或关闭移动数据
+            isMobileData          : 判断网络是否是移动数据
+            is4G                  : 判断网络是否是 4G
+            getWifiEnabled        : 判断 wifi 是否打开
+            setWifiEnabled        : 打开或关闭 wifi
+            isWifiConnected       : 判断 wifi 是否连接状态
+            isWifiAvailable       : 判断 wifi 数据是否可用
+            getNetworkOperatorName: 获取移动网络运营商名称
+            getNetworkType        : 获取当前网络类型
+            getIPAddress          : 获取 IP 地址
+            getDomainAddress      : 获取域名 ip 地址
+
+
+
+            对象相关 -> ObjectUtils.java -> Test
+            isEmpty   : 判断对象是否为空
+            isNotEmpty: 判断对象是否非空
+            equals    : 判断对象是否相等
+
+
+
+            手机相关 -> PhoneUtils.java -> Demo
+            isPhone            : 判断设备是否是手机
+            getIMEI            : 获取 IMEI 码
+            getIMSI            : 获取 IMSI 码
+            getPhoneType       : 获取移动终端类型
+            isSimCardReady     : 判断 sim 卡是否准备好
+            getSimOperatorName : 获取 Sim 卡运营商名称
+            getSimOperatorByMnc: 获取 Sim 卡运营商名称
+            getPhoneStatus     : 获取手机状态信息
+            dial               : 跳至拨号界面
+            call               : 拨打 phoneNumber
+            sendSms            : 跳至发送短信界面
+            sendSmsSilent      : 发送短信
+            getAllContactInfo  : 获取手机联系人
+            getContactNum      : 打开手机联系人界面点击联系人后便获取该号码
+            getAllSMS          : 获取手机短信并保存到 xml 中
+
+
+
+            进程相关 -> ProcessUtils.java -> Demo
+            getForegroundProcessName  : 获取前台线程包名
+            killAllBackgroundProcesses: 杀死所有的后台服务进程
+            killBackgroundProcesses   : 杀死后台服务进程
+
+
+
+            正则相关 -> RegexUtils.java -> Test
+            isMobileSimple : 验证手机号（简单）
+            isMobileExact  : 验证手机号（精确）
+            isTel          : 验证电话号码
+            isIDCard15     : 验证身份证号码 15 位
+            isIDCard18     : 验证身份证号码 18 位
+            isEmail        : 验证邮箱
+            isURL          : 验证 URL
+            isZh           : 验证汉字
+            isUsername     : 验证用户名
+            isDate         : 验证 yyyy-MM-dd 格式的日期校验，已考虑平闰年
+            isIP           : 验证 IP 地址
+            isMatch        : 判断是否匹配正则
+            getMatches     : 获取正则匹配的部分
+            getSplits      : 获取正则匹配分组
+            getReplaceFirst: 替换正则匹配的第一部分
+            getReplaceAll  : 替换所有正则匹配的部分
+
+
+
+            屏幕相关 -> ScreenUtils.java
+            getScreenWidth     : 获取屏幕的宽度（单位：px）
+            getScreenHeight    : 获取屏幕的高度（单位：px）
+            getScreenDensity   : 获取屏幕密度
+            getScreenDensityDpi: 获取屏幕密度 DPI
+            setFullScreen      : 设置屏幕为全屏
+            setLandscape       : 设置屏幕为横屏
+            setPortrait        : 设置屏幕为竖屏
+            isLandscape        : 判断是否横屏
+            isPortrait         : 判断是否竖屏
+            getScreenRotation  : 获取屏幕旋转角度
+            screenShot         : 截屏
+            isScreenLock       : 判断是否锁屏
+            setSleepDuration   : 设置进入休眠时长
+            getSleepDuration   : 获取进入休眠时长
+            isTablet           : 判断是否是平板
+
+
+
+            SD 卡相关 -> SDCardUtils.java -> Demo
+            isSDCardEnable: 判断 SD 卡是否可用
+            getSDCardPaths: 获取 SD 卡路径
+
+
+
+            服务相关 -> ServiceUtils.java
+            getAllRunningService: 获取所有运行的服务
+            startService        : 启动服务
+            stopService         : 停止服务
+            bindService         : 绑定服务
+            unbindService       : 解绑服务
+            isServiceRunning    : 判断服务是否运行
+
+
+
+            Shell 相关 -> ShellUtils.java
+            execCmd: 是否是在 root 下执行命令
+
+
+
+            尺寸相关 -> SizeUtils.java
+            dp2px, px2dp     : dp 与 px 转换
+            sp2px, px2sp     : sp 与 px 转换
+            applyDimension   : 各种单位转换
+            forceGetViewSize : 在 onCreate 中获取视图的尺寸
+            measureView      : 测量视图尺寸
+            getMeasuredWidth : 获取测量视图宽度
+            getMeasuredHeight: 获取测量视图高度
+
+
+
+            Snackbar 相关 -> SnackbarUtils.java -> Demo
+            with           : 设置 snackbar 依赖 view
+            setMessage     : 设置消息
+            setMessageColor: 设置消息颜色
+            setBgColor     : 设置背景色
+            setBgResource  : 设置背景资源
+            setDuration    : 设置显示时长
+            setAction      : 设置行为
+            setBottomMargin: 设置底边距
+            show           : 显示 snackbar
+            showSuccess    : 显示预设成功的 snackbar
+            showWarning    : 显示预设警告的 snackbar
+            showError      : 显示预设错误的 snackbar
+            dismiss        : 消失 snackbar
+            getView        : 获取 snackbar 视图
+            addView        : 添加 snackbar 视图
+
+
+
+            SpannableString 相关 -> SpanUtils.java -> Demo
+            setFlag           : 设置标识
+            setForegroundColor: 设置前景色
+            setBackgroundColor: 设置背景色
+            setLineHeight     : 设置行高
+            setQuoteColor     : 设置引用线的颜色
+            setLeadingMargin  : 设置缩进
+            setBullet         : 设置列表标记
+            setIconMargin     : 设置图标
+            setFontSize       : 设置字体尺寸
+            setFontProportion : 设置字体比例
+            setFontXProportion: 设置字体横向比例
+            setStrikethrough  : 设置删除线
+            setUnderline      : 设置下划线
+            setSuperscript    : 设置上标
+            setSubscript      : 设置下标
+            setBold           : 设置粗体
+            setItalic         : 设置斜体
+            setBoldItalic     : 设置粗斜体
+            setFontFamily     : 设置字体系列
+            setTypeface       : 设置字体
+            setAlign          : 设置对齐
+            setClickSpan      : 设置点击事件
+            setUrl            : 设置超链接
+            setBlur           : 设置模糊
+            setShader         : 设置着色器
+            setShadow         : 设置阴影
+            setSpans          : 设置样式
+            append            : 追加样式字符串
+            appendLine        : 追加一行样式字符串
+            appendImage       : 追加图片
+            appendSpace       : 追加空白
+            create            : 创建样式字符串
+
+
+
+            SP 相关 -> SPUtils.java -> Test
+            getInstance: 获取 SP 实例
+            put        : SP 中写入数据
+            getString  : SP 中读取 String
+            getInt     : SP 中读取 int
+            getLong    : SP 中读取 long
+            getFloat   : SP 中读取 float
+            getBoolean : SP 中读取 boolean
+            getAll     : SP 中获取所有键值对
+            contains   : SP 中是否存在该 key
+            remove     : SP 中移除该 key
+            clear      : SP 中清除所有数据
+
+
+
+            字符串相关 -> StringUtils.java -> Test
+            isEmpty         : 判断字符串是否为 null 或长度为 0
+            isTrimEmpty     : 判断字符串是否为 null 或全为空格
+            isSpace         : 判断字符串是否为 null 或全为空白字符
+            equals          : 判断两字符串是否相等
+            equalsIgnoreCase: 判断两字符串忽略大小写是否相等
+            null2Length0    : null 转为长度为 0 的字符串
+            length          : 返回字符串长度
+            upperFirstLetter: 首字母大写
+            lowerFirstLetter: 首字母小写
+            reverse         : 反转字符串
+            toDBC           : 转化为半角字符
+            toSBC           : 转化为全角字符
+
+
+
+            时间相关 -> TimeUtils.java -> Test
+            millis2String           : 将时间戳转为时间字符串
+            string2Millis           : 将时间字符串转为时间戳
+            string2Date             : 将时间字符串转为 Date 类型
+            date2String             : 将 Date 类型转为时间字符串
+            date2Millis             : 将 Date 类型转为时间戳
+            millis2Date             : 将时间戳转为 Date 类型
+            getTimeSpan             : 获取两个时间差（单位：unit）
+            getFitTimeSpan          : 获取合适型两个时间差
+            getNowMills             : 获取当前毫秒时间戳
+            getNowString            : 获取当前时间字符串
+            getNowDate              : 获取当前 Date
+            getTimeSpanByNow        : 获取与当前时间的差（单位：unit）
+            getFitTimeSpanByNow     : 获取合适型与当前时间的差
+            getFriendlyTimeSpanByNow: 获取友好型与当前时间的差
+            getMillis               : 获取与给定时间等于时间差的时间戳
+            getString               : 获取与给定时间等于时间差的时间字符串
+            getDate                 : 获取与给定时间等于时间差的 Date
+            getMillisByNow          : 获取与当前时间等于时间差的时间戳
+            getStringByNow          : 获取与当前时间等于时间差的时间字符串
+            getDateByNow            : 获取与当前时间等于时间差的 Date
+            isToday                 : 判断是否今天
+            isLeapYear              : 判断是否闰年
+            getChineseWeek          : 获取中式星期
+            getUSWeek               : 获取美式式星期
+            getWeekIndex            : 获取星期索引
+            getWeekOfMonth          : 获取月份中的第几周
+            getWeekOfYear           : 获取年份中的第几周
+            getChineseZodiac        : 获取生肖
+            getZodiac               : 获取星座
+
+
+
+            吐司相关 -> ToastUtils.java -> Demo
+            setGravity     : 设置吐司位置
+            setBgColor     : 设置背景颜色
+            setBgResource  : 设置背景资源
+            setMessageColor: 设置消息颜色
+            showShort      : 显示短时吐司
+            showLong       : 显示长时吐司
+            showCustomShort: 显示短时自定义吐司
+            showCustomLong : 显示长时自定义吐司
+            cancel         : 取消吐司显示
+
+
+
+            压缩相关 -> ZipUtils.java -> Test
+            zipFile           : 压缩文件
+            unzipFile         : 解压文件
+            unzipFileByKeyword: 解压带有关键字的文件
+            getFilesPath      : 获取压缩文件中的文件路径链表
+            getComments       : 获取压缩文件中的注释链表
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         *
+         */
+
 
     }
 

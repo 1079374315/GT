@@ -4,15 +4,14 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF00"
+    android:background="#03A9F4"
     android:gravity="center"
     >
 
     <Button
-        android:id="@+id/my_btn"
+        android:id="@+id/f2_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="跳转"
+        android:text="界面2"
         />
-
 </LinearLayout>

@@ -1,15 +1,15 @@
-package com.gsls.gtlibrary.activity;
+package com.gsls.gtlibrary;
 
-import com.gsls.gtlibrary.R;
+import android.os.Bundle;
+
 import com.gsls.gtlibrary.util.GT;
 
 @GT.Annotations.GT_Activity(R.layout.activity_main)
 public class MainActivity extends GT.AnnotationActivity {
 
     @Override
-    protected void initView() {
-        build(this);
-        log("运行成功！");
+    protected void initView(Bundle savedInstanceState) {
+        build(this);//绑定 Activity
     }
 
 }
