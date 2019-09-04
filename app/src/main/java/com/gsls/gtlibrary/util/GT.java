@@ -1,5 +1,8 @@
 package com.gsls.gtlibrary.util;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -47,8 +50,13 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
+import android.view.animation.RotateAnimation;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -158,7 +166,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  *
  * 更新内容：（1.0.7版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
- *
+ * 2.新增 Animator 工具包
  * <p>
  * <p>
  * <p>
@@ -173,7 +181,7 @@ public class GT {
     //================================== 所有属于 GT 类的属性 =======================================
 
     @SuppressLint("StaticFieldLeak")
-    private static GT gt = null;                 //定义 GT 对象
+    private static GT gtAndroid = null;                 //定义 GT 对象
     private static boolean LOG_TF = true;        //控制外部所有的 Log 显示
     private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
     private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
@@ -193,14 +201,14 @@ public class GT {
      * @return GT  返回 GT 对象
      */
     public static GT getGT() {
-        if (gt == null) {
+        if (gtAndroid == null) {
             synchronized (GT.class) {
-                if (gt == null) {
-                    gt = new GT();
+                if (gtAndroid == null) {
+                    gtAndroid = new GT();
                 }
             }
         }
-        return gt;
+        return gtAndroid;
     }
 
     /**
@@ -968,7 +976,7 @@ public class GT {
 
         private static int NOTIFYID = 0x1997; //通知id
         private static String CHANEL_ID = "com.gsls.king";
-        private static String CHANEL_DESCRIPTION = "GT_Android 描述";
+        private static String CHANEL_DESCRIPTION = "GT 描述";
         private static String CHANEL_NAME = "GT_Android复习";
 
         /**
@@ -1968,6 +1976,8 @@ public class GT {
 //                e.printStackTrace();
             }
         }
+
+        public JSON() {}
 
         /*********************************  根据 Bean 获取数据*************************************/
         /**
@@ -3957,8 +3967,427 @@ public class GT {
 
     }
 
+    /**
+     * 手机屏幕操作
+     */
+    public static class ScreenOperation{
+
+        /**
+         * 点击屏幕 可根据 屏幕的比例 与 具体的 X,Y 坐标点击
+         */
+        public static class AutoTouch{
+            private static int width = 0;
+            private static int height = 0;
+
+            /**
+             * 传入在屏幕中的比例位置，坐标左上角为基准
+             * @param act 传入Activity对象
+             * @param ratioX 需要点击的x坐标在屏幕中的比例位置
+             * @param ratioY 需要点击的y坐标在屏幕中的比例位置
+             */
+            public static void autoClickRatio(Activity act, final double ratioX, final double ratioY) {
+                width = act.getWindowManager().getDefaultDisplay().getWidth();
+                height = act.getWindowManager().getDefaultDisplay().getHeight();
+                Thread.runJava(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 线程睡眠0.3s
+                        Thread.sleep(300);
+                        // 生成点击坐标
+                        int x = (int) (width * ratioX);
+                        int y = (int) (height * ratioY);
+
+                        // 利用ProcessBuilder执行shell命令
+                        String[] order = { "input", "tap", "" + x, "" + y };
+                        try {
+                            new ProcessBuilder(order).start();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
+            /**
+             * 传入在屏幕中的坐标，坐标左上角为基准
+             * @param act 传入Activity对象
+             * @param x 需要点击的x坐标
+             * @param y 需要点击的x坐标
+             */
+            public static void autoClickPos(Activity act, final double x, final double y) {
+                width = act.getWindowManager().getDefaultDisplay().getWidth();
+                height = act.getWindowManager().getDefaultDisplay().getHeight();
+                // 利用ProcessBuilder执行shell命令
+                String[] order = { "input", "tap", "" + x, "" + y };
+                try {
+                    new ProcessBuilder(order).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+    }
 
     //============================================= UI类 ===========================================
+
+    /**
+     * Android GT 动画
+     * 动画后面加 F 的则表示 该动画 是假的动画 后面为 T 的则表示为 真动画
+     */
+    public static class GT_Animation{
+
+        public GT_Animation(){}
+
+        /**
+         * @移动动画
+         * @param x                 初始 X 位置
+         * @param toX               最终 X 位置
+         * @param y                 初始 Y 位置
+         * @param toY               最终 Y 位置
+         * @param time              动画持续时间
+         * @param isSaveClose       是否保持动画结束时的最终状态
+         * @param runCount          播放动画的次数 -1 表示无限循环
+         * @param toAndFro          是否来回播放
+         * @param view              给 View 添加动画
+         * @return
+         */
+        public GT_Animation translate_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view){
+            Animation translateAnimation = new TranslateAnimation(x,toX,y,toY);
+            translateAnimation.setDuration(time);                   //设置动画持续周期
+            translateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            translateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                translateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(translateAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @移动动画
+         * @param x                 初始 X 位置
+         * @param toX               最终 X 位置
+         * @param y                 初始 Y 位置
+         * @param toY               最终 Y 位置
+         * @param time              动画持续时间
+         * @param isSaveClose       是否保持动画结束时的最终状态
+         * @param runCount          播放动画的次数 -1 表示为无限次数
+         * @param toAndFro          是否来回播放
+         * @return
+         */
+        public Animation translate_F(float x,float toX,float y, float toY,long time,boolean isSaveClose,int runCount,boolean toAndFro){
+            Animation translateAnimation = new TranslateAnimation(x,toX,y,toY);
+            translateAnimation.setDuration(time);               //设置动画持续周期
+            translateAnimation.setFillAfter(isSaveClose);       //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            translateAnimation.setFillBefore(!isSaveClose);     // 动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                translateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);   //是否来回的播放
+            return translateAnimation;
+        }
+
+
+        /**
+         * @左右动画
+         * @param x             初始 X 位置
+         * @param toX           最终 X 位置
+         * @param time          执行动画时间
+         * @param runCount      执行动画次数
+         * @param toAndFro      是否来回播放
+         * @param view          给View加入动画
+         * @return
+         */
+        public GT_Animation translateX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view){
+            ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            translateX.setDuration(time);      //动画执行时间
+            if(runCount == -1){
+                translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            }else{
+                translateX.setRepeatCount(runCount);//循环多少次
+            }
+            if(toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            translateX.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @左右动画
+         * @param x             初始 X 位置
+         * @param toX           最终 X 位置
+         * @param time          执行动画时间
+         * @param runCount      执行动画次数
+         * @param toAndFro      是否来回播放
+         * @param view          给View加入动画
+         * @return
+         */
+        public ObjectAnimator translateX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view){
+            ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            translateX.setDuration(time);      //动画执行时间
+            if(runCount == -1){
+                translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            }else{
+                translateX.setRepeatCount(runCount);//循环多少次
+            }
+            if(toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return translateX;
+        }
+
+        /**
+         * @上下动画
+         * @param y             初始 Y 位置
+         * @param toY           最终 Y 位置
+         * @param time          执行动画时间
+         * @param runCount      执行动画次数
+         * @param toAndFro      是否来回播放
+         * @param view          给View加入动画
+         * @return
+         */
+        public GT_Animation translateY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view){
+            ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+            translateY.setDuration(time);      //动画执行时间
+            if(runCount == -1){
+                translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            }else{
+                translateY.setRepeatCount(runCount);//循环多少次
+            }
+            if(toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            translateY.start();//执行动画
+            return this;
+        }
+
+
+        /**
+         * @上下动画
+         * @param y             初始 Y 位置
+         * @param toY           最终 Y 位置
+         * @param time          执行动画时间
+         * @param runCount      执行动画次数
+         * @param toAndFro      是否来回播放
+         * @param view          给View加入动画
+         * @return
+         */
+        public ObjectAnimator translateY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view){
+            ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+            translateY.setDuration(time);      //动画执行时间
+            if(runCount == -1){
+                translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            }else{
+                translateY.setRepeatCount(runCount);//循环多少次
+            }
+            if(toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return translateY;
+        }
+
+
+
+        /**
+         * @缩放动画
+         * @param x             原始 X 尺寸
+         * @param toX           结束 X 尺寸
+         * @param y             原始 Y 尺寸
+         * @param toY           结束 Y 尺寸
+         * @param time          动画持续时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @param view          给 View 添加动画
+         * @return
+         */
+        public GT_Animation scale_F(float x, float toX, float y, float toY,long time,boolean isSaveClose,int runCount, boolean toAndFro,View view){
+            Animation scaleAnimation= new ScaleAnimation(x,toX,y,toY,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+            scaleAnimation.setDuration(time);                   //动画时间
+            scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                scaleAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(scaleAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @缩放动画
+         * @param x             原始 X 尺寸
+         * @param toX           结束 X 尺寸
+         * @param y             原始 Y 尺寸
+         * @param toY           结束 Y 尺寸
+         * @param time          动画持续时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @return
+         */
+        public Animation scale_F(float x, float toX, float y, float toY,long time,boolean isSaveClose,int runCount, boolean toAndFro){
+            Animation scaleAnimation= new ScaleAnimation(x,toX,y,toY,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+            scaleAnimation.setDuration(time);                   //动画时间
+            scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                scaleAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return scaleAnimation;
+        }
+
+
+
+
+        /**
+         * @旋转动画
+         * @param degrees       View初始角度
+         * @param toDegrees     View旋转角度
+         * @param time          动画执行时间
+         * @param time          动画持续时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @param view          执行View动画
+         * @return
+         */
+        public GT_Animation rotate_F(float degrees,float toDegrees,long time,boolean isSaveClose,int runCount, boolean toAndFro,View view ){
+            Animation rotateAnimation = new RotateAnimation(degrees,toDegrees,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+            rotateAnimation.setDuration(time);                   //动画时间
+            rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                rotateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(rotateAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @旋转动画
+         * @param degrees       View初始角度
+         * @param toDegrees     View旋转角度
+         * @param time          动画执行时间
+         * @param time          动画持续时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @return
+         */
+        public Animation rotate_F(float degrees,float toDegrees,long time,boolean isSaveClose,int runCount, boolean toAndFro){
+            Animation rotateAnimation = new RotateAnimation(degrees,toDegrees,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+            rotateAnimation.setDuration(time);                   //动画时间
+            rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                rotateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return rotateAnimation;
+        }
+
+
+
+
+        /**
+         * @透明动画
+         * @param alpha         初始透明度
+         * @param toAlpha       最终透明度
+         * @param time          动画执行时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @param view          执行View动画
+         * @return
+         */
+        public GT_Animation alpha_F(float alpha, float toAlpha, long time,boolean isSaveClose,int runCount, boolean toAndFro,View view){
+            Animation alphaAnimation = new AlphaAnimation(alpha,toAlpha);
+            alphaAnimation.setDuration(time);                   //动画时间
+            alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                alphaAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(alphaAnimation);                //开启动画
+            return this;
+        }
+
+        /**
+         * @透明动画
+         * @param alpha         初始透明度
+         * @param toAlpha       最终透明度
+         * @param time          动画执行时间
+         * @param isSaveClose   是否保持动画结束时的最终状态
+         * @param runCount      播放动画的次数 -1 表示无限次数
+         * @param toAndFro      是否来回播放
+         * @return
+         */
+        public Animation alpha_F(float alpha, float toAlpha, long time,boolean isSaveClose,int runCount, boolean toAndFro){
+            Animation alphaAnimation = new AlphaAnimation(alpha,toAlpha);
+            alphaAnimation.setDuration(time);                   //动画时间
+            alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if(runCount == -1){
+                alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            }else{
+                alphaAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if(toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return alphaAnimation;
+        }
+
+
+
+
+        /**
+         * @添加组合动画
+         * @param annotationList
+         * @param view
+         * @return
+         */
+        public GT_Animation animationSet_F(List<Animation> annotationList,View view){
+            AnimationSet animationSet = new AnimationSet(true);
+            if(annotationList != null && annotationList.size() > 1){
+                for(Animation animation : annotationList){
+                    animationSet.addAnimation(animation);
+                }
+            }
+            view.startAnimation(animationSet);//开启组合动画
+            return this;
+        }
+
+        /**
+         * @添加组合动画
+         * @param annotationList
+         * @return
+         */
+        public AnimationSet animationSet_F(List<Animation> annotationList){
+            AnimationSet animationSet = new AnimationSet(true);
+            if(annotationList != null && annotationList.size() > 1){
+                for(Animation animation : annotationList){
+                    animationSet.addAnimation(animation);
+                }
+            }
+            return animationSet;
+        }
+
+
+
+    }
 
     /**
      * Window 窗体类
@@ -4186,7 +4615,6 @@ public class GT {
 
 
     }
-
 
     /**
      * Game 游戏类
@@ -4685,7 +5113,7 @@ public class GT {
         private Object topFragment;                     //记录当前未加入退回栈的最顶层
         private List<String> topList;                   //记录当前 加入回退栈最顶层的 Fragment
         private Bundle savedInstanceState;              //用于鉴别当前 Activity 是否为初次创建
-        private static Map<String, Object> mapSQL;       //用于存储 Fragment 之间数据传递的 Map
+        private static Map<String, Object> mapSQL;      //用于存储 Fragment 之间数据传递的 Map
 
         /**
          * 提供给外部的访问接口
@@ -6043,11 +6471,13 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer play_pause() {
-            recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
-            if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
-                mediaPlayer.start();//继续播放
-            } else {  //当前处于音乐暂停状态
-                mediaPlayer.pause();//暂停音乐
+            if(mediaPlayer != null){
+                recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
+                if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
+                    mediaPlayer.start();//继续播放
+                } else {  //当前处于音乐暂停状态
+                    mediaPlayer.pause();//暂停音乐
+                }
             }
             return this;
         }//播放 与 暂停
@@ -6058,8 +6488,10 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer stop() {
-            isPlay = false;//设置为暂停状态
-            mediaPlayer.stop();
+            if(mediaPlayer != null && isPlay){
+                isPlay = false;//设置为暂停状态
+                mediaPlayer.stop();
+            }
             return this;
         }//停止音乐
 
@@ -6069,24 +6501,26 @@ public class GT {
          * @return
          */
         private GT_MediaPlayer recover_play() {
-            if (!isPlay) {       //停止过播放
-                if (mediaPlayer.isPlaying()) {//如果属于播放状态
-                    mediaPlayer.stop();//停止播放
-                }
-                mediaPlayer.release();//释放资源
-                mediaPlayer = null;//清空内存中对象
-                if (resid != 0) {
-                    mediaPlayer = MediaPlayer.create(activity, resid);    //初始化 MediaPlayer 对象
-                } else if (url != null) {
-                    mediaPlayer = new MediaPlayer();
-                    try {
-                        mediaPlayer.setDataSource(url);
-                        mediaPlayer.prepare();//预加载音频
-                    } catch (IOException e) {
-                        GT.log_e(getGT().getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
+            if(mediaPlayer != null){
+                if (!isPlay) {       //停止过播放
+                    if (mediaPlayer.isPlaying()) {//如果属于播放状态
+                        mediaPlayer.stop();//停止播放
                     }
+                    mediaPlayer.release();//释放资源
+                    mediaPlayer = null;//清空内存中对象
+                    if (resid != 0) {
+                        mediaPlayer = MediaPlayer.create(activity, resid);    //初始化 MediaPlayer 对象
+                    } else if (url != null) {
+                        mediaPlayer = new MediaPlayer();
+                        try {
+                            mediaPlayer.setDataSource(url);
+                            mediaPlayer.prepare();//预加载音频
+                        } catch (IOException e) {
+                            GT.log_e(getGT().getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
+                        }
+                    }
+                    isPlay = true;//恢复可播放状态
                 }
-                isPlay = true;//恢复可播放状态
             }
             return this;
         }//恢复可播放
@@ -6095,11 +6529,13 @@ public class GT {
          * 释放资源
          */
         public void close() {
-            if (mediaPlayer.isPlaying()) {//如果属于播放状态
-                mediaPlayer.stop();//停止播放
+            if(mediaPlayer != null){
+                if (mediaPlayer.isPlaying()) {//如果属于播放状态
+                    mediaPlayer.stop();//停止播放
+                }
+                mediaPlayer.release();//释放资源
+                mediaPlayer = null;
             }
-            mediaPlayer.release();//释放资源
-            mediaPlayer = null;
         }//释放资源
 
 
@@ -6206,7 +6642,7 @@ public class GT {
          * 初始化音频
          */
         private void loadMusic() {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 for (String key : map.keySet()) {
                     mapMusic.put(key, soundPool.load(context, map.get(key), 1));//初始化 待播放的音频
                 }
@@ -6220,7 +6656,7 @@ public class GT {
          * @return
          */
         public GT_SoundPool removalMusic(Integer key) {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 if (map.containsKey(key)) {
                     map.remove(key);
                     mapMusic.remove(key);
@@ -6238,7 +6674,7 @@ public class GT {
          * @return
          */
         public GT_SoundPool clear() {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 map.clear();
                 mapMusic.clear();
             }
@@ -6253,7 +6689,7 @@ public class GT {
          * @return
          */
         public GT_SoundPool updateMusic(String key, Integer rawId) {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 if (map.containsKey(key)) {
                     map.put(key, rawId);
                     mapMusic.put(key, rawId);
@@ -6275,15 +6711,16 @@ public class GT {
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
             //播放所选音频
-            soundPool.play(
-                    mapMusic.get(key),           //指定播放的音频 key
-                    1,              //左声道 为0.0 到 1.0
-                    1,             //右声道 为0.0 到 1.0
-                    0,                 //优先级 0
-                    (loop == true ? -1 : 0),    //是否循环 0为不循环, -1 为循环
-                    rate                        //速率 为正常速率 1  最低为 0.5，最高为 2
-            );
-
+            if(soundPool != null){
+                soundPool.play(
+                        mapMusic.get(key),           //指定播放的音频 key
+                        1,              //左声道 为0.0 到 1.0
+                        1,             //右声道 为0.0 到 1.0
+                        0,                 //优先级 0
+                        (loop == true ? -1 : 0),    //是否循环 0为不循环, -1 为循环
+                        rate                        //速率 为正常速率 1  最低为 0.5，最高为 2
+                );
+            }
             return this;
         }
     }
@@ -6428,7 +6865,7 @@ public class GT {
          * 为给 Activity 类 标的注解
          * 用法如下：
          *
-         * @Activity(R.layout.activity_main) public class MainActivity extends AppCompatActivity {....}
+         * @Activity(R.layout.activity_main) public class AndroidActivity extends AppCompatActivity {....}
          */
         @Target(ElementType.TYPE)
         @Retention(RetentionPolicy.RUNTIME)
