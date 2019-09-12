@@ -1,6 +1,6 @@
 package com.gsls.gtlibrary.util;
 
-import android.animation.Animator;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
@@ -80,7 +80,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import com.gsls.gtlibrary.entity.LoginBean;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -98,6 +98,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -146,7 +147,6 @@ import okhttp3.RequestBody;
 
 import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
 
-
 /**
  * 工具类说明：
  * GSLS_Tool
@@ -161,18 +161,21 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.31
+ * 更新时间:2019.9.12
  * <p>
- *
- * 更新内容：（1.0.7版本 大更新）
+ * <p>
+ * 更新内容：（1.0.7 版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
- * 2.新增 Animator 工具包
+ * 2.新增 Animator（真/假）动画工具包
+ * 3.新增 HttpUtil 原始网络请求 GET / POST
+ * 4.优化GT_Object的用法
  * <p>
  * <p>
  * <p>
  * 小提示：(用于 AndroidStudio )
  * 收起所有的 方法: Ctrl + Shift +  - (减号)
  * 展开所有的 方法: Ctrl + Shift +  + (加号)
+ * 代码格式化快捷键是 Ctrl + Alt + L
  */
 
 @SuppressWarnings("unchecked")
@@ -180,7 +183,6 @@ public class GT {
 
     //================================== 所有属于 GT 类的属性 =======================================
 
-    @SuppressLint("StaticFieldLeak")
     private static GT gtAndroid = null;                 //定义 GT 对象
     private static boolean LOG_TF = true;        //控制外部所有的 Log 显示
     private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
@@ -200,7 +202,7 @@ public class GT {
      *
      * @return GT  返回 GT 对象
      */
-    public static GT getGT() {
+    private static GT getGT() {
         if (gtAndroid == null) {
             synchronized (GT.class) {
                 if (gtAndroid == null) {
@@ -323,6 +325,7 @@ public class GT {
 
     /**
      * 设置是否初始化 GT 必要初始化的工具包
+     *
      * @param isGTUtil
      */
     public static void setIsGTUtil(boolean isGTUtil) {
@@ -1090,6 +1093,7 @@ public class GT {
                 // 通道的初始值不执行任何操作，因此可以安全地执行
                 // 启动顺序
                 NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                assert notificationManager != null;
                 notificationManager.createNotificationChannel(notificationChannel);
 
                 return CHANEL_ID;
@@ -1173,7 +1177,7 @@ public class GT {
         public static final int PRIVATE = 0;        //只有本应用可读写
         public static final int PROTECTED = 1;      //其他应用可以只读
         public static final int PUBLIC = 2;         //其他应用可以读写
-        private Gson gson = new Gson();             //是俩胡 Gson 对象
+        private Gson gson = new Gson();             //是 Gson 对象
 
         /**
          * 初始化 SP
@@ -1977,7 +1981,8 @@ public class GT {
             }
         }
 
-        public JSON() {}
+        public JSON() {
+        }
 
         /*********************************  根据 Bean 获取数据*************************************/
         /**
@@ -1990,7 +1995,7 @@ public class GT {
             Object o = null;
             try {
                 o = new Gson().fromJson(string, aClass);
-            } catch (JsonSyntaxException exception) {
+            } catch (Exception exception) {
                 log_e(getGT().getLineInfo(), "你的 JSON 解析类型不匹配，请检查  " + aClass + "  是否与请求的Json数据一致！");
             }
             return o;
@@ -2306,6 +2311,191 @@ public class GT {
     }
 
     /**
+     * HttpUtil 原始网络请求类
+     */
+    public static class HttpUtil {
+
+        static final String ENCODE = "utf-8";
+        static final String GET = "GET";
+        static final String POST = "POST";
+
+
+        /**
+         * get请求封装
+         */
+        public static void getRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
+            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
+                @Override
+                public void run() {
+                    StringBuffer sb = new StringBuffer(url);
+                    sb.append("?");
+                    if (params != null && !params.isEmpty()) {
+                        for (Map.Entry<String, String> entry : params.entrySet()) {    //增强for遍历循环添加拼接请求内容
+                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
+                        if (listener != null) {
+                            try {
+                                URL path = new URL(sb.toString());
+                                HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                                con.setRequestMethod(GET);    //设置请求方式
+                                con.setConnectTimeout(3000);    //链接超时3秒
+                                con.setDoOutput(true);
+                                con.setDoInput(true);
+                                OutputStream os = con.getOutputStream();
+                                os.write(sb.toString().getBytes(encode));
+                                os.close();
+                                if (con.getResponseCode() == 200) {    //应答码200表示请求成功
+                                    onSuccess(encode, listener, con);
+                                }
+                            } catch (Exception error) {
+                                error.printStackTrace();
+                                onError(listener, error);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * get请求封装
+         */
+        public static void getRequest(final String url, final OnLoadData listener) {
+            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
+                @Override
+                public void run() {
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(GET);    //设置请求方式
+                            con.setConnectTimeout(3000);    //链接超时3秒
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            OutputStream os = con.getOutputStream();
+                            os.write(url.getBytes(ENCODE));
+                            os.close();
+                            if (con.getResponseCode() == 200) {    //应答码200表示请求成功
+                                onSuccess(ENCODE, listener, con);
+                            }
+                        } catch (Exception error) {
+                            error.printStackTrace();
+                            onError(listener, error);
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * POST请求
+         */
+        public static void postRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
+            Thread.runJava(new Runnable() {// 为网络请求开启子线程
+                @Override
+                public void run() {
+                    StringBuffer sb = new StringBuffer();
+                    if (params != null && !params.isEmpty()) {
+                        for (Map.Entry<String, String> entry : params.entrySet()) {
+                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
+                    }
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(POST);   //设置请求方法POST
+                            con.setConnectTimeout(3000);
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            byte[] bytes = sb.toString().getBytes();
+                            OutputStream outputStream = con.getOutputStream();
+                            outputStream.write(bytes);
+                            outputStream.close();
+                            if (con.getResponseCode() == 200) {
+                                onSuccess(encode, listener, con);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            onError(listener, e);
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * POST请求
+         */
+        public static void postRequest(final String url, final OnLoadData listener) {
+            Thread.runJava(new Runnable() {// 为网络请求开启子线程
+                @Override
+                public void run() {
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(POST);   //设置请求方法POST
+                            con.setConnectTimeout(3000);
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            byte[] bytes = url.getBytes();
+                            OutputStream outputStream = con.getOutputStream();
+                            outputStream.write(bytes);
+                            outputStream.close();
+                            if (con.getResponseCode() == 200) {
+                                onSuccess(ENCODE, listener, con);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            onError(listener, e);
+                        }
+                    }
+                }
+            });
+
+        }
+
+        private static void onError(final OnLoadData listener, final Exception onError) {
+            Thread.runAndroid(new Runnable() {//为 请求失败 开启 UI 线程
+                @Override
+                public void run() {
+                    listener.onError(onError.toString());
+                }
+            });
+        }
+
+        private static void onSuccess(String encode, final OnLoadData listener, HttpURLConnection con) throws IOException {
+            InputStream inputStream = con.getInputStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();//创建内存输出流
+            int len;
+            byte[] bytes = new byte[1024];
+            if (inputStream != null) {
+                while ((len = inputStream.read(bytes)) != -1) {
+                    baos.write(bytes, 0, len);
+                }
+                final String str = new String(baos.toByteArray(), encode);
+                Thread.runAndroid(new Runnable() {//为 请求成功 开启 UI 线程
+                    @Override
+                    public void run() {
+                        listener.onSuccess(str);
+                    }
+                });
+            }
+        }
+
+        //请求接口
+        public interface OnLoadData {
+            void onSuccess(String response);
+
+            void onError(String error);
+        }
+
+    }
+
+    /**
      * 将网页图片 利用照腾讯X5 自定适应屏幕大小
      */
     public static class HtmlFormat {
@@ -2418,92 +2608,92 @@ public class GT {
      */
     public static class GT_Date {
 
-	/**
-	 * 使用案例
-	 * long currentTimeMillis = System.currentTimeMillis();
-	 *
-	 *	输出：输入的时间：1567233280386
-		System.out.println("输入的时间：" + currentTimeMillis);
-
-		currentTimeMillis = 1538364324000L;
-
-        Lunar lunar = new Lunar(currentTimeMillis);//初始化高级功能
-       	节气: 如果指定的日期有节气则返回当天节气，如果没有则返回 "" 空字符串 不是 null
-        System.out.println("节气:" + lunar.getTermString());
-
-                        生肖:狗
-        System.out.println("生肖:" + lunar.getAnimalString());
-
-                        星期：2
-        System.out.println("星期：" + lunar.getDayOfWeek());//星期几(星期日为:1, 星期六为:7)
-
-                        干支历:戊戌年辛酉月丙寅日
-        System.out.println("干支历:" + lunar.getCyclicalDateString());
-
-                       农历:戊戌年八月廿二日
-        System.out.println("农历:" + lunar.getLunarDateString());
-
-                       当前是否为 农历节日:true
-        boolean lFestival = lunar.isLFestival();
-        System.out.println("当前是否为 农历节日:" + lFestival);
-
-                        农历节日:燃灯佛诞
-        if(lFestival){
-        	System.out.println("农历节日:" + lunar.getLFestivalName());
-        }
-
-                       当前是否为公历节日:true
-        boolean sFestival = lunar.isSFestival();
-        System.out.println("当前是否为公历节日:" + lFestival);
-        if(sFestival){
-        	公历节日:国庆节
-        	System.out.println("公历节日:" + lunar.getSFestivalName());
-        }
-
-                        当前是否为节日:true
-        boolean festival = lunar.isFestival();
-        System.out.println("当前是否为节日:" + festival);
-
-                        当前是否放假:true
-        boolean holiday = lunar.isHoliday();
-        System.out.println("当前是否放假:" + holiday);
-
-
-        Date[] jieqi = Lunar.jieqilist(2019);
-        for (int i = 0; i < Lunar.solarTerm.length; i++) {
-            System.out.print(Lunar.solarTerm[i]);
-            @SuppressWarnings("deprecation")
-			int month = jieqi[i].getMonth();
-            month += 1;
-            System.out.print(month + "月");
-            System.out.println(jieqi[i].getDate());
-        }
-        //对应结果
-			小寒1月6
-			大寒1月20
-			立春2月4
-			雨水2月19
-			惊蛰3月6
-			春分3月21
-			清明4月5
-			谷雨4月21
-			立夏5月6
-			小满5月22
-			芒种6月6
-			夏至6月22
-			小暑7月8
-			大暑7月23
-			立秋8月8
-			处暑8月24
-			白露9月8
-			秋分9月24
-			寒露10月9
-			霜降10月24
-			立冬11月8
-			小雪11月23
-			大雪12月8
-			冬至12月22
-	 */
+        /**
+         * 使用案例
+         * long currentTimeMillis = System.currentTimeMillis();
+         * <p>
+         * 输出：输入的时间：1567233280386
+         * System.out.println("输入的时间：" + currentTimeMillis);
+         * <p>
+         * currentTimeMillis = 1538364324000L;
+         * <p>
+         * Lunar lunar = new Lunar(currentTimeMillis);//初始化高级功能
+         * 节气: 如果指定的日期有节气则返回当天节气，如果没有则返回 "" 空字符串 不是 null
+         * System.out.println("节气:" + lunar.getTermString());
+         * <p>
+         * 生肖:狗
+         * System.out.println("生肖:" + lunar.getAnimalString());
+         * <p>
+         * 星期：2
+         * System.out.println("星期：" + lunar.getDayOfWeek());//星期几(星期日为:1, 星期六为:7)
+         * <p>
+         * 干支历:戊戌年辛酉月丙寅日
+         * System.out.println("干支历:" + lunar.getCyclicalDateString());
+         * <p>
+         * 农历:戊戌年八月廿二日
+         * System.out.println("农历:" + lunar.getLunarDateString());
+         * <p>
+         * 当前是否为 农历节日:true
+         * boolean lFestival = lunar.isLFestival();
+         * System.out.println("当前是否为 农历节日:" + lFestival);
+         * <p>
+         * 农历节日:燃灯佛诞
+         * if(lFestival){
+         * System.out.println("农历节日:" + lunar.getLFestivalName());
+         * }
+         * <p>
+         * 当前是否为公历节日:true
+         * boolean sFestival = lunar.isSFestival();
+         * System.out.println("当前是否为公历节日:" + lFestival);
+         * if(sFestival){
+         * 公历节日:国庆节
+         * System.out.println("公历节日:" + lunar.getSFestivalName());
+         * }
+         * <p>
+         * 当前是否为节日:true
+         * boolean festival = lunar.isFestival();
+         * System.out.println("当前是否为节日:" + festival);
+         * <p>
+         * 当前是否放假:true
+         * boolean holiday = lunar.isHoliday();
+         * System.out.println("当前是否放假:" + holiday);
+         * <p>
+         * <p>
+         * Date[] jieqi = Lunar.jieqilist(2019);
+         * for (int i = 0; i < Lunar.solarTerm.length; i++) {
+         * System.out.print(Lunar.solarTerm[i]);
+         *
+         * @SuppressWarnings("deprecation") int month = jieqi[i].getMonth();
+         * month += 1;
+         * System.out.print(month + "月");
+         * System.out.println(jieqi[i].getDate());
+         * }
+         * //对应结果
+         * 小寒1月6
+         * 大寒1月20
+         * 立春2月4
+         * 雨水2月19
+         * 惊蛰3月6
+         * 春分3月21
+         * 清明4月5
+         * 谷雨4月21
+         * 立夏5月6
+         * 小满5月22
+         * 芒种6月6
+         * 夏至6月22
+         * 小暑7月8
+         * 大暑7月23
+         * 立秋8月8
+         * 处暑8月24
+         * 白露9月8
+         * 秋分9月24
+         * 寒露10月9
+         * 霜降10月24
+         * 立冬11月8
+         * 小雪11月23
+         * 大雪12月8
+         * 冬至12月22
+         */
 
         private Lunar lunar = null;
 
@@ -2527,9 +2717,9 @@ public class GT {
         public GT_Date() {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
             time = df.format(new Date());   //获取当时间
-            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
-            ymd = times[0].split("-");  	//分割年月日 数组
-            hms = times[1].split(":");  	//分割时分秒 数组
+            times = time.split(" ");        //分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");    //分割年月日 数组
+            hms = times[1].split(":");    //分割时分秒 数组
         }
 
         /**
@@ -2540,9 +2730,9 @@ public class GT {
             //初始化基本的时间
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
             time = df.format(new Date());   //获取当时间
-            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
-            ymd = times[0].split("-");  	//分割年月日 数组
-            hms = times[1].split(":");  	//分割时分秒 数组
+            times = time.split(" ");        //分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");    //分割年月日 数组
+            hms = times[1].split(":");    //分割时分秒 数组
 
             //初始化高级功能
             lunar = new Lunar(timestamp);
@@ -2573,7 +2763,6 @@ public class GT {
                 w = 0;
             return weekDays[w];
         }
-
 
 
         /**
@@ -2796,7 +2985,7 @@ public class GT {
              * @return 日期数
              */
             public static long getbeforesolarTerm(int year, Date date) {
-                List<Date> jieqi =Alljieqi(year);
+                List<Date> jieqi = Alljieqi(year);
                 int[] jieqibeforeafter = getnearsolarTerm(year, date);
                 return MyDate.DateDays(date, jieqi.get(jieqibeforeafter[0]));
             }
@@ -2813,15 +3002,15 @@ public class GT {
 
             }
 
-            public static List<Date> Alljieqi(int year){
+            public static List<Date> Alljieqi(int year) {
 
-                List<Date> jieqi = new  ArrayList<Date>();
-                Date[] temp ;
+                List<Date> jieqi = new ArrayList<Date>();
+                Date[] temp;
                 temp = jieqilist(year - 1);
                 jieqi.addAll(Arrays.asList(temp));
                 temp = jieqilist(year);
                 jieqi.addAll(Arrays.asList(temp));
-                temp = jieqilist(year+1);
+                temp = jieqilist(year + 1);
                 jieqi.addAll(Arrays.asList(temp));
                 return jieqi;
             }
@@ -2833,7 +3022,7 @@ public class GT {
              * @return
              */
             public static int[] getnearsolarTerm(int year, Date date) {
-                List<Date> jieqi =Alljieqi(year);
+                List<Date> jieqi = Alljieqi(year);
 
                 int[] returnValue = new int[2];
                 for (int i = 0; i < jieqi.size(); i++) {
@@ -2971,6 +3160,7 @@ public class GT {
                     return -1;
                 }
             }
+
             private final static Pattern sFreg = Pattern.compile("^(\\d{2})(\\d{2})([\\s\\*])(.+)$");
             private final static Pattern wFreg = Pattern.compile("^(\\d{2})(\\d)(\\d)([\\s\\*])(.+)$");
 
@@ -3057,7 +3247,7 @@ public class GT {
              * 返回农历年闰月月份
              *
              * @param lunarYear 指定农历年份(数字)
-             * @return 该农历年闰月的月份(数字,没闰返回0)
+             * @return 该农历年闰月的月份(数字, 没闰返回0)
              */
             private static int getLunarLeapMonth(int lunarYear) {
                 // 数据表中,每个农历年用16bit来表示,
@@ -3109,9 +3299,9 @@ public class GT {
             /**
              * 返回农历年正常月份的总天数
              *
-             * @param lunarYear 指定农历年份(数字)
+             * @param lunarYear  指定农历年份(数字)
              * @param lunarMonth 指定农历月份(数字)
-             * @return 该农历年闰月的月份(数字,没闰返回0)
+             * @return 该农历年闰月的月份(数字, 没闰返回0)
              */
             private static int getLunarMonthDays(int lunarYear, int lunarMonth) {
                 // 数据表中,每个农历年用16bit来表示,
@@ -3136,6 +3326,7 @@ public class GT {
                     return utcCal.get(Calendar.DAY_OF_MONTH);
                 }
             }
+
             private static GregorianCalendar utcCal = null;
 
             private static synchronized void makeUTCCalendar() {
@@ -3147,10 +3338,10 @@ public class GT {
             /**
              * 返回全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数。
              *
-             * @param y 指定年份
-             * @param m 指定月份
-             * @param d 指定日期
-             * @param h 指定小时
+             * @param y   指定年份
+             * @param m   指定月份
+             * @param d   指定日期
+             * @param h   指定小时
              * @param min 指定分钟
              * @param sec 指定秒数
              * @return 全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数
@@ -3168,8 +3359,8 @@ public class GT {
              * 返回公历年节气的日期
              *
              * @param solarYear 指定公历年份(数字)
-             * @param index 指定节气序号(数字,0从小寒算起)
-             * @return 日期(数字,所在月份的第几天)
+             * @param index     指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字, 所在月份的第几天)
              */
             private static int getSolarTermDay(int solarYear, int index) {
 
@@ -3180,8 +3371,8 @@ public class GT {
              * 返回公历年节气的日期
              *
              * @param solarYear 指定公历年份(数字)
-             * @param index 指定节气序号(数字,0从小寒算起)
-             * @return 日期(数字,所在月份的第几天)
+             * @param index     指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字, 所在月份的第几天)
              */
             public static Date getSolarTermCalendar(int solarYear, int index) {
                 long l = (long) 31556925974.7 * (solarYear - 1900)
@@ -3285,7 +3476,6 @@ public class GT {
 
             /**
              * 取干支历 不是历年，历月干支，而是中国的从立春节气开始的节月，是中国的太阳十二宫，阳历的。
-
              */
             private void getCyclicalData() {
                 this.solarYear = this.solar.get(Calendar.YEAR);
@@ -3325,7 +3515,7 @@ public class GT {
             /**
              * 取农历年生肖
              *
-             * @return 农历年生肖(例:龙)
+             * @return 农历年生肖(例 : 龙)
              */
             public String getAnimalString() {
                 return Lunar.Animals[(this.lunarYear - 4) % 12];
@@ -3334,7 +3524,7 @@ public class GT {
             /**
              * 返回公历日期的节气字符串
              *
-             * @return 二十四节气字符串,若不是节气日,返回空串(例:冬至)
+             * @return 二十四节气字符串, 若不是节气日, 返回空串(例 : 冬至)
              */
             public String getTermString() {
                 // 二十四节气
@@ -3350,7 +3540,7 @@ public class GT {
             /**
              * 取得干支历字符串
              *
-             * @return 干支历字符串(例:甲子年甲子月甲子日)
+             * @return 干支历字符串(例 : 甲子年甲子月甲子日)
              */
             public String getCyclicalDateString() {
                 return this.getCyclicaYear() + "年" + this.getCyclicaMonth() + "月"
@@ -3468,7 +3658,7 @@ public class GT {
             /**
              * 返回农历表示字符串
              *
-             * @return 农历字符串(例:甲子年正月初三)
+             * @return 农历字符串(例 : 甲子年正月初三)
              */
             public String getLunarDateString() {
                 return this.getLunarYearString() + "年"
@@ -3569,7 +3759,7 @@ public class GT {
             /**
              * 星期几
              *
-             * @return 星期几(星期日为:1, 星期六为:7)
+             * @return 星期几(星期日为 : 1, 星期六为 : 7)
              */
             public int getDayOfWeek() {
                 return this.solar.get(Calendar.DAY_OF_WEEK);
@@ -3599,7 +3789,7 @@ public class GT {
             /**
              * 取得公历节日名称
              *
-             * @return 公历节日名称,如果不是节日返回空串
+             * @return 公历节日名称, 如果不是节日返回空串
              */
             public String getSFestivalName() {
                 return this.sFestivalName;
@@ -3608,7 +3798,7 @@ public class GT {
             /**
              * 取得农历节日名称
              *
-             * @return 农历节日名称,如果不是节日返回空串
+             * @return 农历节日名称, 如果不是节日返回空串
              */
             public String getLFestivalName() {
                 return this.lFestivalName;
@@ -3662,7 +3852,7 @@ public class GT {
             /**
              * 其它日期说明
              *
-             * @return 日期说明(如:民国2年)
+             * @return 日期说明(如 : 民国2年)
              */
             public String getDescription() {
                 if (!this.isFinded) {
@@ -3757,7 +3947,7 @@ public class GT {
 
 
             //日期工具辅助类
-            private static  class MyDate {
+            private static class MyDate {
 
                 private static final int[] dayMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
                 public int day;
@@ -3838,7 +4028,6 @@ public class GT {
                     } else {
                         days = (myTime2 - myTime) / (1 * 60 * 60 * 24);
                     }
-
 
 
                     return days;
@@ -3970,18 +4159,19 @@ public class GT {
     /**
      * 手机屏幕操作
      */
-    public static class ScreenOperation{
+    public static class ScreenOperation {
 
         /**
          * 点击屏幕 可根据 屏幕的比例 与 具体的 X,Y 坐标点击
          */
-        public static class AutoTouch{
+        public static class AutoTouch {
             private static int width = 0;
             private static int height = 0;
 
             /**
              * 传入在屏幕中的比例位置，坐标左上角为基准
-             * @param act 传入Activity对象
+             *
+             * @param act    传入Activity对象
              * @param ratioX 需要点击的x坐标在屏幕中的比例位置
              * @param ratioY 需要点击的y坐标在屏幕中的比例位置
              */
@@ -3998,7 +4188,7 @@ public class GT {
                         int y = (int) (height * ratioY);
 
                         // 利用ProcessBuilder执行shell命令
-                        String[] order = { "input", "tap", "" + x, "" + y };
+                        String[] order = {"input", "tap", "" + x, "" + y};
                         try {
                             new ProcessBuilder(order).start();
                         } catch (IOException e) {
@@ -4010,15 +4200,16 @@ public class GT {
 
             /**
              * 传入在屏幕中的坐标，坐标左上角为基准
+             *
              * @param act 传入Activity对象
-             * @param x 需要点击的x坐标
-             * @param y 需要点击的x坐标
+             * @param x   需要点击的x坐标
+             * @param y   需要点击的x坐标
              */
             public static void autoClickPos(Activity act, final double x, final double y) {
                 width = act.getWindowManager().getDefaultDisplay().getWidth();
                 height = act.getWindowManager().getDefaultDisplay().getHeight();
                 // 利用ProcessBuilder执行shell命令
-                String[] order = { "input", "tap", "" + x, "" + y };
+                String[] order = {"input", "tap", "" + x, "" + y};
                 try {
                     new ProcessBuilder(order).start();
                 } catch (IOException e) {
@@ -4036,333 +4227,823 @@ public class GT {
      * Android GT 动画
      * 动画后面加 F 的则表示 该动画 是假的动画 后面为 T 的则表示为 真动画
      */
-    public static class GT_Animation{
+    public static class GT_Animation {
 
-        public GT_Animation(){}
+        public GT_Animation() {
+        }
 
         /**
-         * @移动动画
-         * @param x                 初始 X 位置
-         * @param toX               最终 X 位置
-         * @param y                 初始 Y 位置
-         * @param toY               最终 Y 位置
-         * @param time              动画持续时间
-         * @param isSaveClose       是否保持动画结束时的最终状态
-         * @param runCount          播放动画的次数 -1 表示无限循环
-         * @param toAndFro          是否来回播放
-         * @param view              给 View 添加动画
+         * @param x           初始 X 位置
+         * @param toX         最终 X 位置
+         * @param y           初始 Y 位置
+         * @param toY         最终 Y 位置
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限循环
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
          * @return
+         * @移动动画（假）
          */
-        public GT_Animation translate_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view){
-            Animation translateAnimation = new TranslateAnimation(x,toX,y,toY);
+        public GT_Animation translate_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation translateAnimation = new TranslateAnimation(x, toX, y, toY);
             translateAnimation.setDuration(time);                   //设置动画持续周期
             translateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             translateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 translateAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             view.startAnimation(translateAnimation);                //开始播放
             return this;
         }
 
         /**
-         * @移动动画
-         * @param x                 初始 X 位置
-         * @param toX               最终 X 位置
-         * @param y                 初始 Y 位置
-         * @param toY               最终 Y 位置
-         * @param time              动画持续时间
-         * @param isSaveClose       是否保持动画结束时的最终状态
-         * @param runCount          播放动画的次数 -1 表示为无限次数
-         * @param toAndFro          是否来回播放
+         * @param x           初始 X 位置
+         * @param toX         最终 X 位置
+         * @param y           初始 Y 位置
+         * @param toY         最终 Y 位置
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示为无限次数
+         * @param toAndFro    是否来回播放
          * @return
+         * @移动item动画（假）
          */
-        public Animation translate_F(float x,float toX,float y, float toY,long time,boolean isSaveClose,int runCount,boolean toAndFro){
-            Animation translateAnimation = new TranslateAnimation(x,toX,y,toY);
+        public Animation translat_Item_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation translateAnimation = new TranslateAnimation(x, toX, y, toY);
             translateAnimation.setDuration(time);               //设置动画持续周期
             translateAnimation.setFillAfter(isSaveClose);       //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             translateAnimation.setFillBefore(!isSaveClose);     // 动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 translateAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);   //是否来回的播放
+            if (toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);   //是否来回的播放
             return translateAnimation;
         }
 
-
         /**
-         * @左右动画
-         * @param x             初始 X 位置
-         * @param toX           最终 X 位置
-         * @param time          执行动画时间
-         * @param runCount      执行动画次数
-         * @param toAndFro      是否来回播放
-         * @param view          给View加入动画
+         * @param x        初始 X 位置
+         * @param toX      最终 X 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
          * @return
+         * @左右动画（真）
          */
-        public GT_Animation translateX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view){
+        public GT_Animation translateX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
             ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
             translateX.setDuration(time);      //动画执行时间
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
-            }else{
+            } else {
                 translateX.setRepeatCount(runCount);//循环多少次
             }
-            if(toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            if (toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
             translateX.start();//执行动画
             return this;
         }
 
         /**
-         * @左右动画
-         * @param x             初始 X 位置
-         * @param toX           最终 X 位置
-         * @param time          执行动画时间
-         * @param runCount      执行动画次数
-         * @param toAndFro      是否来回播放
-         * @param view          给View加入动画
+         * @param x        初始 X 位置
+         * @param toX      最终 X 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
          * @return
+         * @左右item动画（真）
          */
-        public ObjectAnimator translateX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view){
+        public ObjectAnimator translateX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
             ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
             translateX.setDuration(time);      //动画执行时间
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
-            }else{
+            } else {
                 translateX.setRepeatCount(runCount);//循环多少次
             }
-            if(toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            if (toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
             return translateX;
         }
 
         /**
-         * @上下动画
-         * @param y             初始 Y 位置
-         * @param toY           最终 Y 位置
-         * @param time          执行动画时间
-         * @param runCount      执行动画次数
-         * @param toAndFro      是否来回播放
-         * @param view          给View加入动画
+         * @param y        初始 Y 位置
+         * @param toY      最终 Y 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
          * @return
+         * @上下动画（真）
          */
-        public GT_Animation translateY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view){
+        public GT_Animation translateY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
             ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
             translateY.setDuration(time);      //动画执行时间
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
-            }else{
+            } else {
                 translateY.setRepeatCount(runCount);//循环多少次
             }
-            if(toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            if (toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
             translateY.start();//执行动画
             return this;
         }
 
-
         /**
-         * @上下动画
-         * @param y             初始 Y 位置
-         * @param toY           最终 Y 位置
-         * @param time          执行动画时间
-         * @param runCount      执行动画次数
-         * @param toAndFro      是否来回播放
-         * @param view          给View加入动画
+         * @param y        初始 Y 位置
+         * @param toY      最终 Y 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
          * @return
+         * @上下item动画（真）
          */
-        public ObjectAnimator translateY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view){
+        public ObjectAnimator translateY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
             ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
             translateY.setDuration(time);      //动画执行时间
-            if(runCount == -1){
+            if (runCount == -1) {
                 translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
-            }else{
+            } else {
                 translateY.setRepeatCount(runCount);//循环多少次
             }
-            if(toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            if (toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
             return translateY;
         }
 
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @平移动画（真）
+         */
+        public GT_Animation translate_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator translationX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            ObjectAnimator translationY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+
+            //设置动画时间
+            translationX.setDuration(time);
+            translationY.setDuration(time);
+
+            if (runCount == -1) {
+                translationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                translationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translationX.setRepeatCount(runCount);//循环多少次
+                translationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                translationX.setRepeatMode(ObjectAnimator.REVERSE);
+                translationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(translationX).with(translationY);
+            animatorSet.start();
+
+            return this;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @平移item动画（真）
+         */
+        public AnimatorSet translate_Item_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator translationX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            ObjectAnimator translationY = ObjectAnimator.ofFloat(view, "translationY", y, toY).setDuration(time);
+
+            //设置动画时间
+            translationX.setDuration(time);
+            translationY.setDuration(time);
+
+            if (runCount == -1) {
+                translationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                translationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translationX.setRepeatCount(runCount);//循环多少次
+                translationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                translationX.setRepeatMode(ObjectAnimator.REVERSE);
+                translationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(translationX).with(translationY);
+
+            return animatorSet;
+        }
 
 
         /**
-         * @缩放动画
-         * @param x             原始 X 尺寸
-         * @param toX           结束 X 尺寸
-         * @param y             原始 Y 尺寸
-         * @param toY           结束 Y 尺寸
-         * @param time          动画持续时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
-         * @param view          给 View 添加动画
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
          * @return
+         * @缩放动画（假）
          */
-        public GT_Animation scale_F(float x, float toX, float y, float toY,long time,boolean isSaveClose,int runCount, boolean toAndFro,View view){
-            Animation scaleAnimation= new ScaleAnimation(x,toX,y,toY,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        public GT_Animation scale_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation scaleAnimation = new ScaleAnimation(x, toX, y, toY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             scaleAnimation.setDuration(time);                   //动画时间
             scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 scaleAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             view.startAnimation(scaleAnimation);                //开始播放
             return this;
         }
 
         /**
-         * @缩放动画
-         * @param x             原始 X 尺寸
-         * @param toX           结束 X 尺寸
-         * @param y             原始 Y 尺寸
-         * @param toY           结束 Y 尺寸
-         * @param time          动画持续时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
          * @return
+         * @缩放item动画（假）
          */
-        public Animation scale_F(float x, float toX, float y, float toY,long time,boolean isSaveClose,int runCount, boolean toAndFro){
-            Animation scaleAnimation= new ScaleAnimation(x,toX,y,toY,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        public Animation scales_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation scaleAnimation = new ScaleAnimation(x, toX, y, toY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             scaleAnimation.setDuration(time);                   //动画时间
             scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 scaleAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             return scaleAnimation;
         }
 
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scaleX_T(float x, float toX, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            scaleX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            scaleX.start();//执行动画
+            return this;
+        }
 
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放item动画（真）
+         */
+        public ObjectAnimator scaleX_item_T(float x, float toX, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            scaleX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return scaleX;
+        }
+
+        /**
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scaleY_T(float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+            scaleY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            scaleY.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放item动画（真）
+         */
+        public ObjectAnimator scaleY_item_T(float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+            scaleY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return scaleY;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scale_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+
+            //设置动画时间
+            scaleX.setDuration(time);
+            scaleY.setDuration(time);
+
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                scaleX.setRepeatMode(ObjectAnimator.REVERSE);
+                scaleY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(scaleX).with(scaleY);
+            animatorSet.start();
+
+            return this;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @缩放item动画（真）
+         */
+        public AnimatorSet scale_item_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+
+            //设置动画时间
+            scaleX.setDuration(time);
+            scaleY.setDuration(time);
+
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                scaleX.setRepeatMode(ObjectAnimator.REVERSE);
+                scaleY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(scaleX).with(scaleY);
+
+            return animatorSet;
+        }
 
 
         /**
-         * @旋转动画
-         * @param degrees       View初始角度
-         * @param toDegrees     View旋转角度
-         * @param time          动画执行时间
-         * @param time          动画持续时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
-         * @param view          执行View动画
+         * @param degrees     View初始角度
+         * @param toDegrees   View旋转角度
+         * @param time        动画执行时间
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        执行View动画
          * @return
+         * @平面旋转动画（假）
          */
-        public GT_Animation rotate_F(float degrees,float toDegrees,long time,boolean isSaveClose,int runCount, boolean toAndFro,View view ){
-            Animation rotateAnimation = new RotateAnimation(degrees,toDegrees,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        public GT_Animation rotate_F(float degrees, float toDegrees, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation rotateAnimation = new RotateAnimation(degrees, toDegrees, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             rotateAnimation.setDuration(time);                   //动画时间
             rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 rotateAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             view.startAnimation(rotateAnimation);                //开始播放
             return this;
         }
 
         /**
-         * @旋转动画
-         * @param degrees       View初始角度
-         * @param toDegrees     View旋转角度
-         * @param time          动画执行时间
-         * @param time          动画持续时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
+         * @param degrees     View初始角度
+         * @param toDegrees   View旋转角度
+         * @param time        动画执行时间
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
          * @return
+         * @平面旋转item动画（假）
          */
-        public Animation rotate_F(float degrees,float toDegrees,long time,boolean isSaveClose,int runCount, boolean toAndFro){
-            Animation rotateAnimation = new RotateAnimation(degrees,toDegrees,Animation.RELATIVE_TO_SELF,0.5f,Animation.RELATIVE_TO_SELF,0.5f);
+        public Animation rotates_F(float degrees, float toDegrees, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation rotateAnimation = new RotateAnimation(degrees, toDegrees, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
             rotateAnimation.setDuration(time);                   //动画时间
             rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 rotateAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             return rotateAnimation;
         }
 
+        /**
+         * @param x        初始化 X 坐标
+         * @param toX      最终的 X 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画X（真）
+         */
+        public GT_Animation rotatesX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "rotationX", x, toX);
 
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param x        初始化 X 坐标
+         * @param toX      最终的 X 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画X（真）
+         */
+        public ObjectAnimator rotatesX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "rotationX", x, toX);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return rotationX;
+        }
+
+        /**
+         * @param y        初始化 Y 坐标
+         * @param toY      最终的 Y 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画Y（真）
+         */
+        public GT_Animation rotatesY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationY = ObjectAnimator.ofFloat(view, "rotationY", y, toY);
+
+            rotationY.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationY.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param y        初始化 Y 坐标
+         * @param toY      最终的 Y 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画Y（真）
+         */
+        public ObjectAnimator rotatesY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationY = ObjectAnimator.ofFloat(view, "rotationY", y, toY);
+
+            rotationY.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            return rotationY;
+        }
+
+        /**
+         * @param z        初始化 Z 坐标
+         * @param toZ      最终的 Z 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画Z（真）
+         */
+        public GT_Animation rotatesZ_T(float z, float toZ, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationZ = ObjectAnimator.ofFloat(view, "rotation", z, toZ);
+
+            rotationZ.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationZ.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationZ.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationZ.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationZ.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param z        初始化 Z 坐标
+         * @param toZ      最终的 Z 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画Z（真）
+         */
+        public ObjectAnimator rotatesZ_item_T(float z, float toZ, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationZ = ObjectAnimator.ofFloat(view, "rotation", z, toZ);
+
+            rotationZ.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationZ.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationZ.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationZ.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+            return rotationZ;
+        }
 
 
         /**
-         * @透明动画
-         * @param alpha         初始透明度
-         * @param toAlpha       最终透明度
-         * @param time          动画执行时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
-         * @param view          执行View动画
+         * @param alpha       初始透明度
+         * @param toAlpha     最终透明度
+         * @param time        动画执行时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        执行View动画
          * @return
+         * @透明动画（假）
          */
-        public GT_Animation alpha_F(float alpha, float toAlpha, long time,boolean isSaveClose,int runCount, boolean toAndFro,View view){
-            Animation alphaAnimation = new AlphaAnimation(alpha,toAlpha);
+        public GT_Animation alpha_F(float alpha, float toAlpha, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation alphaAnimation = new AlphaAnimation(alpha, toAlpha);
             alphaAnimation.setDuration(time);                   //动画时间
             alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 alphaAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             view.startAnimation(alphaAnimation);                //开启动画
             return this;
         }
 
         /**
-         * @透明动画
-         * @param alpha         初始透明度
-         * @param toAlpha       最终透明度
-         * @param time          动画执行时间
-         * @param isSaveClose   是否保持动画结束时的最终状态
-         * @param runCount      播放动画的次数 -1 表示无限次数
-         * @param toAndFro      是否来回播放
+         * @param alpha       初始透明度
+         * @param toAlpha     最终透明度
+         * @param time        动画执行时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
          * @return
+         * @透明item动画（假）
          */
-        public Animation alpha_F(float alpha, float toAlpha, long time,boolean isSaveClose,int runCount, boolean toAndFro){
-            Animation alphaAnimation = new AlphaAnimation(alpha,toAlpha);
+        public Animation alphas_F(float alpha, float toAlpha, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation alphaAnimation = new AlphaAnimation(alpha, toAlpha);
             alphaAnimation.setDuration(time);                   //动画时间
             alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
             alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
-            if(runCount == -1){
+            if (runCount == -1) {
                 alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
-            }else{
+            } else {
                 alphaAnimation.setRepeatCount(runCount);            //播放的次数
             }
-            if(toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            if (toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
             return alphaAnimation;
         }
 
+        /**
+         * @param alpha    初始透明度
+         * @param toAlpha  最终透明度
+         * @param time     动画执行时间
+         * @param runCount 播放动画的次数 -1 表示无限次数
+         * @param toAndFro 是否来回播放
+         * @return
+         * @透明动画（真）
+         */
+        public GT_Animation alpha_T(float alpha, float toAlpha, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "alpha", alpha, toAlpha);
 
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param alpha    初始透明度
+         * @param toAlpha  最终透明度
+         * @param time     动画执行时间
+         * @param runCount 播放动画的次数 -1 表示无限次数
+         * @param toAndFro 是否来回播放
+         * @return
+         * @透明item动画（真）
+         */
+        public ObjectAnimator alpha_item_T(float alpha, float toAlpha, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "alpha", alpha, toAlpha);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            return rotationX;
+        }
 
 
         /**
-         * @添加组合动画
          * @param annotationList
          * @param view
          * @return
+         * @添加组合动画（假）
          */
-        public GT_Animation animationSet_F(List<Animation> annotationList,View view){
+        public GT_Animation animationSet_F(List<Animation> annotationList, View view) {
             AnimationSet animationSet = new AnimationSet(true);
-            if(annotationList != null && annotationList.size() > 1){
-                for(Animation animation : annotationList){
+            if (annotationList != null && annotationList.size() > 1) {
+                for (Animation animation : annotationList) {
                     animationSet.addAnimation(animation);
                 }
             }
@@ -4371,21 +5052,19 @@ public class GT {
         }
 
         /**
-         * @添加组合动画
          * @param annotationList
          * @return
+         * @添加组合item动画（假）
          */
-        public AnimationSet animationSet_F(List<Animation> annotationList){
+        public AnimationSet animationSets_F(List<Animation> annotationList) {
             AnimationSet animationSet = new AnimationSet(true);
-            if(annotationList != null && annotationList.size() > 1){
-                for(Animation animation : annotationList){
+            if (annotationList != null && annotationList.size() > 1) {
+                for (Animation animation : annotationList) {
                     animationSet.addAnimation(animation);
                 }
             }
             return animationSet;
         }
-
-
 
     }
 
@@ -4829,79 +5508,88 @@ public class GT {
 
             /**
              * 构建 GT 工具包
+             *
              * @param object
              * @param view
              */
-            protected void build(Object object,View view){
-                GT.getGT().build(object,view);
+            protected void build(Object object, View view) {
+                GT.getGT().build(object, view);
             }
 
             /**
              * 跳转 Activity
+             *
              * @param activityClass
              */
-            protected void startActivity(Class activityClass){
+            protected void startActivity(Class activityClass) {
                 GT.startAct(activityClass);
             }
 
             /**
              * 普通日志
+             *
              * @param object
              */
-            protected void log(Object object){
+            protected void log(Object object) {
                 GT.log_i(object);
             }
 
             /**
              * 带 TAG 的普通日志
+             *
              * @param tag
              * @param object
              */
-            protected void log(Object tag,Object object){
-                GT.log_i(tag,object);
+            protected void log(Object tag, Object object) {
+                GT.log_i(tag, object);
             }
 
             /**
              * 错误日志
+             *
              * @param object
              */
-            protected void err(Object object){
+            protected void err(Object object) {
                 GT.log_e(object);
             }
 
             /**
              * 带 TAG 的错误日志
+             *
              * @param tag
              * @param object
              */
-            protected void err(Object tag,Object object){
-                GT.log_e(tag,object);
+            protected void err(Object tag, Object object) {
+                GT.log_e(tag, object);
             }
 
             /**
              * 普通的 Toast
+             *
              * @param object
              */
-            protected void toast(Object object){
+            protected void toast(Object object) {
                 GT.toast_s(object);
             }
 
             /**
              * 带 Context 的 Toast
+             *
              * @param context
              * @param object
              */
-            protected void toast(Context context, Object object){
-                GT.toast_s(context,object);
+            protected void toast(Context context, Object object) {
+                GT.toast_s(context, object);
             }
 
             /**
              * 带 延时的 的 Toast
+             *
              * @param time
              * @param object
              */
-            protected void toast(long time, Object object){
-                GT.toast_time(object,time);
+            protected void toast(long time, Object object) {
+                GT.toast_time(object, time);
             }
 
         }
@@ -4981,79 +5669,88 @@ public class GT {
 
             /**
              * 构建 GT 工具包
+             *
              * @param object
              * @param view
              */
-            protected void build(Object object,View view){
-                GT.getGT().build(object,view);
+            protected void build(Object object, View view) {
+                GT.getGT().build(object, view);
             }
 
             /**
              * 跳转 Activity
+             *
              * @param activityClass
              */
-            protected void startActivity(Class activityClass){
+            protected void startActivity(Class activityClass) {
                 GT.startAct(activityClass);
             }
 
             /**
              * 普通日志
+             *
              * @param object
              */
-            protected void log(Object object){
+            protected void log(Object object) {
                 GT.log_i(object);
             }
 
             /**
              * 带 TAG 的普通日志
+             *
              * @param tag
              * @param object
              */
-            protected void log(Object tag,Object object){
-                GT.log_i(tag,object);
+            protected void log(Object tag, Object object) {
+                GT.log_i(tag, object);
             }
 
             /**
              * 错误日志
+             *
              * @param object
              */
-            protected void err(Object object){
+            protected void err(Object object) {
                 GT.log_e(object);
             }
 
             /**
              * 带 TAG 的错误日志
+             *
              * @param tag
              * @param object
              */
-            protected void err(Object tag,Object object){
-                GT.log_e(tag,object);
+            protected void err(Object tag, Object object) {
+                GT.log_e(tag, object);
             }
 
             /**
              * 普通的 Toast
+             *
              * @param object
              */
-            protected void toast(Object object){
+            protected void toast(Object object) {
                 GT.toast_s(object);
             }
 
             /**
              * 带 Context 的 Toast
+             *
              * @param context
              * @param object
              */
-            protected void toast(Context context, Object object){
-                GT.toast_s(context,object);
+            protected void toast(Context context, Object object) {
+                GT.toast_s(context, object);
             }
 
             /**
              * 带 延时的 的 Toast
+             *
              * @param time
              * @param object
              */
-            protected void toast(long time, Object object){
-                GT.toast_time(object,time);
+            protected void toast(long time, Object object) {
+                GT.toast_time(object, time);
             }
 
         }
@@ -5611,19 +6308,29 @@ public class GT {
     /**
      * 封装普通的 Activity 管理器
      */
-    public abstract static class BaseActivity extends AppCompatActivity{
+    public abstract static class BaseActivity extends AppCompatActivity {
 
-        /** 初始化 加载布局 */
+        /**
+         * 初始化 加载布局
+         */
         protected abstract int initLayout(Bundle savedInstanceState);
 
-        /** 在绘制完 View 之前设置数据 */
-        protected void initDrawView(){}
+        /**
+         * 在绘制完 View 之前设置数据
+         */
+        protected void initDrawView() {
+        }
 
-        /** 初始化 UI */
+        /**
+         * 初始化 UI
+         */
         protected abstract void initView();
 
-        /** 功能方法 */
-        protected void function(){}
+        /**
+         * 功能方法
+         */
+        protected void function() {
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -5636,78 +6343,87 @@ public class GT {
 
         /**
          * 构建 GT 工具包
+         *
          * @param context
          */
-        protected void build(Context context){
+        protected void build(Context context) {
             GT.getGT().build(context);
         }
 
         /**
          * 跳转 Activity
+         *
          * @param activityClass
          */
-        protected void startActivity(Class activityClass){
+        protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
         }
 
         /**
          * 普通日志
+         *
          * @param object
          */
-        protected void log(Object object){
+        protected void log(Object object) {
             GT.log_i(object);
         }
 
         /**
          * 带 TAG 的普通日志
+         *
          * @param tag
          * @param object
          */
-        protected void log(Object tag,Object object){
-            GT.log_i(tag,object);
+        protected void log(Object tag, Object object) {
+            GT.log_i(tag, object);
         }
 
         /**
          * 错误日志
+         *
          * @param object
          */
-        protected void err(Object object){
+        protected void err(Object object) {
             GT.log_e(object);
         }
 
         /**
          * 带 TAG 的错误日志
+         *
          * @param tag
          * @param object
          */
-        protected void err(Object tag,Object object){
-            GT.log_e(tag,object);
+        protected void err(Object tag, Object object) {
+            GT.log_e(tag, object);
         }
 
         /**
          * 普通的 Toast
+         *
          * @param object
          */
-        protected void toast(Object object){
+        protected void toast(Object object) {
             GT.toast_s(object);
         }
 
         /**
          * 带 Context 的 Toast
+         *
          * @param context
          * @param object
          */
-        protected void toast(Context context, Object object){
-            GT.toast_s(context,object);
+        protected void toast(Context context, Object object) {
+            GT.toast_s(context, object);
         }
 
         /**
          * 带 延时的 的 Toast
+         *
          * @param time
          * @param object
          */
-        protected void toast(long time, Object object){
-            GT.toast_time(object,time);
+        protected void toast(long time, Object object) {
+            GT.toast_time(object, time);
         }
 
 
@@ -5716,16 +6432,24 @@ public class GT {
     /**
      * 封装注解的 Activity 管理器
      */
-    public abstract static class AnnotationActivity extends AppCompatActivity{
+    public abstract static class AnnotationActivity extends AppCompatActivity {
 
-        /** 在绘制完 View 之前设置数据 */
-        protected void initDrawView(){}
+        /**
+         * 在绘制完 View 之前设置数据
+         */
+        protected void initDrawView() {
+        }
 
-        /** 初始化 UI */
+        /**
+         * 初始化 UI
+         */
         protected abstract void initView(Bundle savedInstanceState);
 
-        /** 功能方法 */
-        protected void function(){}
+        /**
+         * 功能方法
+         */
+        protected void function() {
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -5737,78 +6461,87 @@ public class GT {
 
         /**
          * 构建 GT 工具包
+         *
          * @param context
          */
-        protected void build(Context context){
+        protected void build(Context context) {
             GT.getGT().build(context);
         }
 
         /**
          * 跳转 Activity
+         *
          * @param activityClass
          */
-        protected void startActivity(Class activityClass){
+        protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
         }
 
         /**
          * 普通日志
+         *
          * @param object
          */
-        protected void log(Object object){
+        protected void log(Object object) {
             GT.log_i(object);
         }
 
         /**
          * 带 TAG 的普通日志
+         *
          * @param tag
          * @param object
          */
-        protected void log(Object tag,Object object){
-            GT.log_i(tag,object);
+        protected void log(Object tag, Object object) {
+            GT.log_i(tag, object);
         }
 
         /**
          * 错误日志
+         *
          * @param object
          */
-        protected void err(Object object){
+        protected void err(Object object) {
             GT.log_e(object);
         }
 
         /**
          * 带 TAG 的错误日志
+         *
          * @param tag
          * @param object
          */
-        protected void err(Object tag,Object object){
-            GT.log_e(tag,object);
+        protected void err(Object tag, Object object) {
+            GT.log_e(tag, object);
         }
 
         /**
          * 普通的 Toast
+         *
          * @param object
          */
-        protected void toast(Object object){
+        protected void toast(Object object) {
             GT.toast_s(object);
         }
 
         /**
          * 带 Context 的 Toast
+         *
          * @param context
          * @param object
          */
-        protected void toast(Context context, Object object){
-            GT.toast_s(context,object);
+        protected void toast(Context context, Object object) {
+            GT.toast_s(context, object);
         }
 
         /**
          * 带 延时的 的 Toast
+         *
          * @param time
          * @param object
          */
-        protected void toast(long time, Object object){
-            GT.toast_time(object,time);
+        protected void toast(long time, Object object) {
+            GT.toast_time(object, time);
         }
 
     }
@@ -6471,7 +7204,7 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer play_pause() {
-            if(mediaPlayer != null){
+            if (mediaPlayer != null) {
                 recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
                 if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
                     mediaPlayer.start();//继续播放
@@ -6488,7 +7221,7 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer stop() {
-            if(mediaPlayer != null && isPlay){
+            if (mediaPlayer != null && isPlay) {
                 isPlay = false;//设置为暂停状态
                 mediaPlayer.stop();
             }
@@ -6501,7 +7234,7 @@ public class GT {
          * @return
          */
         private GT_MediaPlayer recover_play() {
-            if(mediaPlayer != null){
+            if (mediaPlayer != null) {
                 if (!isPlay) {       //停止过播放
                     if (mediaPlayer.isPlaying()) {//如果属于播放状态
                         mediaPlayer.stop();//停止播放
@@ -6529,7 +7262,7 @@ public class GT {
          * 释放资源
          */
         public void close() {
-            if(mediaPlayer != null){
+            if (mediaPlayer != null) {
                 if (mediaPlayer.isPlaying()) {//如果属于播放状态
                     mediaPlayer.stop();//停止播放
                 }
@@ -6711,7 +7444,7 @@ public class GT {
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
             //播放所选音频
-            if(soundPool != null){
+            if (soundPool != null) {
                 soundPool.play(
                         mapMusic.get(key),           //指定播放的音频 key
                         1,              //左声道 为0.0 到 1.0
@@ -7018,7 +7751,6 @@ public class GT {
 
         }
 
-
         /**
          * 资源注解
          */
@@ -7109,7 +7841,8 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_List {
-                Class[] value();
+                Class[] value() default Object.class;
+
             }
 
 
@@ -7119,7 +7852,7 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Map {
-                Class[] value();
+                Class[] value() default Object.class;
             }
 
 
@@ -7129,7 +7862,7 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Set {
-                Class[] value();
+                Class[] value() default Object.class;
             }
 
         }
@@ -7219,13 +7952,13 @@ public class GT {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
                 Annotations.GT_Object initView = field.getAnnotation(Annotations.GT_Object.class);
-
                 if (initView != null) {
 
                     //获取 完整的类路径
                     String classPage = field.toString();
                     String[] s = classPage.split(" ");
-                    classPage = s[1];
+                    classPage = s[0];
+
 
                     //实例化一个对象
                     Object object2 = null;
@@ -7242,7 +7975,6 @@ public class GT {
                     //获取参数的值类型
                     String type = initView.type();
                     String[] types = initView.types();
-
 
                     //创建保存 参数类型的容器
                     List<Object> valueList = new ArrayList<>();
@@ -7268,7 +8000,6 @@ public class GT {
                             functionValue(field, object2, functions[i], valueList, i);//对相应的方法进行赋值
                         }
                     }
-
 
                     //给注解下面的 成员变量注入值
                     try {
@@ -7297,6 +8028,7 @@ public class GT {
                         String classPage = cla.toString();
                         String[] s = classPage.split(" ");
                         classPage = s[1];
+                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
 
                         //实例化一个对象
                         Object object2 = null;
@@ -7338,6 +8070,7 @@ public class GT {
                         String classPage = cla.toString();
                         String[] s = classPage.split(" ");
                         classPage = s[1];
+                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
 
                         //实例化一个对象
                         Object object2 = null;
@@ -7379,6 +8112,7 @@ public class GT {
                         String classPage = cla.toString();
                         String[] s = classPage.split(" ");
                         classPage = s[1];
+                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
 
                         //实例化一个对象
                         Object object2 = null;
@@ -8536,7 +9270,7 @@ public class GT {
     //GT 包官网：https://github.com/1079374315/GT
 
     // 定义 GT 包 简易使用教程
-    public interface CMD{
+    public interface CMD {
 
         /*
          * 关于 GT 包中的功能使用教程请参考官网详细教程
