@@ -201,7 +201,7 @@ public class GT {
      *
      * @return GT  返回 GT 对象
      */
-    private static GT getGT() {
+    public static GT getGT() {
         if (gtAndroid == null) {
             synchronized (GT.class) {
                 if (gtAndroid == null) {
