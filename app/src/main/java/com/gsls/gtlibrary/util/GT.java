@@ -80,7 +80,6 @@ import androidx.fragment.app.FragmentTransaction;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.gsls.gtlibrary.entity.LoginBean;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -161,14 +160,14 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.9.12
+ * 更新时间:2019.9.15
  * <p>
  * <p>
  * 更新内容：（1.0.7 版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
  * 2.新增 Animator（真/假）动画工具包
  * 3.新增 HttpUtil 原始网络请求 GET / POST
- * 4.优化GT_Object的用法
+ * 4.优化GT_Object、GT_List、GT_Set、GT_Map 的用法(详情请看官网)
  * <p>
  * <p>
  * <p>
@@ -7841,7 +7840,28 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_List {
-                Class[] value() default Object.class;
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
 
             }
 
@@ -7852,7 +7872,30 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Map {
-                Class[] value() default Object.class;
+
+                String[] valueKey() default {};
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
             }
 
 
@@ -7862,7 +7905,29 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Set {
-                Class[] value() default Object.class;
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
+
             }
 
         }
@@ -8021,34 +8086,92 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_List initView = field.getAnnotation(Annotations.GT_Collection.GT_List.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
-                    List<Object> objectList = new ArrayList<>();//创建一个 ListView
-                    for (Class cla : classes) {
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
-                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
+                    String[] valueObject = initView.valueObject();
+                    Class<?>[] valueClass = initView.valueClass();
+                    String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                    byte[] valueByte = initView.valueByte();
+                    short[] valueShort = initView.valueShort();
+                    int[] valueInt = initView.valueInt();
+                    long[] valueLong = initView.valueLong();
+                    float[] valueFloat = initView.valueFloat();
+                    double[] valueDouble = initView.valueDouble();
+                    boolean[] valueBoolean = initView.valueBoolean();
+                    char[] valueChar = initView.valueChar();
+
+                    List<Object> objectList = new ArrayList<>();
+
+                    if (valueObject.length != 0) {
+                        for (Object value : valueObject) {
+                            objectList.add(value);
                         }
-                        objectList.add(object2);//添加每一个经过反射得到的 对象
+                    } else if (valueClass.length != 0) {
+                        for (Class cla : valueClass) {
+                            String classPage = cla.toString();
+                            String[] s = classPage.split(" ");
+                            classPage = s[1];
+
+                            //实例化一个对象
+                            Object object2 = null;
+                            try {
+                                object2 = Class.forName(classPage).newInstance();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            objectList.add(object2);//添加每一个经过反射得到的 对象
+                        }
+
+                    } else if (valueString.length != 0) {
+                        for (Object value : valueString) {
+                            objectList.add(value);
+                        }
+                    } else if (valueByte.length != 0) {
+                        for (Object value : valueByte) {
+                            objectList.add(value);
+                        }
+                    } else if (valueShort.length != 0) {
+                        for (Object value : valueShort) {
+                            objectList.add(value);
+                        }
+                    } else if (valueInt.length != 0) {
+                        for (Object value : valueInt) {
+                            objectList.add(value);
+                        }
+                    } else if (valueLong.length != 0) {
+                        for (Object value : valueLong) {
+                            objectList.add(value);
+                        }
+                    } else if (valueFloat.length != 0) {
+                        for (Object value : valueFloat) {
+                            objectList.add(value);
+                        }
+                    } else if (valueDouble.length != 0) {
+                        for (Object value : valueDouble) {
+                            objectList.add(value);
+                        }
+                    } else if (valueBoolean.length != 0) {
+                        for (Object value : valueBoolean) {
+                            objectList.add(value);
+                        }
+                    } else if (valueChar.length != 0) {
+                        for (Object value : valueChar) {
+                            objectList.add(value);
+                        }
                     }
+
+                    //实例注入 List
                     try {
                         field.setAccessible(true);
                         field.set(object, objectList);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
@@ -8063,34 +8186,105 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_Map initView = field.getAnnotation(Annotations.GT_Collection.GT_Map.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
+
                     Map<Object, Object> objectMap = new HashMap<>();//创建一个 Map
-                    for (Class cla : classes) {
+                    String[] valueKey = initView.valueKey();
+                    if (valueKey.length != 0) {    //如果不为 0 则创建 map 后并注入值 否则仅创建新的 Map 对象
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
-                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
+                        String[] valueObject = initView.valueObject();
+                        Class<?>[] valueClass = initView.valueClass();
+                        String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                        byte[] valueByte = initView.valueByte();
+                        short[] valueShort = initView.valueShort();
+                        int[] valueInt = initView.valueInt();
+                        long[] valueLong = initView.valueLong();
+                        float[] valueFloat = initView.valueFloat();
+                        double[] valueDouble = initView.valueDouble();
+                        boolean[] valueBoolean = initView.valueBoolean();
+                        char[] valueChar = initView.valueChar();
+
+                        for (String key : valueKey) {
+                            log_i("key:" + key);
                         }
-                        objectMap.put(cla, object2);//保存每个创建出来的 对象 key 为 每个对象的 class
+
+                        if (valueObject.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueObject[i]);
+                            }
+                        } else if (valueClass.length != 0) {
+                            for (Class cla : valueClass) {
+
+                                //截取 类的 class 路径属性
+                                String classPage = cla.toString();
+                                String[] s = classPage.split(" ");
+                                classPage = s[1];
+
+                                //实例化一个对象
+                                Object object2 = null;
+                                try {
+                                    object2 = Class.forName(classPage).newInstance();
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                } catch (InstantiationException e) {
+                                    e.printStackTrace();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+
+                                for (int i = 0; i < valueKey.length; i++) {
+                                    objectMap.put(valueKey[i], object2);
+                                }
+
+                            }
+
+                        } else if (valueString.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueString[i]);
+                            }
+                        } else if (valueByte.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueByte[i]);
+                            }
+                        } else if (valueShort.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueShort[i]);
+                            }
+                        } else if (valueInt.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueInt[i]);
+                            }
+                        } else if (valueLong.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueLong[i]);
+                            }
+                        } else if (valueFloat.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueFloat[i]);
+                            }
+                        } else if (valueDouble.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueDouble[i]);
+                            }
+                        } else if (valueBoolean.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueBoolean[i]);
+                            }
+                        } else if (valueChar.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueChar[i]);
+                            }
+                        }
+
                     }
+
                     try {
                         field.setAccessible(true);
                         field.set(object, objectMap);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
@@ -8105,34 +8299,92 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_Set initView = field.getAnnotation(Annotations.GT_Collection.GT_Set.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
-                    Set<Object> objectSet = new HashSet<>();//创建一个 Set
-                    for (Class cla : classes) {
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
-                        if (classPage.equals("java.lang.Object")) break; //说明是参数为 null 那就只进行实例化操作
+                    String[] valueObject = initView.valueObject();
+                    Class<?>[] valueClass = initView.valueClass();
+                    String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                    byte[] valueByte = initView.valueByte();
+                    short[] valueShort = initView.valueShort();
+                    int[] valueInt = initView.valueInt();
+                    long[] valueLong = initView.valueLong();
+                    float[] valueFloat = initView.valueFloat();
+                    double[] valueDouble = initView.valueDouble();
+                    boolean[] valueBoolean = initView.valueBoolean();
+                    char[] valueChar = initView.valueChar();
+
+                    Set<Object> objectSet = new HashSet<>();
+
+                    if (valueObject.length != 0) {
+                        for (Object value : valueObject) {
+                            objectSet.add(value);
                         }
-                        objectSet.add(object2);//保存每个创建出来的 对象
+                    } else if (valueClass.length != 0) {
+                        for (Class cla : valueClass) {
+                            String classPage = cla.toString();
+                            String[] s = classPage.split(" ");
+                            classPage = s[1];
+
+                            //实例化一个对象
+                            Object object2 = null;
+                            try {
+                                object2 = Class.forName(classPage).newInstance();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            objectSet.add(object2);//添加每一个经过反射得到的 对象
+                        }
+
+                    } else if (valueString.length != 0) {
+                        for (Object value : valueString) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueByte.length != 0) {
+                        for (Object value : valueByte) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueShort.length != 0) {
+                        for (Object value : valueShort) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueInt.length != 0) {
+                        for (Object value : valueInt) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueLong.length != 0) {
+                        for (Object value : valueLong) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueFloat.length != 0) {
+                        for (Object value : valueFloat) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueDouble.length != 0) {
+                        for (Object value : valueDouble) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueBoolean.length != 0) {
+                        for (Object value : valueBoolean) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueChar.length != 0) {
+                        for (Object value : valueChar) {
+                            objectSet.add(value);
+                        }
                     }
+
+                    //实例注入 List
                     try {
                         field.setAccessible(true);
                         field.set(object, objectSet);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
