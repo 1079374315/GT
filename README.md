@@ -11,9 +11,9 @@
  * <p>
  * <p>
  * 更新内容：（1.0.8 版本 大更新）
- * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
- * 2.新增 Animator（真/假）动画工具包
- * 3.新增 HttpUtil 原始网络请求 GET / POST
+ * 1.新增 AndroidUtilCode 工具包 （详细使用教程：https://www.jianshu.com/p/72494773aace）
+ * 2.新增 Animator（真/假）动画工具包(假：组件UI移动过去，但单击事件仍在原地。真：组件在哪里，触发事件就在哪里)
+ * 3.新增 HttpUtil 原始网络请求 GET / POST 
  * 4.优化GT_Object、GT_List、GT_Set、GT_Map 的用法(详情请看官网)
 ````
 
