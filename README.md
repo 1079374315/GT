@@ -91,7 +91,17 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.1.0'
+	//GT基础功能
+	implementation 'com.github.1079374315:GT:v1.1.0'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	
+	//GT全部功能 需要添加的包
+ 	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ 	implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ 	implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ 	implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ 	implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ 	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ 	implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
 }
 ````
 
