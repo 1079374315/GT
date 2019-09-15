@@ -201,7 +201,7 @@ public class GT {
      *
      * @return GT  返回 GT 对象
      */
-    public static GT getGT() {
+    public   static GT getGT() {
         if (gtAndroid == null) {
             synchronized (GT.class) {
                 if (gtAndroid == null) {
@@ -2283,7 +2283,7 @@ public class GT {
          *
          * @param callback new 一个 Callback 类的内部类
          */
-        public void loadDAta(Callback callback) {
+        public void loadData(Callback callback) {
             if (url != null) {
                 Request request = null;
                 if (map != null && map.size() > 0) {

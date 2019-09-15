@@ -17,7 +17,6 @@ public class AndroidActivity extends GT.AnnotationActivity {
         build(this);//绑定 Activity
         log(loginBean);
 
-
     }
 
 }
