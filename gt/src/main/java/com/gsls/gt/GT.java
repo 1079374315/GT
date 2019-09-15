@@ -151,12 +151,14 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- * //GT 须依赖的包：
- * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.9.0'   //加载图片的 glide
- * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ * //GT全部功能 需要添加的包
+ * implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ * implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ * implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
  * <p>
  * <p>
  * <p>
@@ -164,11 +166,12 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 更新时间:2019.9.15
  * <p>
  * <p>
- * 更新内容：（1.0.7 版本 大更新）
- * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
- * 2.新增 Animator（真/假）动画工具包
+ * 更新内容：（1.1.0 版本 大更新）
+ * 1.新增 AndroidUtilCode 工具包 （详细使用教程：https://www.jianshu.com/p/72494773aace）
+ * 2.新增 Animator（真/假）动画工具包(假：组件UI移动过去，但单击事件仍在原地。真：组件在哪里，触发事件就在哪里)
  * 3.新增 HttpUtil 原始网络请求 GET / POST
  * 4.优化GT_Object、GT_List、GT_Set、GT_Map 的用法(详情请看官网)
+ * 5.可使用 OkGo、OkHttp、加载图片类等方法.
  * <p>
  * <p>
  * <p>
@@ -202,7 +205,7 @@ public class GT {
      *
      * @return GT  返回 GT 对象
      */
-    public   static GT getGT() {
+    public static GT getGT() {
         if (gtAndroid == null) {
             synchronized (GT.class) {
                 if (gtAndroid == null) {
