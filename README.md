@@ -2,7 +2,7 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
 
-# 最新版本: 1.0.7
+# 最新版本: 1.0.8
 发布时间：2019年9月15日 
 
 ## 此次版本更新： 
@@ -10,7 +10,7 @@
  * 更新时间:2019.9.15
  * <p>
  * <p>
- * 更新内容：（1.0.7 版本 大更新）
+ * 更新内容：（1.0.8 版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
  * 2.新增 Animator（真/假）动画工具包
  * 3.新增 HttpUtil 原始网络请求 GET / POST
@@ -90,17 +90,17 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.0.7'
+	implementation 'com.github.1079374315:GT:v1.0.8'
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.7)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.8)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.0.7 (the "License");
+Licensed under the Apache License, Version 1.0.8 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
