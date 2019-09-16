@@ -2,7 +2,7 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 
 
-# 最新版本: 1.0.8
+# 最新版本: 1.1.0
 发布时间：2019年9月15日 
 
 ## 此次版本更新： 
@@ -10,11 +10,12 @@
  * 更新时间:2019.9.15
  * <p>
  * <p>
- * 更新内容：（1.0.8 版本 大更新）
+ * 更新内容：（1.1.0 版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （详细使用教程：https://www.jianshu.com/p/72494773aace）
  * 2.新增 Animator（真/假）动画工具包(假：组件UI移动过去，但单击事件仍在原地。真：组件在哪里，触发事件就在哪里)
- * 3.新增 HttpUtil 原始网络请求 GET / POST 
+ * 3.新增 HttpUtil 原始网络请求 GET / POST
  * 4.优化GT_Object、GT_List、GT_Set、GT_Map 的用法(详情请看官网)
+ * 5.可使用 OkGo、OkHttp、加载图片类等方法.
 ````
 
 [使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
@@ -90,17 +91,27 @@ allprojects {
 	
 第二步 2. 添加依赖关系
 dependencies {
-	implementation 'com.github.1079374315:GT:v1.0.8'
+	//GT基础功能
+	implementation 'com.github.1079374315:GT:v1.1.0'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	
+	//GT全部功能 需要添加的包
+ 	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ 	implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ 	implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ 	implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ 	implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ 	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ 	implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.0.8)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.0)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.0.8 (the "License");
+Licensed under the Apache License, Version 1.1.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
