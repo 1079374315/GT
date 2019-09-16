@@ -165,7 +165,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 更新时间:2019.9.16
  * <p>
  * <p>
- * 更新内容：（1.1.1 版本 大更新）
+ * 更新内容：（1.1.2 版本 大更新）
  * 1.新增 AndroidUtilCode 工具包 （详细使用教程：https://www.jianshu.com/p/72494773aace）
  * 2.新增 Animator（真/假）动画工具包(假：组件UI移动过去，但单击事件仍在原地。真：组件在哪里，触发事件就在哪里)
  * 3.新增 HttpUtil 原始网络请求 GET / POST
@@ -5174,7 +5174,6 @@ public class GT {
          */
         public static void hideActionBar(AppCompatActivity activity) {
             ActionBar actionBar = activity.getSupportActionBar();
-            GT.log_e("测试:" + actionBar);
             if (activity != null) {
                 actionBar.hide();
             }
