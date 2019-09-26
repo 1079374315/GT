@@ -13,6 +13,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -41,6 +43,7 @@ import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -67,11 +70,13 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.RotateAnimation;
 import android.view.animation.ScaleAnimation;
 import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -173,12 +178,18 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.9.23
+ * 更新时间:2019.9.26
  * <p>
  * <p>
  * 更新内容：（1.1.3 版本）
  * 1.新增 getNetworkState() 方法 获取当前网络属于 无网络(返回0)、WF(返回1)、2G(返回2)、3G(返回3)、4G(返回4) 网络
  * 2.Game 类中增加 遥感控制 组件
+ * 3.增加 应用程序工具集合类 ApplicationUtils 已更新工具有如下：
+ *  (1)弹出软件盘
+ *  (2)收起软键盘
+ *  (3)将字符串复制到粘贴板上
+ *  (4)保存View中的图片
+ * 4.
  * <p>
  * <p>
  * <p>
@@ -4328,6 +4339,75 @@ public class GT {
                     e.printStackTrace();
                 }
             }
+
+        }
+
+    }
+
+    /**
+     * @ApplicationUtils 应用程序的小工具集合
+     */
+    public static class ApplicationUtils{
+
+        /**
+         * @弹出软件盘
+         * @param editText
+         * @param activity
+         */
+        public static void editKeyboard(EditText editText, Activity activity) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(editText, InputMethodManager.RESULT_SHOWN);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+            editText.requestFocus();// 为搜索框 获取光标
+        }
+
+        /**
+         * @收起软键盘
+         * @param editText
+         * @param activity
+         */
+        public static void editKeyShrink(EditText editText, Activity activity) {
+            InputMethodManager inputMethodManager = (InputMethodManager) activity
+                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+        }
+
+        /**
+         * @将字符串复制到粘贴板上
+         * @param context
+         * @param text
+         */
+        public static void copyToClipboard(Context context, String text) {
+            ClipboardManager systemService = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            systemService.setPrimaryClip(ClipData.newPlainText("text", text));
+        }
+
+        /**
+         * @保存View中的图片
+         * @param view
+         */
+        public static void saveImage(View view, Context context) {
+
+            String sd = "sdcard/";
+            String name = String.valueOf(System.currentTimeMillis());
+            String fliename = sd + name + ".png";
+            File file = new File(fliename);
+            try {
+                FileOutputStream fos = new FileOutputStream(file);
+                view.setDrawingCacheEnabled(true);
+                Bitmap copy = view.getDrawingCache();
+                if (copy != null)
+                    copy.compress(Bitmap.CompressFormat.PNG, 100, fos);
+                view.setDrawingCacheEnabled(false);
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // 通知系统更新图库
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            intent.setData(Uri.fromFile(file));
+            context.sendBroadcast(intent);
 
         }
 
