@@ -47,7 +47,7 @@
 
 [GT 第八章：network 网络类：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%85%AB%E7%AB%A0%EF%BC%9Anetwork%20%E7%BD%91%E7%BB%9C%E7%B1%BB)
 
-[GT 第九章： 网络请求OkGo/OkHttp3 + JSON ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%B9%9D%E7%AB%A0%EF%BC%9A%20%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82OkGo%2FOkHttp3%20%2B%20JSON)
+[GT 第九章： 网络请求OkGo/OkHttp3/原始网络 + JSON ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%B9%9D%E7%AB%A0%EF%BC%9A%20%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82OkGo%2FOkHttp3%20%2B%20JSON)
 
 [GT 第十章：Web 快捷键：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E5%8D%81%E7%AB%A0%EF%BC%9AWeb%20%E5%BF%AB%E6%8D%B7%E9%94%AE)
 
