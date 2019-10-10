@@ -87,6 +87,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -119,6 +120,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -153,6 +155,8 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import dalvik.system.DexClassLoader;
+import dalvik.system.PathClassLoader;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -178,7 +182,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.9.26
+ * 更新时间:2019.10.10
  * <p>
  * <p>
  * 更新内容：（1.1.3 版本）
@@ -189,7 +193,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  *  (2)收起软键盘
  *  (3)将字符串复制到粘贴板上
  *  (4)保存View中的图片
- * 4.
+ * 4.新增 AppIteration 类（APP迭代类） 主要有：APP更新、APP热修复
  * <p>
  * <p>
  * <p>
@@ -389,42 +393,9 @@ public class GT {
      *
      * @param msg object 类型的消息
      */
-    public static void log_v(Object msg) {
-        if (LOG_TF) {
-            Log.v("GT_v", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
-    public static void log_d(Object msg) {
-        if (LOG_TF) {
-            Log.d("GT_d", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
     public static void log_i(Object msg) {
         if (LOG_TF) {
             Log.i("GT_i", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
-    public static void log_w(Object msg) {
-        if (LOG_TF) {
-            Log.w("GT_w", "------- " + msg);
         }
     }
 
@@ -445,66 +416,9 @@ public class GT {
      * @param title 日志标题
      * @param msg   日志消息
      */
-    public static void log_v(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.v("GT_v",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
-    public static void log_d(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.d("GT_d",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
     public static void log_i(Object title, Object msg) {
         if (LOG_TF) {
             Log.i("GT_i",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
-    public static void log_w(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.w("GT_w",
                     "------- Run" +
                             "\n\n---------------------" + title + "------------------------\n" +
                             "                   " + msg + "\n" +
@@ -731,7 +645,6 @@ public class GT {
 
 
     }
-
 
     /**
      * AlertDialog.Builder 对话框类
@@ -1237,7 +1150,7 @@ public class GT {
             } else if (object instanceof Set) {
                 sp_e.putStringSet(key, (Set) object);
             } else {
-                if (GT_LOG_TF) log_v(context, "进行对象保存");
+                if (GT_LOG_TF) log_i(context, "进行对象保存");
                 String json = new Gson().toJson(object);
                 String json_class = object.getClass().toString();
                 sp_e.putString(key, json);                           //保存对象的 Json 数据
@@ -1259,7 +1172,7 @@ public class GT {
                 sp_e.remove(key);
                 if (commit) sp_e.apply();
             } else {
-                if (GT_LOG_TF) log_v("删除失败  当前 sp 中无此 key");
+                if (GT_LOG_TF) log_i("删除失败  当前 sp 中无此 key");
             }
             return sp_e;
         }
@@ -1274,7 +1187,7 @@ public class GT {
         public GT_SharedPreferences updata(String key, Object object) {
             if (query(key) != null) {
                 if (GT_LOG_TF)
-                    log_v(context, "进入到 updata 查询的数据不为null");
+                    log_i(context, "进入到 updata 查询的数据不为null");
                 save(key, object);
             }
             return this;
@@ -1292,7 +1205,7 @@ public class GT {
                 obj = sp.getInt(key, 0);
             } catch (ClassCastException e1) {
                 if (GT_LOG_TF)
-                    log_v(context, "Int 数据装换异常");
+                    log_i(context, "Int 数据装换异常");
                 try {
                     String str_class = sp.getString(key + "_class", null);     //获取对象 class 数据
                     String str = sp.getString(key, null);                          //获取对象 Json  数据
@@ -1304,27 +1217,27 @@ public class GT {
                     }
                 } catch (ClassCastException e2) {
                     if (GT_LOG_TF)
-                        log_v(context, "String 数据装换异常");
+                        log_i(context, "String 数据装换异常");
                     try {
                         obj = sp.getLong(key, 0);
                     } catch (ClassCastException e3) {
                         if (GT_LOG_TF)
-                            log_v(context, "Long 数据装换异常");
+                            log_i(context, "Long 数据装换异常");
                         try {
                             obj = sp.getFloat(key, 0f);
                         } catch (ClassCastException e4) {
                             if (GT_LOG_TF)
-                                log_v(context, "Float 数据装换异常");
+                                log_i(context, "Float 数据装换异常");
                             try {
                                 obj = sp.getBoolean(key, false);
                             } catch (ClassCastException e5) {
                                 if (GT_LOG_TF)
-                                    log_v(context, "Boolean 数据装换异常");
+                                    log_i(context, "Boolean 数据装换异常");
                                 try {
                                     obj = sp.getStringSet(key, null);
                                 } catch (ClassCastException e6) {
                                     if (GT_LOG_TF)
-                                        log_v(context, "StringSet 数据装换异常");
+                                        log_i(context, "StringSet 数据装换异常");
                                     obj = null;
                                 }
                             }
@@ -1899,6 +1812,354 @@ public class GT {
 
     }
 
+    //=========================================== APP迭代类（更新、热修复bug） =========================================
+
+    /**
+     * APP 迭代类
+     */
+    public static class AppIteration{
+
+        //更新 APP 版本
+        public static class UpdateApp{
+
+            /**
+             * 内置 更新 APP 版本 注意
+             *
+             * 详细教程：https://blog.csdn.net/qq_39799899/article/details/102470084
+             *
+             * 1.在清单文件添加数据共享
+             * <application>
+             * ...
+             <!--数据共享-->
+             <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="自己包名.fileprovider"
+                android:grantUriPermissions="true"
+                android:exported="false">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/file_paths" />
+                </provider>
+             * ...
+             * </<application>
+             *
+             * 2.添加 file_paths.xml 文件
+             * <paths>
+             *     <external-path path="." name="external_storage_root" />
+             * </paths>
+             *
+             * 3.记得添加权限
+             *  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 写入手机权限 -->
+             *  <uses-permission android:name="android.permission.INTERNET" />  <!-- 网络权限 -->
+             *  <uses-permission android:name="android.permission.READ_PHONE_STATE" />  <!-- 读取手机权限 -->
+             *
+             */
+
+            /**
+             * @下载服务器的APK
+             * @param downloadUrl
+             * @param savePath
+             * @下载APK新版本
+             */
+            public static void downloadApp(final String downloadUrl, final String savePath) {
+
+                Thread.runJava(new Runnable() {
+                    @Override
+                    public void run() {
+                        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + savePath);//记得加扩展名
+                        file.getParentFile().mkdir();
+                        try {
+                            file.createNewFile();
+                            URL url2 = new URL(downloadUrl);
+                            HttpURLConnection conn = (HttpURLConnection) url2.openConnection();
+                            conn.connect();
+                            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                                InputStream ips = conn.getInputStream();
+                                FileOutputStream fops = new FileOutputStream(file);
+
+                                byte[] buf = new byte[1024];
+                                int read = ips.read(buf);
+                                while (read != -1) {
+                                    fops.write(buf, 0, read);
+                                    fops.flush();
+                                    read = ips.read(buf);
+                                }
+                                fops.close();
+                                ips.close();
+                                conn.disconnect();
+                            }
+                        } catch (Exception e) {
+                            if(getGT().getGtLogTf()){
+                                log_e(getGT().getLineInfo(),"网络下载app报错： "  + e);
+                            }
+                        }
+                    }
+                });
+
+            }
+
+            /**
+             * @安装APK
+             * @param apkPath
+             * @安装新版本
+             */
+            public static void installNewApk(Activity activity, String apkPath) {
+                String url = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + apkPath;
+                Uri uri;
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+
+                //支持7.0
+                if (Build.VERSION.SDK_INT >= 24) {
+                    uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".fileprovider", new File(url));
+                } else {
+                    uri = Uri.fromFile(new File(url));
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+
+                intent.setDataAndType(uri, "application/vnd.android.package-archive"); // 对应apk类型
+
+                activity.getApplication().startActivity(intent);
+            }
+
+
+        }
+
+        //热修复 APP
+        public static class RepairAPP{
+
+            /**
+             * 详细教程：https://blog.csdn.net/qq_39799899/article/details/102478355
+             *
+             * 热修复 APP
+             *
+             */
+
+            //这下面两个属性可自己修改
+            private static String REPAIR_FILE_NAME = null;  //修复文件名  默认补丁包为 当前APP名称
+            private static String REPAIR_FILE_PATH = null;   //修复文件路径 默认位置为 当前APP名称
+
+            public static String getRepairFileName() {
+                return REPAIR_FILE_NAME;
+            }
+
+            public static String getRepairFilePath() {
+                return REPAIR_FILE_PATH;
+            }
+
+            public static void setRepairFileName(String repairFileName) {
+                REPAIR_FILE_NAME = repairFileName;
+            }
+
+            public static void setRepairFilePath(String repairFilePath) {
+                REPAIR_FILE_PATH = repairFilePath;
+            }
+
+            private static final String DEX_SUFFIX = ".dex";
+            private static final String APK_SUFFIX = ".apk";
+            private static final String JAR_SUFFIX = ".jar";
+            private static final String ZIP_SUFFIX = ".zip";
+            private static final String DEX_DIR = "odex";
+            private static final String OPTIMIZE_DEX_DIR = "optimize_dex";
+            private static HashSet<File> loadedDex = new HashSet<>();
+
+            static {
+                loadedDex.clear();
+            }
+
+            /**
+             * 开启修复
+             *
+             * @param context
+             */
+            public static void startRepair(final Context context) {
+
+                //如果 补丁包文件夹名为 null
+                if(REPAIR_FILE_PATH == null){
+                    REPAIR_FILE_PATH = context.getResources().getString(R.string.app_name);//设置补丁包目录为当前 app 名
+                    GT.log_i("REPAIR_FILE_PATH:" + REPAIR_FILE_PATH);
+                }
+
+                //如果 补丁包文件名为 null
+                if(REPAIR_FILE_NAME == null){
+                    REPAIR_FILE_NAME = context.getResources().getString(R.string.app_name);//默认补丁包文件名为 GT 开头
+                    GT.log_i("REPAIR_FILE_NAME:" + REPAIR_FILE_NAME);
+                }
+
+
+
+                File externalStorageDirectory = Environment.getExternalStorageDirectory();
+                // 遍历所有的修复dex , 因为可能是多个dex修复包
+                File fileDir = externalStorageDirectory != null ?
+                        new File(externalStorageDirectory, RepairAPP.REPAIR_FILE_PATH) :
+                        new File(context.getFilesDir(), RepairAPP.DEX_DIR);// data/user/0/包名/files/odex（这个可以任意位置）
+                if (!fileDir.exists()) {//如果目录不存在就创建所有目录，这里需要添加权限
+                    fileDir.mkdirs();
+                }
+                if (RepairAPP.isGoingToFix(context)) {
+                    RepairAPP.loadFixedDex(context, Environment.getExternalStorageDirectory());
+                    GT.log_i("正在修复");
+                }
+            }
+
+
+            /**
+             * 加载补丁，使用默认目录：data/data/包名/files/odex
+             *
+             * @param context
+             */
+            public static void loadFixedDex(Context context) {
+                loadFixedDex(context, null);
+            }
+
+            /**
+             * 加载补丁
+             *
+             * @param context       上下文
+             * @param patchFilesDir 补丁所在目录
+             */
+            public static void loadFixedDex(Context context, File patchFilesDir) {
+                // dex合并之前的dex
+                doDexInject(context, loadedDex);
+            }
+
+            /**
+             * @author bthvi
+             * @time 2019/10/10 11:42
+             * @desc 验证是否需要热修复
+             */
+            public static boolean isGoingToFix(@NonNull Context context) {
+                boolean canFix = false;
+                File externalStorageDirectory = Environment.getExternalStorageDirectory();
+
+                // 遍历所有的修复dex , 因为可能是多个dex修复包
+                File fileDir = externalStorageDirectory != null ?
+                        new File(externalStorageDirectory, REPAIR_FILE_PATH) :
+                        new File(context.getFilesDir(), DEX_DIR);// data/data/包名/files/odex（这个可以任意位置）
+
+                File[] listFiles = fileDir.listFiles();
+                if (listFiles != null) {
+                    for (File file : listFiles) {
+                        if (file.getName().startsWith(REPAIR_FILE_NAME) &&
+                                (file.getName().endsWith(DEX_SUFFIX)
+                                        || file.getName().endsWith(APK_SUFFIX)
+                                        || file.getName().endsWith(JAR_SUFFIX)
+                                        || file.getName().endsWith(ZIP_SUFFIX))) {
+
+                            loadedDex.add(file);// 存入集合
+                            //有目标dex文件, 需要修复
+                            canFix = true;
+                        }
+                    }
+                }
+                return canFix;
+            }
+
+            private static void doDexInject(Context appContext, HashSet<File> loadedDex) {
+                String optimizeDir = appContext.getFilesDir().getAbsolutePath() +
+                        File.separator + OPTIMIZE_DEX_DIR;
+                // data/data/包名/files/optimize_dex（这个必须是自己程序下的目录）
+
+                File fopt = new File(optimizeDir);
+                if (!fopt.exists()) {
+                    fopt.mkdirs();
+                }
+                try {
+                    // 1.加载应用程序dex的Loader
+                    PathClassLoader pathLoader = (PathClassLoader) appContext.getClassLoader();
+                    for (File dex : loadedDex) {
+                        // 2.加载指定的修复的dex文件的Loader
+                        DexClassLoader dexLoader = new DexClassLoader(
+                                dex.getAbsolutePath(),// 修复好的dex（补丁）所在目录
+                                fopt.getAbsolutePath(),// 存放dex的解压目录（用于jar、zip、apk格式的补丁）
+                                null,// 加载dex时需要的库
+                                pathLoader// 父类加载器
+                        );
+                        // 3.开始合并
+                        // 合并的目标是Element[],重新赋值它的值即可
+
+                        /**
+                         * BaseDexClassLoader中有 变量: DexPathList pathList
+                         * DexPathList中有 变量 Element[] dexElements
+                         * 依次反射即可
+                         */
+
+                        //3.1 准备好pathList的引用
+                        Object dexPathList = getPathList(dexLoader);
+                        Object pathPathList = getPathList(pathLoader);
+                        //3.2 从pathList中反射出element集合
+                        Object leftDexElements = getDexElements(dexPathList);
+                        Object rightDexElements = getDexElements(pathPathList);
+                        //3.3 合并两个dex数组
+                        Object dexElements = combineArray(leftDexElements, rightDexElements);
+
+                        // 重写给PathList里面的Element[] dexElements;赋值
+                        Object pathList = getPathList(pathLoader);// 一定要重新获取，不要用pathPathList，会报错
+                        setField(pathList, pathList.getClass(), "dexElements", dexElements);
+
+                    }
+//                    Toast.makeText(appContext, "修复完成", Toast.LENGTH_SHORT).show();
+                    GT.log_i("修复完成");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            /**
+             * 反射给对象中的属性重新赋值
+             */
+            private static void setField(Object obj, Class<?> cl, String field, Object value) throws NoSuchFieldException, IllegalAccessException {
+                Field declaredField = cl.getDeclaredField(field);
+                declaredField.setAccessible(true);
+                declaredField.set(obj, value);
+            }
+
+            /**
+             * 反射得到对象中的属性值
+             */
+            private static Object getField(Object obj, Class<?> cl, String field) throws NoSuchFieldException, IllegalAccessException {
+                Field localField = cl.getDeclaredField(field);
+                localField.setAccessible(true);
+                return localField.get(obj);
+            }
+
+
+            /**
+             * 反射得到类加载器中的pathList对象
+             */
+            private static Object getPathList(Object baseDexClassLoader) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+                return getField(baseDexClassLoader, Class.forName("dalvik.system.BaseDexClassLoader"), "pathList");
+            }
+
+            /**
+             * 反射得到pathList中的dexElements
+             */
+            private static Object getDexElements(Object pathList) throws NoSuchFieldException, IllegalAccessException {
+                return getField(pathList, pathList.getClass(), "dexElements");
+            }
+
+            /**
+             * 数组合并
+             */
+            private static Object combineArray(Object arrayLhs, Object arrayRhs) {
+                Class<?> clazz = arrayLhs.getClass().getComponentType();
+                int i = Array.getLength(arrayLhs);// 得到左数组长度（补丁数组）
+                int j = Array.getLength(arrayRhs);// 得到原dex数组长度
+                int k = i + j;// 得到总数组长度（补丁数组+原dex数组）
+                Object result = Array.newInstance(clazz, k);// 创建一个类型为clazz，长度为k的新数组
+                System.arraycopy(arrayLhs, 0, result, 0, i);
+                System.arraycopy(arrayRhs, 0, result, i, j);
+                return result;
+            }
+
+        }
+
+
+    }
+
+
 
     //=========================================== 网络类 =========================================
 
@@ -2023,12 +2284,12 @@ public class GT {
                 if (null == connManager)
                     return NETWORN_NONE;
                 //获取当前网络类型，如果为空，返回无网络
-                NetworkInfo activeNetInfo = connManager.getActiveNetworkInfo();
+                @SuppressLint("MissingPermission") NetworkInfo activeNetInfo = connManager.getActiveNetworkInfo();
                 if (activeNetInfo == null || !activeNetInfo.isAvailable()) {
                     return NETWORN_NONE;
                 }
                 // 判断是不是连接的是不是wifi
-                NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                @SuppressLint("MissingPermission") NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
                 if (null != wifiInfo) {
                     NetworkInfo.State state = wifiInfo.getState();
                     if (null != state)
@@ -2037,7 +2298,7 @@ public class GT {
                         }
                 }
                 // 如果不是wifi，则判断当前连接的是运营商的哪种网络2g、3g、4g等
-                NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+                @SuppressLint("MissingPermission") NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
                 if (null != networkInfo) {
                     NetworkInfo.State state = networkInfo.getState();
                     String strSubTypeName = networkInfo.getSubtypeName();
@@ -2099,7 +2360,7 @@ public class GT {
                 JSONObject jsonObject = new JSONObject(string);
             } catch (JSONException e) {
                 if (GT_LOG_TF)
-                    log_v("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getGT().getLineInfo() + "】");
+                    log_i("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getGT().getLineInfo() + "】");
                 //                e.printStackTrace();
             }
         }
@@ -2722,7 +2983,6 @@ public class GT {
         }
 
     }
-
 
     //============================================= 小工具类 =======================================
 
@@ -4214,40 +4474,6 @@ public class GT {
     }
 
     /**
-     * 分享功能
-     */
-    public static class GT_Share {
-
-        private Activity activity;
-
-        /**
-         * 初始化 上下文
-         *
-         * @param activity
-         */
-        public GT_Share(Activity activity) {
-            this.activity = activity;
-        }
-
-        /**
-         * 发送文字
-         *
-         * @param title
-         * @param content
-         */
-        public void senText(String title, String content) {
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, content);
-            shareIntent = Intent.createChooser(shareIntent, title);
-            activity.startActivity(shareIntent);
-        }
-
-
-    }
-
-    /**
      * 图片优化类
      */
     public static class ImageOptimize {
@@ -4350,6 +4576,21 @@ public class GT {
     public static class ApplicationUtils{
 
         /**
+         * 分享文字
+         * @param activity
+         * @param title
+         * @param content
+         */
+        public void senText(Activity activity, String title, String content) {
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, content);
+            shareIntent = Intent.createChooser(shareIntent, title);
+            activity.startActivity(shareIntent);
+        }
+
+        /**
          * @弹出软件盘
          * @param editText
          * @param activity
@@ -4412,6 +4653,8 @@ public class GT {
         }
 
     }
+
+
 
     //============================================= UI类 ===========================================
 
@@ -5997,7 +6240,7 @@ public class GT {
                 mapSQL = new HashMap<>();
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
+                    GT.log_i(getGT().getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
                 }
             }
             return this;
@@ -6027,7 +6270,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
+                        GT.log_i(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
             }
@@ -6055,7 +6298,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
+                        GT.log_i(getGT().getLineInfo(), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
                     }
                 }
             }
@@ -6089,7 +6332,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
+                        GT.log_i(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
             }
@@ -6112,12 +6355,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
+                        GT.log_i(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
+                    GT.log_i(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
             return this;
@@ -6138,12 +6381,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
+                        GT.log_i(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
+                    GT.log_i(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
             return this;
@@ -6165,12 +6408,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
+                        GT.log_i(getGT().getLineInfo(), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
+                    GT.log_i(getGT().getLineInfo(), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
                 }
             }
             return this;
@@ -6197,7 +6440,7 @@ public class GT {
                 topList.add(HXM);//添加当退回栈记录中
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "切换新的 Fragment 时 NewFragment 为 null");
+                    GT.log_i(getGT().getLineInfo(), "切换新的 Fragment 时 NewFragment 为 null");
                 }
             }
             return this;
@@ -6216,7 +6459,7 @@ public class GT {
                 topList.remove(HXM);//移除当前已经退出栈 Fragment 的 哈希码
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "退回栈bug：fm、topList为 null 或 topListSize == 0");
+                    GT.log_i(getGT().getLineInfo(), "退回栈bug：fm、topList为 null 或 topListSize == 0");
                 }
             }
             return this;
@@ -6232,7 +6475,7 @@ public class GT {
                 transaction = fm.beginTransaction();
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "fm 管理器为 null");
+                    GT.log_i(getGT().getLineInfo(), "fm 管理器为 null");
                 }
             }
             return transaction;
@@ -6688,9 +6931,6 @@ public class GT {
         }
 
     }
-
-
-
 
 
     //============================================= 游戏类 ======================================
@@ -7609,11 +7849,11 @@ public class GT {
                     if (intent.hasExtra("state")) {
                         if (intent.getIntExtra("state", 0) == 0) {
                             if (GT_LOG_TF)
-                                log_v("耳机测试: 没插入耳机");
+                                log_i("耳机测试: 没插入耳机");
                             headset_TF = false;
                         } else if (intent.getIntExtra("state", 0) == 1) {
                             if (GT_LOG_TF)
-                                log_v("耳机测试: 插入耳机");
+                                log_i("耳机测试: 插入耳机");
                             headset_TF = true;
                         }
                     }
@@ -8052,7 +8292,7 @@ public class GT {
                     loadMusic();//初始化 音频流
 
                 } else {
-                    GT.log_v(getGT().getLineInfo(), "添加音频无效，当前已经包含相同的 key，无法再进行装载相同的 key");//提示无效的添加
+                    GT.log_i(getGT().getLineInfo(), "添加音频无效，当前已经包含相同的 key，无法再进行装载相同的 key");//提示无效的添加
                 }
             }
             return this;
@@ -8082,7 +8322,7 @@ public class GT {
                     mapMusic.remove(key);
                     loadMusic();//初始化音频
                 } else {
-                    log_v(getGT().getLineInfo(), "移除音频失败，当前并不存在此 key:" + key);
+                    log_i(getGT().getLineInfo(), "移除音频失败，当前并不存在此 key:" + key);
                 }
             }
             return this;
@@ -8115,7 +8355,7 @@ public class GT {
                     mapMusic.put(key, rawId);
                     loadMusic();//初始化音频
                 } else {
-                    GT.log_v(getGT().getLineInfo(), "修改音频无效，当前并不存在当前 key，无法进行更新操作");//提示无效的更新
+                    GT.log_i(getGT().getLineInfo(), "修改音频无效，当前并不存在当前 key，无法进行更新操作");//提示无效的更新
                 }
             }
             return this;
@@ -10108,7 +10348,7 @@ public class GT {
                         gtAsyncTask.execute();
                     } catch (IllegalStateException e) {
                         if (GT.GT_LOG_TF) {
-                            GT.log_v(getGT().getLineInfo(), "无法执行任务:任务已在运行。");
+                            GT.log_i(getGT().getLineInfo(), "无法执行任务:任务已在运行。");
                         }
                     }
                 }
