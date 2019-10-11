@@ -1,6 +1,6 @@
 [![CSDN](https://img.shields.io/badge/Android%20Arsenal-Fragmentation-brightgreen.svg?style=flat)](https://blog.csdn.net/qq_39799899)
-[![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://blog.csdn.net/qq_39799899/article/details/102490617)
-
+[![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
+[切换到CSDN](https://blog.csdn.net/qq_39799899/article/details/102490617)
 
 # 最新版本: 1.1.3
 发布时间：2019年10月10日 
