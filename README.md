@@ -1,22 +1,24 @@
 [![CSDN](https://img.shields.io/badge/Android%20Arsenal-Fragmentation-brightgreen.svg?style=flat)](https://blog.csdn.net/qq_39799899)
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
+[切换到CSDN](https://blog.csdn.net/qq_39799899/article/details/102490617)
 
-
-# 最新版本: 1.1.2
-发布时间：2019年9月16日 
+# 最新版本: 1.1.3
+发布时间：2019年10月10日 
 
 ## 此次版本更新： 
 ````
- * 更新时间:2019.9.16
+ * 更新时间:2019.10.10
  * <p>
  * <p>
- * 更新内容：（1.1.2 版本 大更新）
- * 1.新增 AndroidUtilCode 工具包 （详细使用教程：https://www.jianshu.com/p/72494773aace）
- * 2.新增 Animator（真/假）动画工具包(假：组件UI移动过去，但单击事件仍在原地。真：组件在哪里，触发事件就在哪里)
- * 3.新增 HttpUtil 原始网络请求 GET / POST
- * 4.优化GT_Object、GT_List、GT_Set、GT_Map 的用法(详情请看官网)
- * 5.可使用 OkGo、OkHttp、加载图片类等方法.
- * 6.修复 GT_Object 注入的问题
+ * 更新内容：（1.1.3 版本）
+ * 1.新增 getNetworkState() 方法 获取当前网络属于 无网络(返回0)、WF(返回1)、2G(返回2)、3G(返回3)、4G(返回4) 网络
+ * 2.Game 类中增加 遥感控制 组件
+ * 3.增加 应用程序工具集合类 ApplicationUtils 已更新工具有如下：
+ *  (1)弹出软件盘
+ *  (2)收起软键盘
+ *  (3)将字符串复制到粘贴板上
+ *  (4)保存View中的图片
+ * 4.新增 AppIteration 类（APP迭代类） 主要有：APP更新、APP热修复
 ````
 
 [使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
@@ -95,7 +97,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GT:v1.1.2'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GT:v1.1.3'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
@@ -108,13 +110,40 @@ dependencies {
 }
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.2)
+````
+
+#混淆时，GT需要添加的
+
+#不混淆GT包
+-dontwarn com.gsls.gt.**
+#不混淆GT类
+-keep public class com.gsls.gt.GT { *; }
+#不混淆GT类的子类
+-keep public class * extends com.gsls.gt.GT { *; }
+#不混淆某个类的内部类
+-keep class com.gsls.gt.GT$* {*;}
+#还有些混淆需要注意的是，最好将使用注解的类均不进行混淆。
+
+
+
+
+
+#比如 BaseFragment 类使用了注解 那就需要添加以下不混淆
+
+#不混淆 BaseFragment 类
+-keep public class com.ydh.fragment.BaseFragment { *; }
+#不混淆 所有继承 BaseFragment 类
+-keep public class * extends com.ydh.fragment.BaseFragment { *; }
+
+````
+
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.3)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.1.2 (the "License");
+Licensed under the Apache License, Version 1.1.3 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
