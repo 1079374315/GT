@@ -188,12 +188,13 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.10.15
+ * 更新时间:2019.10.24
  * * <p>
  * * <p>
  * * 更新内容：（1.1.4 版本）
  * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
- * * 2.增加权限管理类 AppAuthorityManagement
+ * * 2.增加 权限管理类 AppAuthorityManagement
+ * * 3.增加 App存储池类 AppDataPool (App内部存储池、App外部存储池)
  * <p>
  * <p>
  * <p>
@@ -288,8 +289,8 @@ public class GT {
      *
      * @param CONTEXT
      */
-    public void build(Context CONTEXT) {
-        this.CONTEXT = CONTEXT;
+    public void build(Context context) {
+        this.CONTEXT = context;
         initGTUtilActivity();//初始化 GT 必要的工具
     }
 
@@ -300,6 +301,17 @@ public class GT {
      * @param view
      */
     public void build(Object object, View view) {
+        initGTUtilFragment(object, view);//初始化 GT 必要的工具
+    }
+
+    /**
+     * 为外部提供访问 GT Context 接口
+     *
+     * @param object
+     * @param view
+     */
+    public void build(Context context, Object object, View view) {
+        this.CONTEXT = context;
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
     }
 
@@ -543,6 +555,35 @@ public class GT {
             }, time);
 
         }
+    }
+
+    private static Toast toast;
+
+    /**
+     * @param content
+     * @标准Toast
+     */
+    public static void toast(Object content) {
+        if (getGT().getCONTEXT() != null) {
+            if (toast == null) {
+                toast = Toast.makeText(getGT().getCONTEXT(), content.toString(), Toast.LENGTH_SHORT);
+            } else {
+                toast.setText(content.toString());
+            }
+            toast.show();
+        } else {
+            log(getLineInfo(), "当前没有赋值 Context 无法显示 Toast ");
+        }
+
+    }
+
+    public static void toast(Context context, Object content) {
+        if (toast == null) {
+            toast = Toast.makeText(context, content.toString(), Toast.LENGTH_SHORT);
+        } else {
+            toast.setText(content.toString());
+        }
+        toast.show();
     }
 
     /**
@@ -4244,9 +4285,9 @@ public class GT {
         }
 
         /**
-         * @弹出软件盘
          * @param editText
          * @param activity
+         * @弹出软件盘
          */
         public static void editKeyboard(EditText editText, Activity activity) {
             InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -4256,9 +4297,9 @@ public class GT {
         }
 
         /**
-         * @收起软键盘
          * @param editText
          * @param activity
+         * @收起软键盘
          */
         public static void editKeyShrink(EditText editText, Activity activity) {
             InputMethodManager inputMethodManager = (InputMethodManager) activity
@@ -4267,9 +4308,9 @@ public class GT {
         }
 
         /**
-         * @将字符串复制到粘贴板上
          * @param context
          * @param text
+         * @将字符串复制到粘贴板上
          */
         public static void copyToClipboard(Context context, String text) {
             ClipboardManager systemService = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -4277,10 +4318,10 @@ public class GT {
         }
 
         /**
-         * @保存图片
          * @param context  上下文
          * @param view     保存图片的组件
          * @param fileName 文件名
+         * @保存图片
          */
         public static void saveImage(Context context, View view, String fileName) {
             Bitmap bm = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
@@ -4307,9 +4348,9 @@ public class GT {
         }
 
         /**
-         * @获取软件版本号
          * @param mContext
          * @return
+         * @获取软件版本号
          */
         public static int getVersionCode(Context mContext) {
             int versionCode = 0;
@@ -4323,9 +4364,9 @@ public class GT {
         }
 
         /**
-         * @获取版本号名称
          * @param context
          * @return
+         * @获取版本号名称
          */
         public static String getVerName(Context context) {
             String verName = "";
@@ -4338,11 +4379,11 @@ public class GT {
         }
 
         /**
-         * @解压文件
          * @param zipPtath        解压文件的路径
          * @param outputDirectory 解压后的输出路径
          * @param isDeleteZipPage 是否保留压缩文件
          * @throws IOException
+         * @解压文件
          */
         public static void unzipFile(String zipPtath, String outputDirectory, boolean isDeleteZipPage)
                 throws IOException {
@@ -4402,9 +4443,9 @@ public class GT {
         }
 
         /**
-         * @获取文件夹中所有文件名
          * @param path
          * @return
+         * @获取文件夹中所有文件名
          */
         public static List<String> getFilesAllName(String path) {
             File file = new File(path);
@@ -4421,18 +4462,19 @@ public class GT {
         }
 
         /**
-         * @清空文件夹中所有文件
          * @param file         清空的文件路径
-         * @param isSaveFolder 是否保存当前文件夹
+         * @param isSaveFolder 是否保存当前文件夹 true：b
+         * @清空文件夹中所有文件
          */
-        public static void deleteFile(File file, boolean isSaveFolder) {
+        public static void deleteAllFile(File file, boolean isSaveFolder) {
+
             if (file.isDirectory()) {
                 File[] files = file.listFiles();
                 for (int i = 0; i < files.length; i++) {
                     File f = files[i];
-                    deleteFile(f, isSaveFolder);
+                    deleteAllFile(f, isSaveFolder);
                 }
-                if (isSaveFolder) {// 是否保留本文件夹
+                if (!isSaveFolder) {// 是否保留本文件夹
                     file.delete();// 如要保留文件夹，只删除文件，请注释这行
                 }
             } else if (file.exists()) {
@@ -4441,17 +4483,17 @@ public class GT {
         }
 
         /**
-         * @获取手机根目录
          * @return
+         * @获取手机根目录
          */
         public static String getAppDirectory() {
             return Environment.getExternalStorageDirectory().toString();
         }
 
         /**
-         * @获取当前apk包名
          * @param context
          * @return
+         * @获取当前apk包名
          */
         public static String getPackageName(Context context) {
             try {
@@ -4466,9 +4508,8 @@ public class GT {
 
     }
 
+
     //=========================================== APP迭代类（更新、热修复bug） =========================================
-
-
 
     /**
      * APP 迭代类
@@ -4512,9 +4553,9 @@ public class GT {
              */
 
             /**
-             * @在网络下载文件到本地
              * @param downloadUrl
              * @param savePath
+             * @在网络下载文件到本地
              * @下载服务器的APK
              */
             public static void downloadFile(final String downloadUrl, final String savePath) {
@@ -4583,13 +4624,15 @@ public class GT {
 
         }
 
+
         // 热修复 APP
         public static class RepairAPP {
 
             // 这下面两个属性可自己修改
-            private static String repairFileName = null; // 修复文件名 	默认补丁包文件名为 当前APP版本号 开头
-            private static String repairFilePath = null; // 修复文件路径 	默认补丁包的路径为 当前App包名 下的 thermalRemediation文件夹下
+            private static String repairFileName = null; // 修复文件名 默认补丁包文件名为 当前APP版本号 开头
+            private static String repairFilePath = null; // 修复文件路径 默认补丁包的路径为 当前App包名 下的 thermalRemediation文件夹下
             private static String repairFileFolderName = "thermalRemediation"; // 默认存储热修复默认的文件夹名称
+            private static String repairBugFilePath = null;// 热修复 bug 文件路径
 
             public static String getRepairFileName() {
                 return repairFileName;
@@ -4628,13 +4671,13 @@ public class GT {
             }
 
             /**
-             * @初始化 热修复路径与文件格式
              * @param context
+             * @初始化 热修复路径与文件格式
              */
             public static void init(Context context) {
                 // 如果 补丁包文件夹名为 null
                 if (repairFilePath == null) {
-                    repairFilePath = ApplicationUtils.getPackageName(context) + "/" + repairFileFolderName;// 设置补丁包目录为当前 app 包名 下的 thermalRemediation文件夹
+                    repairFilePath = ApplicationUtils.getPackageName(context) + "/" + repairFileFolderName;// 设置补丁包目录为当前
                 }
 
                 // 如果 补丁包文件名为 null
@@ -4659,15 +4702,31 @@ public class GT {
                 if (!fileDir.exists()) {// 如果目录不存在就创建所有目录，这里需要添加权限
                     fileDir.mkdirs();
                 }
-                if (RepairAPP.isGoingToFix(context)) {
-                    RepairAPP.loadFixedDex(context, Environment.getExternalStorageDirectory());
-                    log("正在修复");
+
+                repairBugFilePath = getRepairAppDirectory(context);// 赋值热修复 Bug 文件路径
+
+                if (RepairAPP.isGoingToFix(context)) {// 是否需要热修复
+                    RepairAPP.loadFixedDex(context, Environment.getExternalStorageDirectory());// 加载补丁包
+//                    log("正在修复");
+
+//                    log("bug文件目录:" + repairBugFilePath);
+
+                    // 解决 oat 文件的 bug
+                    for (String path : ApplicationUtils.getFilesAllName(repairBugFilePath)) {
+                        if (path.indexOf("oat") != -1) {
+                            repairBugFilePath += "/oat";
+//                            log("【进入删除 oat 文件 bug】");
+                            GT.ApplicationUtils.deleteAllFile(new File(repairBugFilePath), false);
+                        }
+
+                    }
+
                 }
             }
 
             /**
-             * @获取手机热修复根目录
              * @return
+             * @获取手机热修复根目录
              */
             public static String getRepairAppDirectory(Context context) {
                 if (GT.AppIteration.RepairAPP.getRepairFilePath() == null) {
@@ -4702,16 +4761,14 @@ public class GT {
              * @验证是否需要热修复
              * @author bthvi
              * @time 2019/10/10 11:42
-             * @desc
+             * @desc 验证是否需要热修复
              */
             public static boolean isGoingToFix(Context context) {
                 boolean canFix = false;
                 File externalStorageDirectory = Environment.getExternalStorageDirectory();
-
                 // 遍历所有的修复dex , 因为可能是多个dex修复包
                 File fileDir = externalStorageDirectory != null ? new File(externalStorageDirectory, repairFilePath)
                         : new File(context.getFilesDir(), DEX_DIR);// data/data/包名/files/odex（这个可以任意位置）
-
                 File[] listFiles = fileDir.listFiles();
                 if (listFiles != null) {
                     for (File file : listFiles) {
@@ -4729,18 +4786,18 @@ public class GT {
             }
 
             /**
-             * @下载Zip补丁包并加载
              * @param context
              * @param downloadUrl
+             * @下载Zip补丁包并加载
              */
             public static void downloadZipServicePack(final Context context, final String downloadUrl) {
-//				log("下载 补丁包中...");
-
                 final String savePath = GT.AppIteration.RepairAPP.getRepairAppDirectory(context)
                         + "thermalRemediation.zip";
 
-//				log("下载补丁包服务器路径：" + downloadUrl);
-//				log("下载补丁包保存的路径：" + savePath);
+                File file = new File(GT.AppIteration.RepairAPP.getRepairAppDirectory(context));
+                if (!file.exists()) {
+                    file.mkdirs();
+                }
 
                 Thread.runJava(new Runnable() {
                     @Override
@@ -4769,44 +4826,36 @@ public class GT {
                             }
                         } catch (Exception e) {
                             if (GT.getGT().getGtLogTf()) {
-                                GT.err(getLineInfo(), "网络下载app报错： " + e);
+                                GT.log(getLineInfo(), "网络下载app报错： " + e);
                             }
                         }
-
-//						log("下载完成...");
-
                         try {
-                            GT.ApplicationUtils.unzipFile(savePath,
+                            ApplicationUtils.unzipFile(savePath,
                                     GT.AppIteration.RepairAPP.getRepairAppDirectory(context), true);
                         } catch (IOException e) {
                             if (GT.getGT().getGtLogTf()) {
-                                GT.err(getLineInfo(), "解压失败： " + e);
+                                log(getLineInfo(), "解压失败： " + e);
                             }
                             e.printStackTrace();
                         }
 
-                        startRepair(context);// 开始热修复
+                        GT.AppIteration.RepairAPP.startRepair(context);// 开始热修复
 
                     }
                 });
             }
 
-            /**
-             * @这个必须是自己程序下的目
-             * @param appContext
-             * @param loadedDex
-             */
-            private static void doDexInject(Context appContext, HashSet<File> loadedDex) {
-                String optimizeDir = appContext.getFilesDir().getAbsolutePath() + File.separator + OPTIMIZE_DEX_DIR;
-                // data/data/包名/files/optimize_dex（这个必须是自己程序下的目录）
+            private static void doDexInject(Context context, HashSet<File> loadedDex) {
 
+                String optimizeDir = context.getFilesDir().getAbsolutePath() + File.separator + OPTIMIZE_DEX_DIR;
                 File fopt = new File(optimizeDir);
                 if (!fopt.exists()) {
                     fopt.mkdirs();
                 }
+
                 try {
                     // 1.加载应用程序dex的Loader
-                    PathClassLoader pathLoader = (PathClassLoader) appContext.getClassLoader();
+                    PathClassLoader pathLoader = (PathClassLoader) context.getClassLoader();
                     for (File dex : loadedDex) {
                         // 2.加载指定的修复的dex文件的Loader
                         DexClassLoader dexLoader = new DexClassLoader(dex.getAbsolutePath(), // 修复好的dex（补丁）所在目录
@@ -4830,14 +4879,12 @@ public class GT {
                         Object rightDexElements = getDexElements(pathPathList);
                         // 3.3 合并两个dex数组
                         Object dexElements = combineArray(leftDexElements, rightDexElements);
-
                         // 重写给PathList里面的Element[] dexElements;赋值
                         Object pathList = getPathList(pathLoader);// 一定要重新获取，不要用pathPathList，会报错
                         setField(pathList, pathList.getClass(), "dexElements", dexElements);
-
                     }
 //                   Toast.makeText(appContext, "修复完成", Toast.LENGTH_SHORT).show();
-                    log("修复完成");
+//                    log("修复完成");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -4868,6 +4915,7 @@ public class GT {
              */
             private static Object getPathList(Object baseDexClassLoader)
                     throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+                // TODO 当前这行代码在有些机型上会产生oat文件，我已经做了处理
                 return getField(baseDexClassLoader, Class.forName("dalvik.system.BaseDexClassLoader"), "pathList");
             }
 
@@ -4898,12 +4946,98 @@ public class GT {
     }
 
 
+    //=========================================== APP 存储池 =========================================
+
+    /**
+     * @App存储池
+     */
+    public static class AppDataPool {
+
+        /**
+         * @App内部存储池
+         * @临时数据
+         */
+        public static class Interior {
+
+            /**
+             * @内部存储池
+             * @存储数据的临时容器
+             */
+            private final static Map<Object, Object> interiorDataPool = new HashMap<>();
+
+            /**
+             * @保存数据
+             * @param classs
+             * @param key
+             * @param data
+             * @return 操作成功 返回 true
+             */
+            public static boolean saveDataPool(Class classs, Object key, Object data) {
+                Object idKey = AppDataPool.getIdKey(classs, key);//形成唯一的 IdKey
+                if (!interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.put(idKey, data);//存储数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，保存数据失败！当前数据池中存在该值");
+                    }
+                    return false;
+                }
+            }
+
+            /**
+             * @删除数据
+             * @param classs
+             * @param key
+             * @return 操作成功 返回 true
+             */
+            public static boolean deleteDataPool(Class classs, Object key) {
+                Object idKey = AppDataPool.getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.remove(idKey);//删除数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，删除数据失败！当前数据池中不存在该值");
+                    }
+                    return false;
+                }
+            }
+
+
+        }
+
+        /**
+         * @APP外部存储池
+         * @持久性数据
+         */
+        public static class External {
+
+        }
+
+
+        /**
+         * @param classs
+         * @param key
+         * @return
+         * @APP存储池中 返回 IdKey
+         */
+        private static String getIdKey(Object classs, Object key) {
+            String javaFile = classs.getClass().getName().replace(".", "/") + ".java";// 获取文件包名与Java文件名
+            String projectPath = classs.getClass().getResource("/").toString();// 获取项目路径
+            projectPath = projectPath.substring(projectPath.indexOf("/") + 1, projectPath.length());// 获取当前类的绝对路径
+            return projectPath + javaFile + "{" + key + "}";
+        }
+
+    }
+
+
     //=========================================== APP权限类 =========================================
 
     /**
      * APP 权限管理 类
      */
-    public static class AppAuthorityManagement{
+    public static class AppAuthorityManagement {
 
         //android6.0之后要动态获取权限
         public static void readWritePermission(Activity activity) {
@@ -4917,15 +5051,15 @@ public class GT {
                 int permission = ActivityCompat.checkSelfPermission(activity,
                         "android.permission.WRITE_EXTERNAL_STORAGE");
                 if (permission != PackageManager.PERMISSION_GRANTED) {
-                    if(getGT().getLogTf()){
-                        err(getLineInfo(),"读写获取权限失败");
+                    if (getGT().getLogTf()) {
+                        err(getLineInfo(), "读写获取权限失败");
                     }
                     // 没有写的权限，去申请写的权限，会弹出对话框
                     ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
                 }
             } catch (Exception e) {
-                if(getGT().getLogTf()){
-                    err(getLineInfo(),"读写获取权限报错");
+                if (getGT().getLogTf()) {
+                    err(getLineInfo(), "读写获取权限报错");
                 }
                 e.printStackTrace();
             }
@@ -7230,7 +7364,8 @@ public class GT {
                 Window.Close_virtualButton(activity);//关闭虚拟按钮
                 GT.Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
             } catch (Exception e) {
-                GT.err(getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
+                if (getGT().getGtLogTf())
+                    GT.err(getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
             }
         }
 
