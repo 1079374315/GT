@@ -202,10 +202,11 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * * 更新内容：（1.1.4 版本）
  * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
  * * 2.增加 权限管理类 AppAuthorityManagement
- * * 3.增加 App存储池类 AppDataPool (App内部存储池、App外部存储池)
+ * * 3.增加 字符串加密类 Encryption （目前有加密算法：MD5 、 DES）
+ * * 4.增加 App存储池类 AppDataPool (App内部存储池、App外部存储池)
  * * 数据池 使用场景：
- *  (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
- *  (2)外部池使用场景：APP 之间数据的 传递
+ * (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
+ * (2)外部池使用场景：APP 之间数据的 传递
  * <p>
  * <p>
  * <p>
