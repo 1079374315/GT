@@ -56,6 +56,7 @@ import android.os.PowerManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -97,6 +98,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
@@ -138,6 +140,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -160,6 +164,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
 
 import dalvik.system.DexClassLoader;
 import dalvik.system.PathClassLoader;
@@ -301,6 +310,7 @@ public class GT {
      * @param view
      */
     public void build(Object object, View view) {
+
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
     }
 
@@ -4285,6 +4295,21 @@ public class GT {
         }
 
         /**
+         * @param activity
+         * @param sharTitle
+         * @param filePath
+         * @分享文件
+         */
+        public void shareFile(Activity activity, String sharTitle, String filePath) {
+            Intent intent = new Intent(Intent.ACTION_SEND);// 发送多个文件
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filePath)));
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            activity.startActivity(Intent.createChooser(intent, sharTitle));
+
+        }
+
+        /**
          * @param editText
          * @param activity
          * @弹出软件盘
@@ -4345,6 +4370,15 @@ public class GT {
             intent.setAction(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
             intent.setData(Uri.fromFile(file));
             context.sendBroadcast(intent);
+        }
+
+        /**
+         * @param activity
+         * @return
+         * @获取App名字
+         */
+        public static String getAppName(Activity activity) {
+            return activity.getResources().getString(R.string.app_name);
         }
 
         /**
@@ -4966,14 +5000,14 @@ public class GT {
             private final static Map<Object, Object> interiorDataPool = new HashMap<>();
 
             /**
-             * @保存数据
              * @param classs
              * @param key
              * @param data
              * @return 操作成功 返回 true
+             * @保存数据
              */
-            public static boolean saveDataPool(Class classs, Object key, Object data) {
-                Object idKey = AppDataPool.getIdKey(classs, key);//形成唯一的 IdKey
+            public static boolean saveDataPool(Object classs, Object key, Object data) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
                 if (!interiorDataPool.containsKey(idKey)) {
                     interiorDataPool.put(idKey, data);//存储数据
                     return true;
@@ -4986,13 +5020,13 @@ public class GT {
             }
 
             /**
-             * @删除数据
              * @param classs
              * @param key
              * @return 操作成功 返回 true
+             * @删除数据
              */
-            public static boolean deleteDataPool(Class classs, Object key) {
-                Object idKey = AppDataPool.getIdKey(classs, key);//形成唯一的 IdKey
+            public static boolean deleteDataPool(Object classs, Object key) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
                 if (interiorDataPool.containsKey(idKey)) {
                     interiorDataPool.remove(idKey);//删除数据
                     return true;
@@ -5004,30 +5038,428 @@ public class GT {
                 }
             }
 
+            /**
+             * @param classs
+             * @param key
+             * @return 成功返回 查询的值 否则返回 null
+             * @查询数据
+             */
+            public static Object queryDataPool(Object classs, Object key) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    return interiorDataPool.get(idKey);//获取数据
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，查询数据失败！当前数据池中不存在该值");
+                    }
+                    return null;
+                }
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return 成功返回 true
+             * @修改数据
+             */
+            public static boolean updateDataPool(Object classs, Object key, Object toData) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.put(idKey, toData);//修改数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，修改数据失败！当前数据池中不存在该值");
+                    }
+                    return false;
+                }
+            }
+
+            /**
+             * @return
+             * @清空
+             */
+            public static boolean clearData() {
+                if (interiorDataPool != null) {
+                    try {
+                        interiorDataPool.clear();
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return
+             * @APP存储池中返回IdKey
+             */
+            private static String getIdKey(Object classs, Object key) {
+                return classs.getClass().getName().replace(".", "/") + ".java 【" + key + "】";// 获取文件包名与Java文件名
+            }
 
         }
 
         /**
          * @APP外部存储池
-         * @持久性数据
+         * @持久性数据（需要在清单文件中添加以下文件读取与写入权限）
+         * @<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+         * @<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
          */
         public static class External {
 
+            /**
+             * @外部存储池
+             * @存储数据的永久容器
+             */
+            private static Map<Object, Object> externalDataPool = null;    //当前App所有数据的容器
+            private static Object passWord = null;             //当前文件的密码
+            private static GT_File gt_file = null;             //GT_File 工具包
+            private static String fileSaveDataPath = null;     //文件保存数据的路径
+            private static String fileName = null;             //保存数据的文件名
+            private static String filePath = null;             //当前文件的全部路径
+            private static Gson gson = null;
+
+            /**
+             * @param activity
+             * @param passWord
+             * @初始化
+             */
+            public static void init(Activity activity, Object passWord) {
+                AppAuthorityManagement.readWritePermission(activity);//申请文件读写的6.0以上权限
+                External.passWord = Encryption.MD5.encryptMD5(AppUtils.getAppPackageName() + passWord);//将 密码 进行 MD5 加密
+                gt_file = new GT_File();//创建 File 对象
+                gson = new Gson();
+
+                fileSaveDataPath = "/Android/data/com.gsls.gtlibrary/AppDataPool/";//GT APP 公共池数据源
+                fileName = ApplicationUtils.getAppName(activity) + ".GT";//文件名与扩展名
+
+//                log("读取数据池的路径:" + ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+
+                if (!file.exists()) {//如果当前文件不存在
+//                    log("当前文件不存在 创建 Map");
+                    externalDataPool = new HashMap<>();//创建 Map
+                } else {
+//                    log("当前文件存在");
+                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
+                    if (filesAllName != null && filesAllName.size() > 0) {
+                        String fileName = filesAllName.get(0);
+                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
+                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
+                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
+                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
+                    }
+
+                }
+
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @保存数据(保存只能保存自己app池下的数据)
+             */
+            public static boolean saveDataPool(Object key, Object data) {
+
+                if (externalDataPool != null && !externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.put(key, data);//将数据保存到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("保存成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前保存 外部数据池出错，数据池 中已存在该 Key 保存失败");
+                    }
+                    return false;
+                }
+
+            }
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @查询数据(查询自己app池下的数据)
+             */
+            public static Object queryDataPool(Object key) {
+
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+
+                if (!file.exists()) {//如果当前文件不存在
+//                    log("当前文件不存在 创建 Map");
+                    externalDataPool = new HashMap<>();//创建 Map
+                } else {
+//                    log("当前文件存在");
+                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
+                    if (filesAllName != null && filesAllName.size() > 0) {
+                        String fileName = filesAllName.get(0);
+                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
+                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
+                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
+                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
+                        if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                            return externalDataPool.get(key);//获取数据
+                        } else {
+                            if (getGT().getGtLogTf()) {
+                                log(getLineInfo(), "当前查询 内部数据池出错，数据池 中已存在该 Key 查询失败");
+                            }
+                            return null;
+                        }
+                    }
+
+                }
+                return null;
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @查询数据(查询需要输入指定查询App的包名)
+             */
+            public static Object queryDataPool(Object packageName, Object passWord, Object key) {
+
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + packageName + "/" + fileName);
+                if (file.exists()) {   //如果当前文件不存在
+//                    log("当前文件存在");
+                    String queryData = gt_file.query(fileSaveDataPath + packageName, fileName);//读取文件内的数据
+//                    log("读取出来加密的数据:" + queryData);
+                    passWord = Encryption.MD5.encryptMD5(packageName.toString() + passWord);//将 密码 进行 MD5 加密
+                    String encryptData = Encryption.DES.decryptPassword(queryData, passWord);//将加密的数据解密
+//                    log("解密出来的数据:" + encryptData);
+                    Map<Object, Object> map = new HashMap<>();
+                    map = gson.fromJson(encryptData, HashMap.class);
+//                    log("初始化时 读取出来的map:" + map);
+                    if (map.containsKey(key)) {
+                        return map.get(key);
+                    } else {
+                        if (getGT().getGtLogTf()) {
+                            log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 Key 查询失败");
+                        }
+                        return null;
+                    }
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 app包名 的数据池 查询失败");
+                    }
+                    return null;
+                }
+
+            }
+
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @修改数据(修改只能修改自己app池下的数据)
+             */
+            public static boolean updateDataPool(Object key, Object toData) {
+
+                if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.put(key, toData);//将数据保存到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("修改存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("修改成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
+                    }
+                    return false;
+                }
+
+            }
+
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @删除数据(删除只能删除自己app池下的数据)
+             */
+            public static boolean deleteDataPool(Object key) {
+
+                if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.remove(key);//将数据删除到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("删除存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("删除成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前删除 外部数据池出错，数据池 中不已存在该 Key 删除失败");
+                    }
+                    return false;
+                }
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @清空数据(清空只能保存自己app池下的数据)
+             */
+            public static boolean clearDataPool(Object key, Object data) {
+
+                if (externalDataPool != null && !externalDataPool.containsKey(key)) {
+                    externalDataPool.clear();
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前清空 外部数据池出错，数据池 中不已存在该 Key 清空失败");
+                    }
+                    return false;
+                }
+
+            }
+
+
         }
 
+
+    }
+
+    //=========================================== 字符串加密类 =========================================
+
+    /**
+     * @加密类
+     */
+    public static class Encryption {
 
         /**
-         * @param classs
-         * @param key
-         * @return
-         * @APP存储池中 返回 IdKey
+         * @MD5 加密算法
          */
-        private static String getIdKey(Object classs, Object key) {
-            String javaFile = classs.getClass().getName().replace(".", "/") + ".java";// 获取文件包名与Java文件名
-            String projectPath = classs.getClass().getResource("/").toString();// 获取项目路径
-            projectPath = projectPath.substring(projectPath.indexOf("/") + 1, projectPath.length());// 获取当前类的绝对路径
-            return projectPath + javaFile + "{" + key + "}";
+        public static class MD5 {
+
+            private static final String hexDigIts[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d",
+                    "e", "f"};
+
+            /**
+             * MD5加密
+             *
+             * @param origin      字符
+             * @param charsetname 编码
+             * @return
+             */
+            public static String encryptMD5(String origin) {
+                String resultString = null;
+                try {
+                    resultString = new String(origin);
+                    MessageDigest md = MessageDigest.getInstance("MD5");
+                    if (null == "UTF-8" || "".equals("UTF-8")) {
+                        resultString = byteArrayToHexString(md.digest(resultString.getBytes()));
+                    } else {
+                        resultString = byteArrayToHexString(md.digest(resultString.getBytes("UTF-8")));
+                    }
+                } catch (Exception e) {
+                }
+                return resultString;
+            }
+
+            public static String byteArrayToHexString(byte b[]) {
+                StringBuffer resultSb = new StringBuffer();
+                for (int i = 0; i < b.length; i++) {
+                    resultSb.append(byteToHexString(b[i]));
+                }
+                return resultSb.toString();
+            }
+
+            public static String byteToHexString(byte b) {
+                int n = b;
+                if (n < 0) {
+                    n += 256;
+                }
+                int d1 = n / 16;
+                int d2 = n % 16;
+                return hexDigIts[d1] + hexDigIts[d2];
+            }
+
         }
+
+        /**
+         * @DES 加密算法
+         */
+        public static class DES {
+            /**
+             * 加密
+             *
+             * @param clearText
+             * @return
+             */
+            public static String encryptPassword(Object clearText, Object password) {
+                try {
+                    DESKeySpec keySpec = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        keySpec = new DESKeySpec(String.valueOf(password).getBytes(StandardCharsets.UTF_8));
+                    }
+                    SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+                    SecretKey key = keyFactory.generateSecret(keySpec);
+
+                    Cipher cipher = Cipher.getInstance("DES");
+                    cipher.init(Cipher.ENCRYPT_MODE, key);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        return Base64.encodeToString(cipher.doFinal(String.valueOf(clearText).getBytes(StandardCharsets.UTF_8)), Base64.DEFAULT);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return String.valueOf(clearText);
+            }
+
+            /**
+             * 解密
+             *
+             * @param encryptedPwd
+             * @return
+             */
+            public static String decryptPassword(Object encryptedPwd, Object password) {
+                try {
+                    DESKeySpec keySpec = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                        keySpec = new DESKeySpec(String.valueOf(password).getBytes(StandardCharsets.UTF_8));
+                    }
+                    SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+                    SecretKey key = keyFactory.generateSecret(keySpec);
+
+                    byte[] encryptedWithoutB64 = Base64.decode(String.valueOf(encryptedPwd), Base64.DEFAULT);
+                    Cipher cipher = Cipher.getInstance("DES");
+                    cipher.init(Cipher.DECRYPT_MODE, key);
+                    byte[] plainTextPwdBytes = cipher.doFinal(encryptedWithoutB64);
+                    return new String(plainTextPwdBytes);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return String.valueOf(encryptedPwd);
+            }
+        }
+
 
     }
 
