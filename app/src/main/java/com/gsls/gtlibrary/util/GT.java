@@ -208,6 +208,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * * 数据池 使用场景：
  * (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
  * (2)外部池使用场景：APP 之间数据的 传递
+ * * 5.优化基础类增加 startFragment 操作
  * <p>
  * <p>
  * <p>
@@ -7594,6 +7595,16 @@ public class GT {
         }
 
         /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
+        }
+
+        /**
          * 普通日志
          *
          * @param object
@@ -7709,6 +7720,16 @@ public class GT {
          */
         protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
+        }
+
+        /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
         }
 
         /**

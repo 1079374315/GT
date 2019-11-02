@@ -10,7 +10,6 @@ import com.gsls.gtlibrary.util.GT;
 public class AndroidActivity extends GT.AnnotationActivity {
 
 
-
     @Override
     protected void initView(Bundle savedInstanceState) {
         build(this);//绑定 Activity
