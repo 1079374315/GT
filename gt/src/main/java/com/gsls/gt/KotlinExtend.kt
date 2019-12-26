@@ -5,10 +5,10 @@ package com.gsls.gt
  */
 
 fun Any.log(msg: Any){
-    GT.log_i(msg.toString())
+    GT.log(msg.toString())
 }
 
 fun Any.err(msg: Any){
-    GT.log_e(msg.toString())
+    GT.log(msg.toString())
 }
 

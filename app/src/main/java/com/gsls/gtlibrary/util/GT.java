@@ -197,10 +197,10 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.11.2
+ * 更新时间:2019.12.26
  * * <p>
  * * <p>
- * * 更新内容：（1.1.4 版本）
+ * * 更新内容：（1.1.5 版本）
  * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
  * * 2.增加 权限管理类 AppAuthorityManagement
  * * 3.增加 字符串加密类 Encryption （目前有加密算法：MD5 、 DES）
@@ -532,7 +532,7 @@ public class GT {
             }
 
         }
-    }
+    }/**/
 
     /**
      * 可多个消息框 Toast
@@ -11286,7 +11286,7 @@ public class GT {
 
         /**
          * 实例化 随机类 类
-         */
+         *//**/
         public GT_Random() {
             random = new Random();
         }

@@ -1,3 +1,4 @@
+package com.gsls.gt;
 
 import android.Manifest;
 import android.animation.AnimatorSet;
@@ -101,7 +102,6 @@ import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.gsls.gt.R;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -196,10 +196,10 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.11.2
+ * 更新时间:2019.12.26
  * * <p>
  * * <p>
- * * 更新内容：（1.1.4 版本）
+ * * 更新内容：（1.1.5 版本）
  * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
  * * 2.增加 权限管理类 AppAuthorityManagement
  * * 3.增加 字符串加密类 Encryption （目前有加密算法：MD5 、 DES）
@@ -207,6 +207,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * * 数据池 使用场景：
  * (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
  * (2)外部池使用场景：APP 之间数据的 传递
+ * * 5.优化基础类增加 startFragment 操作
  * <p>
  * <p>
  * <p>
@@ -530,7 +531,7 @@ public class GT {
             }
 
         }
-    }
+    }/**/
 
     /**
      * 可多个消息框 Toast
@@ -7593,6 +7594,16 @@ public class GT {
         }
 
         /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
+        }
+
+        /**
          * 普通日志
          *
          * @param object
@@ -7708,6 +7719,16 @@ public class GT {
          */
         protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
+        }
+
+        /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
         }
 
         /**
@@ -11264,7 +11285,7 @@ public class GT {
 
         /**
          * 实例化 随机类 类
-         */
+         *//**/
         public GT_Random() {
             random = new Random();
         }
