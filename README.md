@@ -79,7 +79,7 @@
 
 [GT 第二十三章： 遥感控件 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%B8%89%E7%AB%A0%EF%BC%9A%E9%81%A5%E6%84%9F%E6%8E%A7%E4%BB%B6)
 
-[GT 第二十四章： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%8C%E7%AB%A0%EF%BC%9A%20%E6%AD%A3%E5%9C%A8%E6%9B%B4%E6%96%B0%E7%9A%84%20GT%20%E5%BA%93)
+[GT 待更新章节： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%8C%E7%AB%A0%EF%BC%9A%20%E6%AD%A3%E5%9C%A8%E6%9B%B4%E6%96%B0%E7%9A%84%20GT%20%E5%BA%93)
 
 
 # 如何使用
