@@ -136,9 +136,9 @@ dependencies {
 #比如 BaseFragment 类使用了注解 那就需要添加以下不混淆
 
 #不混淆 BaseFragment 类
--keep public class com.ydh.fragment.BaseFragment { *; }
+-keep public class com.***.fragment.BaseFragment { *; }
 #不混淆 所有继承 BaseFragment 类
--keep public class * extends com.ydh.fragment.BaseFragment { *; }
+-keep public class * extends com.***.fragment.BaseFragment { *; }
 
 ````
 
