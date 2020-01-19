@@ -4,8 +4,8 @@
     package="com.gsls.gtlibrary">
 
     <!-- 文件的读取和写入权限 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".MyApp"
@@ -16,17 +16,15 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-
-        <activity android:name=".activity.KotlinActivity"/>
-        <activity android:name=".activity.TestActivity"/>
-
+        <activity android:name=".activity.KotlinActivity" />
+        <activity android:name=".activity.TextActivity" />
         <activity android:name=".activity.AndroidActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
     </application>
 
 </manifest>
