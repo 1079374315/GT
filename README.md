@@ -2,23 +2,23 @@
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
 [切换到CSDN](https://blog.csdn.net/qq_39799899/article/details/102490617)
 
-# 最新版本: 1.1.3
-发布时间：2019年10月10日 
+# 最新版本: 1.1.5
+发布时间：2020.1.7
 
 ## 此次版本更新： 
 ````
- * 更新时间:2019.10.10
- * <p>
- * <p>
- * 更新内容：（1.1.3 版本 稳定版）
- * 1.新增 getNetworkState() 方法 获取当前网络属于 无网络(返回0)、WF(返回1)、2G(返回2)、3G(返回3)、4G(返回4) 网络
- * 2.Game 类中增加 遥感控制 组件
- * 3.增加 应用程序工具集合类 ApplicationUtils 已更新工具有如下：
- *  (1)弹出软件盘
- *  (2)收起软键盘
- *  (3)将字符串复制到粘贴板上
- *  (4)保存View中的图片
- * 4.新增 AppIteration 类（APP迭代类） 主要有：APP更新、APP热修复
+ * 更新时间:2020.1.7
+ * * <p>
+ * * <p>
+ * * 更新内容：（1.1.5 版本）
+ * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
+ * * 2.增加 权限管理类 AppAuthorityManagement
+ * * 3.增加 字符串加密类 Encryption （目前有加密算法：MD5 、 DES）
+ * * 4.增加 App存储池类 AppDataPool (App内部存储池、App外部存储池)
+ * * 数据池 使用场景：
+ * (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
+ * (2)外部池使用场景：APP 之间数据的 传递
+ * * 5.优化基础类增加 startFragment 操作
 ````
 
 [使用教程请关注楼主博客](https://blog.csdn.net/qq_39799899/article/details/98891256)
@@ -79,7 +79,9 @@
 
 [GT 第二十三章： 遥感控件 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%B8%89%E7%AB%A0%EF%BC%9A%E9%81%A5%E6%84%9F%E6%8E%A7%E4%BB%B6)
 
-[GT 第二十四章： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%8C%E7%AB%A0%EF%BC%9A%20%E6%AD%A3%E5%9C%A8%E6%9B%B4%E6%96%B0%E7%9A%84%20GT%20%E5%BA%93)
+[GT 第二十四章： APP数据池 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E5%9B%9B%E7%AB%A0%EF%BC%9AAPP%E6%95%B0%E6%8D%AE%E6%B1%A0)
+
+[GT 待更新章节： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%8C%E7%AB%A0%EF%BC%9A%20%E6%AD%A3%E5%9C%A8%E6%9B%B4%E6%96%B0%E7%9A%84%20GT%20%E5%BA%93)
 
 
 # 如何使用
@@ -100,7 +102,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GT:v1.1.3'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GT:v1.1.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
@@ -134,19 +136,19 @@ dependencies {
 #比如 BaseFragment 类使用了注解 那就需要添加以下不混淆
 
 #不混淆 BaseFragment 类
--keep public class com.ydh.fragment.BaseFragment { *; }
+-keep public class com.***.fragment.BaseFragment { *; }
 #不混淆 所有继承 BaseFragment 类
--keep public class * extends com.ydh.fragment.BaseFragment { *; }
+-keep public class * extends com.***.fragment.BaseFragment { *; }
 
 ````
 
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.3)
+## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.5)
 
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.1.3 (the "License");
+Licensed under the Apache License, Version 1.1.5 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
