@@ -187,26 +187,29 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- * //GT全部功能 需要添加的包
- * implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
- * implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
- * implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
- * implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
- * implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
- * implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
+ *    //GT全部功能 需要添加的包
+ *    //GT基础功能
+ *    implementation 'com.github.1079374315:GT:v1.1.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
+ *    //GT全部功能 需要添加的包
+ *    implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ *    implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ *    implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ *    implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ *    implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ *    implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ *    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
  * <p>
  * <p>
  * <p>
- * <p>
- * 更新时间:2019.1.19
- * * <p>
- * * <p>
+ * * 更新时间:2019.1.19
+ * * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
+ * * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * * 更新内容：（1.1.6 版本）
- * * 1.可使用 setLogTAG 方法用于自定义 日志的 TAG 值
- * * 2.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志。(最终效果 以最新教程为主)
- * * 如： 代码：logs("你好")   最终显示： ------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
- * * 3.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
+ * * 1.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志。(最终效果 以最新教程为主)
+ * *    (1)可使用 setLogTAG 方法用于自定义 日志的 TAG 值
+ * *    (2)新增两种打印   本地普通打印：logs("***");   本地错误打印：errs("***");  （默认不开启本地打印，若需要开启请参考官网教程）
+ * *     如： 代码：logs("你好");   最终显示： ------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
+ * * 2.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
  * <p>
  * <p>
  * <p>
