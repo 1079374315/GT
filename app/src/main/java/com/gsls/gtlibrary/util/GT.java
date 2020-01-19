@@ -204,7 +204,9 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * * <p>
  * * 更新内容：（1.1.6 版本）
  * * 1.可使用 setLogTAG 方法用于自定义 日志的 TAG 值
- * * 2.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志如：------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
+ * * 2.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志。(最终效果 以最新教程为主)
+ * * 如： 代码：logs("你好")   最终显示： ------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
+ * * 3.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
  * <p>
  * <p>
  * <p>
@@ -219,11 +221,11 @@ public class GT {
 
     //================================== 所有属于 GT 类的属性 =======================================
     private static GT gtAndroid = null;          //定义 GT 对象
-    private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
-    private static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
     private static boolean isGTUtil = true;      //默认加载注解
+    private static Toast toast;                  //吐司缓冲
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
     //================================== 提供访问 GT 属性的接口======================================
+
     private GT() {
     }//设置不可实例化
 
@@ -253,25 +255,7 @@ public class GT {
     }
 
     /**
-     * 控制外部所有的 toast 显示 获取与设置
-     *
-     * @return boolean 返回 toast 是否开启的状态
-     */
-    public Boolean getToastTf() {
-        return TOAST_TF;
-    }
-
-    /**
-     * 设置 Toast 是否开启
-     *
-     * @param toastTf true 为开启 false 为关闭
-     */
-    public void setToastTf(Boolean toastTf) {
-        TOAST_TF = toastTf;
-    }
-
-    /**
-     * 为外部提供访问 GT Context 接口
+     * @Activity 为外部提供访问 GT Context 接口
      *
      * @param CONTEXT
      */
@@ -281,7 +265,7 @@ public class GT {
     }
 
     /**
-     * 为外部提供访问 GT Context 接口
+     * @Fragment 为外部提供访问 GT Context 接口
      *
      * @param object
      * @param view
@@ -292,7 +276,7 @@ public class GT {
     }
 
     /**
-     * 为外部提供访问 GT Context 接口
+     * @初始化必要工具 为外部提供访问 GT Context 接口
      *
      * @param object
      * @param view
@@ -302,23 +286,7 @@ public class GT {
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
     }
 
-    /**
-     * 获取 GT 类 内部Toast 是否开启
-     *
-     * @return true 为开启 false 为关闭
-     */
-    public Boolean getGtToastTf() {
-        return GT_TOAST_TF;
-    }
-
-    /**
-     * 设置 GT 类内部 Toast 是否显示
-     *
-     * @param gtToastTf true 为开启 false 为关闭
-     */
-    public void setGtToastTf(Boolean gtToastTf) {
-        GT_TOAST_TF = gtToastTf;
-    }
+    //============================================= 加载 GT 必要的工具 =============================
 
     /**
      * 返回当前 是否加载注解
@@ -337,8 +305,6 @@ public class GT {
     public static void setIsGTUtil(boolean isGTUtil) {
         GT.isGTUtil = isGTUtil;
     }
-
-    //============================================= 加载 GT 必要的工具 =============================
 
     //初始化 GT 必要的工具 主要用于  Activity 的页面
     private void initGTUtilActivity() {
@@ -377,7 +343,7 @@ public class GT {
         return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
     }
 
-    //============================================= 提示类 =========================================
+    //============================================= 日志类 =========================================
 
     /**
      * @用于打详细日志的 LOG 框架
@@ -664,7 +630,135 @@ public class GT {
 
     }
 
-    //============================================= 吐司 =====================================
+    //============================================= 吐司类 =====================================
+
+
+    /**
+     * @吐司类
+     */
+    public static class TOAST{
+
+        public static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
+        public static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
+
+        public static boolean isToastTf() {
+            return TOAST_TF;
+        }
+
+        public static void setToastTf(boolean toastTf) {
+            TOAST_TF = toastTf;
+        }
+
+        public static boolean isGtToastTf() {
+            return GT_TOAST_TF;
+        }
+
+        public static void setGtToastTf(boolean gtToastTf) {
+            GT_TOAST_TF = gtToastTf;
+        }
+
+        /**
+         * Toast 自定义 View
+         */
+        public static class ToastView {
+
+            private static Toast toast;
+            private View view;
+
+            public Toast getToast() {
+                return toast;
+            }
+
+            public void ShowToast() {
+                toast.show();
+            }
+
+
+            public View getView() {
+                return view;
+            }
+
+
+            /**
+             * @param layout 布局
+             * @return
+             */
+            public ToastView initLayout(int layout) {
+                if (TOAST.TOAST_TF) {
+                    if (getGT().CONTEXT != null) {
+                        view = LayoutInflater.from(getGT().CONTEXT).inflate(layout, null);
+                        toast = new Toast(getGT().CONTEXT);
+                        toast.setView(view);
+                    } else {
+                        if (LOG.LOG_TF) {//设置为默认输出日志
+                            err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        }
+                    }
+                }
+                return this;
+            }
+
+            public ToastView initLayout(int layout, Context context) {
+                if (TOAST.TOAST_TF) {
+                    if (context != null) {
+                        view = LayoutInflater.from(context).inflate(layout, null);
+                        toast = new Toast(context);
+                        toast.setView(view);
+                    } else {
+                        if (LOG.LOG_TF) {//设置为默认输出日志
+                            err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        }
+                    }
+                }
+                return this;
+            }
+
+            /**
+             * @param layout  布局
+             * @param Gravity Gravity.*****  用这个变量里面的值可以控制显示位置 如果为 0 就显示默认位置
+             * @return
+             */
+            public ToastView initLayout(int layout, int Gravity) {
+
+                if (TOAST.TOAST_TF) {
+                    if (getGT().CONTEXT != null) {
+                        view = LayoutInflater.from(getGT().CONTEXT).inflate(layout, null);
+                        toast = new Toast(getGT().CONTEXT);
+                        if (Gravity != 0)
+                            toast.setGravity(Gravity, 0, 0);
+                        toast.setView(view);
+                    } else {
+                        if (LOG.LOG_TF) {//设置为默认输出日志
+                            err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        }
+                    }
+                }
+                return this;
+            }
+
+
+            public ToastView initLayout(int layout, int Gravity, Context context) {
+
+                if (TOAST.TOAST_TF) {
+                    if (context != null) {
+                        view = LayoutInflater.from(context).inflate(layout, null);
+                        toast = new Toast(context);
+                        if (Gravity != 0)
+                            toast.setGravity(Gravity, 0, 0);
+                        toast.setView(view);
+                    } else {
+                        if (LOG.LOG_TF) {//设置为默认输出日志
+                            err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        }
+                    }
+                }
+                return this;
+            }
+
+
+        }
+
+    }
 
     /**
      * 单个消息框 Toast
@@ -672,7 +766,7 @@ public class GT {
      * @param msg object 类型的消息
      */
     public static void toast_s(Object msg) {
-        if (TOAST_TF) {
+        if (TOAST.TOAST_TF) {
             if (getGT().CONTEXT != null) {
                 Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_SHORT).show();
             } else {
@@ -690,7 +784,7 @@ public class GT {
      * @param time 显示时间
      */
     public static void toast_time(Object msg, long time) {
-        if (TOAST_TF) {
+        if (TOAST.TOAST_TF) {
             if (getGT().CONTEXT != null) {
                 final Toast toast = Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_LONG);
                 final Timer timer = new Timer();
@@ -722,7 +816,7 @@ public class GT {
      * @param msg     object 类型的消息
      */
     public static void toast_s(Context context, Object msg) {
-        if (TOAST_TF)
+        if (TOAST.TOAST_TF)
             Toast.makeText(context, String.valueOf(msg), Toast.LENGTH_SHORT).show();
     }
 
@@ -733,7 +827,7 @@ public class GT {
      * @param msg     object 类型的消息
      */
     public static void toast_time(Context context, Object msg, int time) {
-        if (TOAST_TF) {
+        if (TOAST.TOAST_TF) {
             final Toast toast = Toast.makeText(context, String.valueOf(msg), Toast.LENGTH_LONG);
             final Timer timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -752,8 +846,6 @@ public class GT {
 
         }
     }
-
-    private static Toast toast;
 
     /**
      * @param content
@@ -780,107 +872,6 @@ public class GT {
             toast.setText(content.toString());
         }
         toast.show();
-    }
-
-    /**
-     * Toast 自定义 View
-     */
-    public static class ToastView {
-
-        private static Toast toast;
-        private View view;
-
-        public Toast getToast() {
-            return toast;
-        }
-
-        public void ShowToast() {
-            toast.show();
-        }
-
-
-        public View getView() {
-            return view;
-        }
-
-
-        /**
-         * @param layout 布局
-         * @return
-         */
-        public ToastView initLayout(int layout) {
-            if (TOAST_TF) {
-                if (getGT().CONTEXT != null) {
-                    view = LayoutInflater.from(getGT().CONTEXT).inflate(layout, null);
-                    toast = new Toast(getGT().CONTEXT);
-                    toast.setView(view);
-                } else {
-                    if (LOG.LOG_TF) {//设置为默认输出日志
-                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
-                    }
-                }
-            }
-            return this;
-        }
-
-        public ToastView initLayout(int layout, Context context) {
-            if (TOAST_TF) {
-                if (context != null) {
-                    view = LayoutInflater.from(context).inflate(layout, null);
-                    toast = new Toast(context);
-                    toast.setView(view);
-                } else {
-                    if (LOG.LOG_TF) {//设置为默认输出日志
-                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
-                    }
-                }
-            }
-            return this;
-        }
-
-        /**
-         * @param layout  布局
-         * @param Gravity Gravity.*****  用这个变量里面的值可以控制显示位置 如果为 0 就显示默认位置
-         * @return
-         */
-        public ToastView initLayout(int layout, int Gravity) {
-
-            if (TOAST_TF) {
-                if (getGT().CONTEXT != null) {
-                    view = LayoutInflater.from(getGT().CONTEXT).inflate(layout, null);
-                    toast = new Toast(getGT().CONTEXT);
-                    if (Gravity != 0)
-                        toast.setGravity(Gravity, 0, 0);
-                    toast.setView(view);
-                } else {
-                    if (LOG.LOG_TF) {//设置为默认输出日志
-                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
-                    }
-                }
-            }
-            return this;
-        }
-
-
-        public ToastView initLayout(int layout, int Gravity, Context context) {
-
-            if (TOAST_TF) {
-                if (context != null) {
-                    view = LayoutInflater.from(context).inflate(layout, null);
-                    toast = new Toast(context);
-                    if (Gravity != 0)
-                        toast.setGravity(Gravity, 0, 0);
-                    toast.setView(view);
-                } else {
-                    if (LOG.LOG_TF) {//设置为默认输出日志
-                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
-                    }
-                }
-            }
-            return this;
-        }
-
-
     }
 
     //============================================= 对话框 =====================================
@@ -4732,7 +4723,6 @@ public class GT {
 
     }
 
-
     //=========================================== APP迭代类（更新、热修复bug） =========================================
 
     /**
@@ -5168,7 +5158,6 @@ public class GT {
 
 
     }
-
 
     //=========================================== APP 存储池 =========================================
 

@@ -28,6 +28,8 @@ public class AndroidActivity extends AppCompatActivity {
         GT.logs("你好2");
         GT.errs("你好3");
 
+
+
      /*   *//**
          * @初始化 APP数据池 密码 此方法只需要调用一次
          * @参数一：是哪个Activity 存的数据
