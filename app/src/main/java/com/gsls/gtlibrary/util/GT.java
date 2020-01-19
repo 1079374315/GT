@@ -113,6 +113,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -121,6 +122,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -202,6 +204,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * * <p>
  * * 更新内容：（1.1.6 版本）
  * * 1.可使用 setLogTAG 方法用于自定义 日志的 TAG 值
+ * * 2.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志如：------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
  * <p>
  * <p>
  * <p>
@@ -215,19 +218,12 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
 public class GT {
 
     //================================== 所有属于 GT 类的属性 =======================================
-
-    private static GT gtAndroid = null;                 //定义 GT 对象
-    private static boolean LOG_TF = true;        //控制外部所有的 Log 显示
-    private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
+    private static GT gtAndroid = null;          //定义 GT 对象
     private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
     private static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
-    private static boolean isGTUtil = true;             //默认加载注解
+    private static boolean isGTUtil = true;      //默认加载注解
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
-    private static Object LOG_TAG = "GT_";     //默认的日志 TAG 为 GT_
-
-
     //================================== 提供访问 GT 属性的接口======================================
-
     private GT() {
     }//设置不可实例化
 
@@ -254,40 +250,6 @@ public class GT {
      */
     public Context getCONTEXT() {
         return CONTEXT;
-    }
-
-    /**
-     * 获取控制外部所有的 Log 显示
-     *
-     * @return boolean 返回当前日志提示是否开启
-     */
-    public Boolean getLogTf() {
-        return LOG_TF;
-    }
-
-    /**
-     * 设置 外部 日志是否开启
-     *
-     * @param logTf true 为开启 false 为关闭 默认为 true
-     */
-    public void setLogTf(Boolean logTf) {
-        LOG_TF = logTf;
-    }/**/
-
-    /**
-     * @设置日志 TAG
-     * @param logTag
-     */
-    public void setLogTAG(Object logTag){
-        LOG_TAG = logTag.toString();
-    }
-
-    /**
-     * @获取日志TAG
-     * @return
-     */
-    public Object getLogTAG(){
-        return LOG_TAG;
     }
 
     /**
@@ -338,24 +300,6 @@ public class GT {
     public void build(Context context, Object object, View view) {
         this.CONTEXT = context;
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
-    }
-
-    /**
-     * 获取GT类内部的日志是否开启状态
-     *
-     * @return Boolean true 为开启 false 为关闭
-     */
-    public Boolean getGtLogTf() {
-        return GT_LOG_TF;
-    }
-
-    /**
-     * 设置 GT 类内部日志是否开启
-     *
-     * @param gtLogTf true 为开启 false 为关闭
-     */
-    public void setGtLogTf(Boolean gtLogTf) {
-        GT_LOG_TF = gtLogTf;
     }
 
     /**
@@ -423,7 +367,210 @@ public class GT {
 
     }
 
+    /**
+     * 报错提示 该提示可通过 GT 提供的接口 的实例获取
+     *
+     * @return String 报错的文件与行号
+     */
+    public static String getLineInfo() {
+        StackTraceElement ste = new Throwable().getStackTrace()[1];
+        return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
+    }
+
     //============================================= 提示类 =========================================
+
+    /**
+     * @用于打详细日志的 LOG 框架
+     */
+    public static class LOG{
+
+        public LOG(){}
+
+        //保存log的路径
+        private static String path = Environment.getExternalStorageDirectory().getPath() + "/GT_LOG/";
+        private static String logFilePath = ""; //自定义 打印日志的文件路径
+        //格式化不包含秒的时间
+        private static SimpleDateFormat dfd = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINESE);
+        //保存log的文件名称
+        public static String fileName = "-log-" + "GT".substring("GT".lastIndexOf(".") + 1) + ".txt";
+        private static String printFileName = "";         //用于自定义 打印文件名
+
+        public static boolean LOG_TF = true;        //控制外部所有的 Log 显示
+        public static boolean LOG_FILE_TF = false;  //控制是否打日志到本地(注意：打开比较耗内存资源，该功能仅用于测试，在上线时请关闭它)
+        public static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
+        public static String LOG_TAG = "GT_";       //控制日志 TAG 值
+        public static int tier = 5;                 //控制日志截取第几层的信息
+
+        public static String getLogFilePath() {
+            return logFilePath;
+        }
+
+        public static void setLogFilePath(String logFilePath) {
+            LOG.logFilePath = logFilePath;
+        }
+
+        public static String getPath() {
+            return path;
+        }
+
+        public static void setPath(String path) {
+            LOG.path = path;
+        }
+
+        public static SimpleDateFormat getDfd() {
+            return dfd;
+        }
+
+        public static void setDfd(SimpleDateFormat dfd) {
+            LOG.dfd = dfd;
+        }
+
+        public static String getFileName() {
+            return fileName;
+        }
+
+        public static void setFileName(String fileName) {
+            LOG.fileName = fileName;
+        }
+
+        public static boolean isLogTf() {
+            return LOG_TF;
+        }
+
+        public static void setLogTf(boolean logTf) {
+            LOG_TF = logTf;
+        }
+
+        public static boolean isLogFileTf() {
+            return LOG_FILE_TF;
+        }
+
+        /**
+         * @打开本地打印
+         * @param logFileTf
+         * @param activity
+         */
+        public static void setLogFileTf(boolean logFileTf,Activity activity) {
+            LOG_FILE_TF = logFileTf;
+            if(logFileTf){
+                printFileName = ApplicationUtils.getAppName(activity);
+            }
+        }
+
+        public static boolean isGtLogTf() {
+            return GT_LOG_TF;
+        }
+
+        public static void setGtLogTf(boolean gtLogTf) {
+            GT_LOG_TF = gtLogTf;
+        }
+
+        public static String getLogTag() {
+            return LOG_TAG;
+        }
+
+        public static void setLogTag(String logTag) {
+            LOG_TAG = logTag;
+        }
+
+        public static int getTier() {
+            return tier;
+        }
+
+        public static void setTier(int tier) {
+            LOG.tier = tier;
+        }
+
+        public static String getPrintFileName() {
+            return printFileName;
+        }
+
+        public static void setPrintFileName(String printFileName) {
+            LOG.printFileName = printFileName;
+        }
+
+        public static SimpleDateFormat getDfs() {
+            return dfs;
+        }
+
+        public static void setDfs(SimpleDateFormat dfs) {
+            LOG.dfs = dfs;
+        }
+
+        // 获取log打印前缀(行数、类名、方法名)
+        private static String getPrefix(int number) {
+            String prefix = "<Line:%d>[%s] %s(): "; // 占位符
+            StackTraceElement caller = java.lang.Thread.currentThread().getStackTrace()[number];// new Throwable().getStackTrace()[number];
+            String className = caller.getClassName();
+            prefix = String.format(prefix, caller.getLineNumber(), className, caller.getMethodName()); // 替换
+            return prefix;
+        }
+
+        /**
+         * log打印到sdCard
+         * @param path   文件路径(不含文件名)
+         * @param prefix log前缀内容
+         * @param msg    打印内容
+         * @ 格式化包含秒的时间
+         */
+        private static SimpleDateFormat dfs = new SimpleDateFormat("HH:mm:ss.SSS", Locale.CHINESE);
+        public static void writeToSdCard(String path, String prefix, Object msg) {
+
+            if(logFilePath != null && logFilePath.length() > 0){
+                path = Environment.getExternalStorageDirectory().getPath() + "/" + logFilePath;
+            }
+
+            String time = dfs.format(new Date());
+            File file = createPathFile(path);
+            BufferedWriter out = null;
+            try {
+                out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true)));
+                out.write("\r\n[" + time + "]" + getProcessTag() + prefix + msg);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        //获取当前进程信息(PID,TID,ThreadId)
+        private static String getProcessTag() {
+            return "<PID:" + android.os.Process.myPid() + ",TID:" + android.os.Process.myTid() + ",ThreadId:" + java.lang.Thread.currentThread().getId() + ">";
+        }
+
+        /**
+         * 根据文件路径 创建文件
+         * @param path 文件路径(不含文件名)
+         */
+        public static File createPathFile(String path) {
+            File fileDir = new File(path);
+            if (!fileDir.exists()) {
+                fileDir.mkdirs();
+            }
+            //如果自定义了 打印文件名就给它初始化上
+            if(printFileName != null && !"".equals(printFileName)){
+                fileName = "-" + printFileName + ".txt";
+            }
+            String filePath = path + dfd.format(new Date()) + fileName;
+            File file = new File(filePath);
+            if (!file.exists()) {
+                try {
+                    file.createNewFile();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    err("LOG日志报错", "报错行数在:" + getLineInfo() + "[logGT] createPathFile(): e=" + e);
+                }
+            }
+            return file;
+        }
+
+    }
 
     /**
      * 提示消息 Log
@@ -431,8 +578,26 @@ public class GT {
      * @param msg object 类型的消息
      */
     public static void log(Object msg) {
-        if (LOG_TF) {
-            Log.i(LOG_TAG.toString() + "i", "------- " + msg);
+        if (LOG.LOG_TF) {
+            Log.i(LOG.LOG_TAG.toString() + "i", "------- " + msg);
+        }
+    }
+
+    /**
+     * @详细提示消息
+     * @param mg
+     */
+    public static void logs(Object mg){
+        if(LOG.LOG_TF){
+            String prefix = "";
+            prefix = LOG.getPrefix(LOG.tier);
+            log(prefix + mg);
+            if (LOG.LOG_FILE_TF) {// 打印到sd卡
+                if (TextUtils.isEmpty(prefix)) {
+                    prefix = LOG.getPrefix(LOG.tier);
+                }
+                LOG.writeToSdCard(LOG.path, prefix, mg);
+            }
         }
     }
 
@@ -442,8 +607,22 @@ public class GT {
      * @param msg object 类型的消息
      */
     public static void err(Object msg) {
-        if (LOG_TF) {
-            Log.e(LOG_TAG.toString() + "e", "------- " + msg);
+        if (LOG.LOG_TF) {
+            Log.e(LOG.LOG_TAG.toString() + "e", "------- " + msg);
+        }
+    }
+
+    public static void errs(Object mg){
+        if(LOG.LOG_TF){
+            String prefix = "";
+            prefix = LOG.getPrefix(LOG.tier);
+            err(prefix + mg);
+            if (LOG.LOG_FILE_TF) {// 打印到sd卡
+                if (TextUtils.isEmpty(prefix)) {
+                    prefix = LOG.getPrefix(LOG.tier);
+                }
+                LOG.writeToSdCard(LOG.path, prefix, mg);
+            }
         }
     }
 
@@ -454,8 +633,8 @@ public class GT {
      * @param msg   日志消息
      */
     public static void log(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.i(LOG_TAG.toString() + "i",
+        if (LOG.LOG_TF) {
+            Log.i(LOG.LOG_TAG.toString() + "i",
                     "------- Run" +
                             "\n\n---------------------" + title + "------------------------\n" +
                             "                   " + msg + "\n" +
@@ -473,8 +652,8 @@ public class GT {
      * @param msg   日志消息
      */
     public static void err(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.e(LOG_TAG.toString() + "e",
+        if (LOG.LOG_TF) {
+            Log.e(LOG.LOG_TAG.toString() + "e",
                     "------- Run" +
                             "\n\n---------------------" + title + "------------------------\n" +
                             "                   " + msg + "\n" +
@@ -485,15 +664,7 @@ public class GT {
 
     }
 
-    /**
-     * 报错提示 该提示可通过 GT 提供的接口 的实例获取
-     *
-     * @return String 报错的文件与行号
-     */
-    public static String getLineInfo() {
-        StackTraceElement ste = new Throwable().getStackTrace()[1];
-        return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
-    }
+    //============================================= 吐司 =====================================
 
     /**
      * 单个消息框 Toast
@@ -505,7 +676,7 @@ public class GT {
             if (getGT().CONTEXT != null) {
                 Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_SHORT).show();
             } else {
-                if (LOG_TF)//设置为默认输出日志
+                if (LOG.LOG_TF)//设置为默认输出日志
                     err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
@@ -537,7 +708,7 @@ public class GT {
                     }
                 }, time);
             } else {
-                if (LOG_TF)//设置为默认输出日志
+                if (LOG.LOG_TF)//设置为默认输出日志
                     err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
@@ -644,7 +815,7 @@ public class GT {
                     toast = new Toast(getGT().CONTEXT);
                     toast.setView(view);
                 } else {
-                    if (LOG_TF) {//设置为默认输出日志
+                    if (LOG.LOG_TF) {//设置为默认输出日志
                         err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
@@ -659,7 +830,7 @@ public class GT {
                     toast = new Toast(context);
                     toast.setView(view);
                 } else {
-                    if (LOG_TF) {//设置为默认输出日志
+                    if (LOG.LOG_TF) {//设置为默认输出日志
                         err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
@@ -682,7 +853,7 @@ public class GT {
                         toast.setGravity(Gravity, 0, 0);
                     toast.setView(view);
                 } else {
-                    if (LOG_TF) {//设置为默认输出日志
+                    if (LOG.LOG_TF) {//设置为默认输出日志
                         err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
@@ -701,7 +872,7 @@ public class GT {
                         toast.setGravity(Gravity, 0, 0);
                     toast.setView(view);
                 } else {
-                    if (LOG_TF) {//设置为默认输出日志
+                    if (LOG.LOG_TF) {//设置为默认输出日志
                         err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
@@ -711,6 +882,8 @@ public class GT {
 
 
     }
+
+    //============================================= 对话框 =====================================
 
     /**
      * AlertDialog.Builder 对话框类
@@ -1104,6 +1277,8 @@ public class GT {
 
     }
 
+    //============================================= 跳转页面 =====================================
+
     /**
      * 跳转 Activity
      *
@@ -1216,7 +1391,7 @@ public class GT {
             } else if (object instanceof Set) {
                 sp_e.putStringSet(key, (Set) object);
             } else {
-                if (GT_LOG_TF) log(context, "进行对象保存");
+                if (LOG.GT_LOG_TF) log(context, "进行对象保存");
                 String json = new Gson().toJson(object);
                 String json_class = object.getClass().toString();
                 sp_e.putString(key, json);                           //保存对象的 Json 数据
@@ -1238,7 +1413,7 @@ public class GT {
                 sp_e.remove(key);
                 if (commit) sp_e.apply();
             } else {
-                if (GT_LOG_TF) log("删除失败  当前 sp 中无此 key");
+                if (LOG.GT_LOG_TF) log("删除失败  当前 sp 中无此 key");
             }
             return sp_e;
         }
@@ -1252,7 +1427,7 @@ public class GT {
          */
         public GT_SharedPreferences updata(String key, Object object) {
             if (query(key) != null) {
-                if (GT_LOG_TF)
+                if (LOG.GT_LOG_TF)
                     log(context, "进入到 updata 查询的数据不为null");
                 save(key, object);
             }
@@ -1270,7 +1445,7 @@ public class GT {
             try {
                 obj = sp.getInt(key, 0);
             } catch (ClassCastException e1) {
-                if (GT_LOG_TF)
+                if (LOG.GT_LOG_TF)
                     log(context, "Int 数据装换异常");
                 try {
                     String str_class = sp.getString(key + "_class", null);     //获取对象 class 数据
@@ -1282,27 +1457,27 @@ public class GT {
                         obj = gson.fromJson(str, object_class.getClass());     //通过 Gson 与 实例对象 获取相应的 Object 对象
                     }
                 } catch (ClassCastException e2) {
-                    if (GT_LOG_TF)
+                    if (LOG.GT_LOG_TF)
                         log(context, "String 数据装换异常");
                     try {
                         obj = sp.getLong(key, 0);
                     } catch (ClassCastException e3) {
-                        if (GT_LOG_TF)
+                        if (LOG.GT_LOG_TF)
                             log(context, "Long 数据装换异常");
                         try {
                             obj = sp.getFloat(key, 0f);
                         } catch (ClassCastException e4) {
-                            if (GT_LOG_TF)
+                            if (LOG.GT_LOG_TF)
                                 log(context, "Float 数据装换异常");
                             try {
                                 obj = sp.getBoolean(key, false);
                             } catch (ClassCastException e5) {
-                                if (GT_LOG_TF)
+                                if (LOG.GT_LOG_TF)
                                     log(context, "Boolean 数据装换异常");
                                 try {
                                     obj = sp.getStringSet(key, null);
                                 } catch (ClassCastException e6) {
-                                    if (GT_LOG_TF)
+                                    if (LOG.GT_LOG_TF)
                                         log(context, "StringSet 数据装换异常");
                                     obj = null;
                                 }
@@ -1612,7 +1787,7 @@ public class GT {
             if (formerName != null) {
 
             } else {
-                if (GT_LOG_TF) err("修改数据库 失败！ 原由：暂未找到需要修改的数据库名称");
+                if (LOG.GT_LOG_TF) err("修改数据库 失败！ 原由：暂未找到需要修改的数据库名称");
             }
         }
 
@@ -2077,7 +2252,7 @@ public class GT {
             try {
                 JSONObject jsonObject = new JSONObject(string);
             } catch (JSONException e) {
-                if (GT_LOG_TF)
+                if (LOG.GT_LOG_TF)
                     log("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getLineInfo() + "】");
                 //                e.printStackTrace();
             }
@@ -4635,7 +4810,7 @@ public class GT {
                                 conn.disconnect();
                             }
                         } catch (Exception e) {
-                            if (getGT().getGtLogTf()) {
+                            if (LOG.isLogTf()) {
                                 err(getLineInfo(), "网络下载文件报错： " + e);
                             }
                         }
@@ -4874,7 +5049,7 @@ public class GT {
                                 conn.disconnect();
                             }
                         } catch (Exception e) {
-                            if (GT.getGT().getGtLogTf()) {
+                            if (LOG.isLogTf()) {
                                 GT.log(getLineInfo(), "网络下载app报错： " + e);
                             }
                         }
@@ -4882,7 +5057,7 @@ public class GT {
                             ApplicationUtils.unzipFile(savePath,
                                     GT.AppIteration.RepairAPP.getRepairAppDirectory(context), true);
                         } catch (IOException e) {
-                            if (GT.getGT().getGtLogTf()) {
+                            if (LOG.isLogTf()) {
                                 log(getLineInfo(), "解压失败： " + e);
                             }
                             e.printStackTrace();
@@ -5027,7 +5202,7 @@ public class GT {
                     interiorDataPool.put(idKey, data);//存储数据
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "App内部存储池，保存数据失败！当前数据池中存在该值");
                     }
                     return false;
@@ -5046,7 +5221,7 @@ public class GT {
                     interiorDataPool.remove(idKey);//删除数据
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "App内部存储池，删除数据失败！当前数据池中不存在该值");
                     }
                     return false;
@@ -5064,7 +5239,7 @@ public class GT {
                 if (interiorDataPool.containsKey(idKey)) {
                     return interiorDataPool.get(idKey);//获取数据
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "App内部存储池，查询数据失败！当前数据池中不存在该值");
                     }
                     return null;
@@ -5083,7 +5258,7 @@ public class GT {
                     interiorDataPool.put(idKey, toData);//修改数据
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "App内部存储池，修改数据失败！当前数据池中不存在该值");
                     }
                     return false;
@@ -5192,7 +5367,7 @@ public class GT {
                     //                    log("保存成功");
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "当前保存 外部数据池出错，数据池 中已存在该 Key 保存失败");
                     }
                     return false;
@@ -5227,7 +5402,7 @@ public class GT {
                         if (externalDataPool != null && externalDataPool.containsKey(key)) {
                             return externalDataPool.get(key);//获取数据
                         } else {
-                            if (getGT().getGtLogTf()) {
+                            if (LOG.isLogTf()) {
                                 log(getLineInfo(), "当前查询 内部数据池出错，数据池 中已存在该 Key 查询失败");
                             }
                             return null;
@@ -5262,13 +5437,13 @@ public class GT {
                     if (map.containsKey(key)) {
                         return map.get(key);
                     } else {
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 Key 查询失败");
                         }
                         return null;
                     }
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 app包名 的数据池 查询失败");
                     }
                     return null;
@@ -5296,7 +5471,7 @@ public class GT {
                     //                    log("修改成功");
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
                     }
                     return false;
@@ -5324,7 +5499,7 @@ public class GT {
                     //                    log("删除成功");
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "当前删除 外部数据池出错，数据池 中不已存在该 Key 删除失败");
                     }
                     return false;
@@ -5347,7 +5522,7 @@ public class GT {
                     gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
                     return true;
                 } else {
-                    if (getGT().getGtLogTf()) {
+                    if (LOG.isLogTf()) {
                         log(getLineInfo(), "当前清空 外部数据池出错，数据池 中不已存在该 Key 清空失败");
                     }
                     return false;
@@ -5503,14 +5678,14 @@ public class GT {
                 int permission = ActivityCompat.checkSelfPermission(activity,
                         "android.permission.WRITE_EXTERNAL_STORAGE");
                 if (permission != PackageManager.PERMISSION_GRANTED) {
-                    if (getGT().getLogTf()) {
+                    if (LOG.isLogTf()) {
                         err(getLineInfo(), "读写获取权限失败");
                     }
                     // 没有写的权限，去申请写的权限，会弹出对话框
                     ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
                 }
             } catch (Exception e) {
-                if (getGT().getLogTf()) {
+                if (LOG.isLogTf()) {
                     err(getLineInfo(), "读写获取权限报错");
                 }
                 e.printStackTrace();
@@ -7103,7 +7278,7 @@ public class GT {
                 this.savedInstanceState = savedInstanceState;
                 mapSQL = new HashMap<>();
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
                 }
             }
@@ -7133,7 +7308,7 @@ public class GT {
                     topFragment = initFragmentLayoutKey;//记录为 显示层 Fragment
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
@@ -7161,7 +7336,7 @@ public class GT {
                     topFragment = key;//记录为 显示层 Fragment
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
                     }
                 }
@@ -7195,7 +7370,7 @@ public class GT {
                     topFragment = key;//记录为 显示层 Fragment
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
@@ -7218,12 +7393,12 @@ public class GT {
                     transaction.hide(newFragment);//隐藏新添加的 Fragment
                     transaction.commit();//提交事务
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
@@ -7244,12 +7419,12 @@ public class GT {
                     transaction.hide(newFragment);//隐藏新添加的 Fragment
                     transaction.commit();//提交事务
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
@@ -7271,12 +7446,12 @@ public class GT {
                     topFragment = key;  //切换当前最顶层 Fragment
                     transaction.commit();//提交事务
                 } else {
-                    if (GT_LOG_TF) {
+                    if (LOG.GT_LOG_TF) {
                         GT.log(getLineInfo(), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
                     }
                 }
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
                 }
             }
@@ -7303,7 +7478,7 @@ public class GT {
                 transaction.commit();//提交事务
                 topList.add(HXM);//添加当退回栈记录中
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "切换新的 Fragment 时 NewFragment 为 null");
                 }
             }
@@ -7325,7 +7500,7 @@ public class GT {
                 fm.popBackStack(HXM, FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
                 topList.remove(HXM);//移除当前已经退出栈 Fragment 的 哈希码
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "退回栈bug：fm、topList为 null 或 topListSize == 0");
                 }
             }
@@ -7341,7 +7516,7 @@ public class GT {
             if (fm != null) {
                 transaction = fm.beginTransaction();
             } else {
-                if (GT_LOG_TF) {
+                if (LOG.GT_LOG_TF) {
                     GT.log(getLineInfo(), "fm 管理器为 null");
                 }
             }
@@ -7839,7 +8014,7 @@ public class GT {
                 Window.Close_virtualButton(activity);//关闭虚拟按钮
                 GT.Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
             } catch (Exception e) {
-                if (getGT().getGtLogTf())
+                if (LOG.isLogTf())
                     GT.err(getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
             }
         }
@@ -8734,11 +8909,11 @@ public class GT {
                 public void onReceive(Context context, Intent intent) {
                     if (intent.hasExtra("state")) {
                         if (intent.getIntExtra("state", 0) == 0) {
-                            if (GT_LOG_TF)
+                            if (LOG.GT_LOG_TF)
                                 log("耳机测试: 没插入耳机");
                             headset_TF = false;
                         } else if (intent.getIntExtra("state", 0) == 1) {
-                            if (GT_LOG_TF)
+                            if (LOG.GT_LOG_TF)
                                 log("耳机测试: 插入耳机");
                             headset_TF = true;
                         }
@@ -10637,7 +10812,7 @@ public class GT {
                             field.setAccessible(true);
                             method.invoke(object, valueList.get(index));
                         } catch (Exception e) {
-                            if (getGT().getGtLogTf()) {
+                            if (LOG.isLogTf()) {
                                 GT.err(getLineInfo(), "注解注入失败 ！");
                             }
                             //                            e.printStackTrace();
@@ -10668,7 +10843,7 @@ public class GT {
                         method = aClass.getMethod(functionName, byte.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 byte 类型数据 报错");
                         }
                     }
@@ -10678,7 +10853,7 @@ public class GT {
                         method = aClass.getMethod(functionName, short.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Short 类型数据 报错");
                         }
                     }
@@ -10688,7 +10863,7 @@ public class GT {
                         method = aClass.getMethod(functionName, int.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 int 类型数据 报错");
                         }
                     }
@@ -10698,7 +10873,7 @@ public class GT {
                         method = aClass.getMethod(functionName, long.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Long 类型数据 报错");
                         }
                     }
@@ -10708,7 +10883,7 @@ public class GT {
                         method = aClass.getMethod(functionName, float.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Float 类型数据 报错");
                         }
                     }
@@ -10718,7 +10893,7 @@ public class GT {
                         method = aClass.getMethod(functionName, double.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Double 类型数据 报错");
                         }
                     }
@@ -10728,7 +10903,7 @@ public class GT {
                         method = aClass.getMethod(functionName, boolean.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Boolean 类型数据 报错");
                         }
                     }
@@ -10738,7 +10913,7 @@ public class GT {
                         method = aClass.getMethod(functionName, char.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 Character 类型数据 报错");
                         }
                     }
@@ -10748,7 +10923,7 @@ public class GT {
                         method = aClass.getMethod(functionName, String.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (getGT().getGtLogTf()) {
+                        if (LOG.isLogTf()) {
                             GT.err(getLineInfo(), "注解 赋值 String 类型数据 报错");
                         }
                     }
@@ -10967,7 +11142,7 @@ public class GT {
          */
         public AnnotationAssist(Object obj, Object annotation) {
 
-            if (GT_LOG_TF) {
+            if (LOG.GT_LOG_TF) {
                 log("obj:" + obj);
                 log("annotation:" + annotation);
             }
@@ -10977,22 +11152,22 @@ public class GT {
              */
             obj = classToObject(obj);
             Annotation[] annotations = obj.getClass().getAnnotations();
-            if (GT_LOG_TF) log("---------------该类有所的注解---------------------");
-            for (Annotation annotation1 : annotations) if (GT_LOG_TF) log(annotation1);
-            if (GT_LOG_TF) log("-------------------close--------------------------");
+            if (LOG.GT_LOG_TF) log("---------------该类有所的注解---------------------");
+            for (Annotation annotation1 : annotations) if (LOG.GT_LOG_TF) log(annotation1);
+            if (LOG.GT_LOG_TF) log("-------------------close--------------------------");
 
 
             /**
              * 获取声明注解	[Ljava.lang.annotation.Annotation;@28c97a5
              */
             Annotation[] deAnnos = obj.getClass().getDeclaredAnnotations();
-            if (GT_LOG_TF) log("被声明式注解标识过:" + deAnnos);
+            if (LOG.GT_LOG_TF) log("被声明式注解标识过:" + deAnnos);
 
 
             if (annotation != null) {
                 //获取被 SubAnnotation 注解过的类
                 Annotation subAnnotation = obj.getClass().getAnnotation((Class<Annotation>) annotation);
-                if (GT_LOG_TF) log("该类被 [" + subAnnotation + "] 注解过");
+                if (LOG.GT_LOG_TF) log("该类被 [" + subAnnotation + "] 注解过");
             }
 
         }
@@ -11233,7 +11408,7 @@ public class GT {
                     try {
                         gtAsyncTask.execute();
                     } catch (IllegalStateException e) {
-                        if (GT.GT_LOG_TF) {
+                        if (GT.LOG.GT_LOG_TF) {
                             GT.log(getLineInfo(), "无法执行任务:任务已在运行。");
                         }
                     }
