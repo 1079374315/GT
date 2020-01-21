@@ -22,10 +22,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -149,6 +153,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
@@ -173,6 +178,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
 import dalvik.system.DexClassLoader;
+import dalvik.system.DexFile;
 import dalvik.system.PathClassLoader;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -187,21 +193,21 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- *    //GT全部功能 需要添加的包
- *    //GT基础功能
- *    implementation 'com.github.1079374315:GT:v1.1.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
- *    //GT全部功能 需要添加的包
- *    implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
- *    implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
- *    implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
- *    implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
- *    implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
- *    implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
- *    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
+ * //GT全部功能 需要添加的包
+ * //GT基础功能
+ * implementation 'com.github.1079374315:GT:v1.1.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
+ * //GT全部功能 需要添加的包
+ * implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ * implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ * implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
  * <p>
  * <p>
  * <p>
- * * 更新时间:2019.1.19
+ * * 更新时间:2019.1.21（大爆料：更新 Hibernate 数据库）
  * * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
  * * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * * 更新内容：（1.1.6 版本）
@@ -210,6 +216,7 @@ import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
  * *    (2)新增两种打印   本地普通打印：logs("***");   本地错误打印：errs("***");  （默认不开启本地打印，若需要开启请参考官网教程）
  * *     如： 代码：logs("你好");   最终显示： ------- <Line:28>[com.gsls.gtlibrary.activity.AndroidActivity] onCreate(): 你好
  * * 2.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
+ * * 3.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
  * <p>
  * <p>
  * <p>
@@ -258,9 +265,8 @@ public class GT {
     }
 
     /**
-     * @Activity 为外部提供访问 GT Context 接口
-     *
      * @param CONTEXT
+     * @Activity 为外部提供访问 GT Context 接口
      */
     public void build(Context context) {
         this.CONTEXT = context;
@@ -268,10 +274,9 @@ public class GT {
     }
 
     /**
-     * @Fragment 为外部提供访问 GT Context 接口
-     *
      * @param object
      * @param view
+     * @Fragment 为外部提供访问 GT Context 接口
      */
     public void build(Object object, View view) {
 
@@ -279,10 +284,9 @@ public class GT {
     }
 
     /**
-     * @初始化必要工具 为外部提供访问 GT Context 接口
-     *
      * @param object
      * @param view
+     * @初始化必要工具 为外部提供访问 GT Context 接口
      */
     public void build(Context context, Object object, View view) {
         this.CONTEXT = context;
@@ -351,9 +355,10 @@ public class GT {
     /**
      * @用于打详细日志的 LOG 框架
      */
-    public static class LOG{
+    public static class LOG {
 
-        public LOG(){}
+        public LOG() {
+        }
 
         //保存log的路径
         private static String path = Environment.getExternalStorageDirectory().getPath() + "/GT_LOG/";
@@ -415,13 +420,13 @@ public class GT {
         }
 
         /**
-         * @打开本地打印
          * @param logFileTf
          * @param activity
+         * @打开本地打印
          */
-        public static void setLogFileTf(boolean logFileTf,Activity activity) {
+        public static void setLogFileTf(boolean logFileTf, Activity activity) {
             LOG_FILE_TF = logFileTf;
-            if(logFileTf){
+            if (logFileTf) {
                 printFileName = ApplicationUtils.getAppName(activity);
             }
         }
@@ -477,15 +482,17 @@ public class GT {
 
         /**
          * log打印到sdCard
+         *
          * @param path   文件路径(不含文件名)
          * @param prefix log前缀内容
          * @param msg    打印内容
          * @ 格式化包含秒的时间
          */
         private static SimpleDateFormat dfs = new SimpleDateFormat("HH:mm:ss.SSS", Locale.CHINESE);
+
         public static void writeToSdCard(String path, String prefix, Object msg) {
 
-            if(logFilePath != null && logFilePath.length() > 0){
+            if (logFilePath != null && logFilePath.length() > 0) {
                 path = Environment.getExternalStorageDirectory().getPath() + "/" + logFilePath;
             }
 
@@ -515,6 +522,7 @@ public class GT {
 
         /**
          * 根据文件路径 创建文件
+         *
          * @param path 文件路径(不含文件名)
          */
         public static File createPathFile(String path) {
@@ -523,7 +531,7 @@ public class GT {
                 fileDir.mkdirs();
             }
             //如果自定义了 打印文件名就给它初始化上
-            if(printFileName != null && !"".equals(printFileName)){
+            if (printFileName != null && !"".equals(printFileName)) {
                 fileName = "-" + printFileName + ".txt";
             }
             String filePath = path + dfd.format(new Date()) + fileName;
@@ -553,11 +561,11 @@ public class GT {
     }
 
     /**
-     * @详细提示消息
      * @param mg
+     * @详细提示消息
      */
-    public static void logs(Object mg){
-        if(LOG.LOG_TF){
+    public static void logs(Object mg) {
+        if (LOG.LOG_TF) {
             String prefix = "";
             prefix = LOG.getPrefix(LOG.tier);
             log(prefix + mg);
@@ -581,8 +589,8 @@ public class GT {
         }
     }
 
-    public static void errs(Object mg){
-        if(LOG.LOG_TF){
+    public static void errs(Object mg) {
+        if (LOG.LOG_TF) {
             String prefix = "";
             prefix = LOG.getPrefix(LOG.tier);
             err(prefix + mg);
@@ -639,7 +647,7 @@ public class GT {
     /**
      * @吐司类
      */
-    public static class TOAST{
+    public static class TOAST {
 
         public static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
         public static boolean GT_TOAST_TF = false;  //控制内部所有的 toast 显示
@@ -1735,65 +1743,318 @@ public class GT {
     }
 
     /**
-     * Hibernate SQL 暂时没有编辑完，待完善
+     * @Hibernate SQL 暂时没有更新好，待更新。。。
      */
     public static class Hibernate {
 
-        // 增    INSERT INTO ROLE(NAME,AGE,SEX) VALUES(:name,:age,:sex)
-        // 删    DELETE 表名 WHERE NAME = '陈启申'
-        // 改    UPDATE 表名 SET NAME = ? WHERE ID = ?
-        // 查    SELECT * FROM ROLE WHERE id > ?
-        //str    String json = new Gson().toJson(object);
-        //obj    obj = new Gson().fromJson(str,object_class.getClass());     //通过 Gson 与 实例对象 获取相应的 Object 对象
-        //       sp = context.getSharedPreferences(SQLName, AppCompatActivity.MODE_WORLD_WRITEABLE);//打开 sp
-        //       sp_e = sp.edit();//让userData处于编辑状态
-
+        //=============================== 实例化 Hibernate 对象 ====================================
         private Context context;
-        private Object password;
-        private SharedPreferences sp;
-        private SharedPreferences.Editor sp_e;
-        private Map<Object, Object> sqlMap = new HashMap<>();
-        private final static String DATABASE = "GT_DATABASE";
 
-        //初始化 Hibernate
-        public Hibernate(Context context) {
-            this.context = context;
-            sp = context.getSharedPreferences(DATABASE, AppCompatActivity.MODE_WORLD_WRITEABLE);//创建最底层的 sql
-            sp_e = sp.edit();   //让 GT_DATABASE 处于编辑状态
-        }
-
-        //创建数据库
-        public void createDatabase(String databaseName, Object password) {
-            sqlMap.put(databaseName, new HashMap<>());
-            String db = new Gson().toJson(sqlMap);
-            err("创建数据库的 json 数据", db);
-
-            //            db = password;
-
-            err("加密后的数据库 json 数据", db);
-            sp_e.putString(databaseName, db);
-            sp_e.apply();
-        }
-
-        //修改数据库
-        public void alterDatabase(String formerName, String newName, Object password) {
-            formerName = sp.getString("formerName", null);
-            if (formerName != null) {
-
+        public Hibernate() {
+            Context context = getGT().getCONTEXT();
+            if (context != null) {
+                this.context = context;
             } else {
-                if (LOG.GT_LOG_TF) err("修改数据库 失败！ 原由：暂未找到需要修改的数据库名称");
+                errs("当前并没有绑定 Activity 无法使用无参构造方法，请先使用 GT.getGT().build(this); 进行 Activity 绑定。");
             }
         }
 
-        //删除数据库
-        public void dropDatabase(String databaseName) {
+        public Hibernate(Context context) {
+            this.context = context;
+        }
+
+        //=============================== 数据库注解 ====================================
+
+        /**
+         * 实体类注解
+         */
+        @Target(ElementType.TYPE)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_Entity {
+        }
+
+        @Target(ElementType.TYPE)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_Bean {
+        }
+
+        /**
+         * 实体类注解集合
+         */
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_Entitys {
+            Class<?>[] valueArray() default {};
+        }
+
+        @Target(ElementType.FIELD)
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_Beans {
+            Class<?>[] valueArray() default {};
+        }
+
+        //=============================== 数据库属性 ====================================
+        private String DATABASE_NAME = "GT.db";   //数据库名称
+        private int DATABASE_VERSION = 1;         //数据库版本
+
+        public String getDATABASE_NAME() {
+            return DATABASE_NAME;
+        }
+
+        public void setDATABASE_NAME(String DATABASE_NAME) {
+            this.DATABASE_NAME = DATABASE_NAME;
+        }
+
+        public int getDATABASE_VERSION() {
+            return DATABASE_VERSION;
+        }
+
+        public void setDATABASE_VERSION(int DATABASE_VERSION) {
+            this.DATABASE_VERSION = DATABASE_VERSION;
+        }
+
+        //=============================== 数据库对象 ====================================
+        private SQLiteDatabase sqLiteDatabase;
+
+        public SQLiteDatabase getSqLiteDatabase() {
+            return sqLiteDatabase;
+        }
+
+        public void setSqLiteDatabase(SQLiteDatabase sqLiteDatabase) {
+            this.sqLiteDatabase = sqLiteDatabase;
+        }
+
+        //=============================== 数据库语句 ====================================
+        private String SQL_CODE = "";//创建表
+
+        public String getSQL_CODE() {
+            return SQL_CODE;
+        }
+
+        public void setSQL_CODE(String SQL_CODE) {
+            this.SQL_CODE = SQL_CODE;
+        }
+
+        //=============================== 数据表路径 ====================================
+        //表class集合
+        private List<Class<?>> tableList;
+
+        public List<Class<?>> getTableList() {
+            return tableList;
+        }
+
+        public void setTableList(List<Class<?>> tableList) {
+            this.tableList = tableList;
+        }
+
+        //表字段与字段的类型
+        private List<String> tableStr;
+
+        public List<String> getTableStr() {
+            return tableStr;
+        }
+
+        public void setTableStr(List<String> tableStr) {
+            this.tableStr = tableStr;
+        }
+
+        /**
+         * @SQL 代码
+         */
+        private class SQL_Code {
+
 
         }
 
-        //打开数据库
-        public void openDatabase(String databaseName, Object password) {
+        //=============================== 数据库管理 ====================================
 
+        /**
+         * @数据库管理类
+         */
+        private class DatabaseHelper extends SQLiteOpenHelper {
+
+            private DatabaseHelper databaseHelper = null;
+            private Context context = null;
+
+            public DatabaseHelper(Context context) {
+                super(context, DATABASE_NAME, null, DATABASE_VERSION);
+                this.context = context;
+            }
+
+            public synchronized DatabaseHelper getDatabaseHelper(Context context) {
+                if (databaseHelper == null) {
+                    databaseHelper = new DatabaseHelper(context);
+                }
+                return databaseHelper;
+            }
+
+            public DatabaseHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+                super(context, name, factory, version);
+                this.context = context;
+            }
+
+            @Override
+            public void onCreate(SQLiteDatabase sqLiteDatabase) {
+                // TODO 可以使用 反射获取表与字段，如果没有添加实体类的话，就提示创建失败！
+//                SQL_CODE = "create table " + TABLE_NAME + "(_id integer primary key autoincrement)";
+                log("SQL_CODE:" + SQL_CODE);
+                sqLiteDatabase.execSQL(SQL_CODE); //创建数据库 sql 语句 并 执行
+            }
+
+            @Override
+            public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+                log("==================开始数据库更新=======================");
+                log("当前数据库版本号为:" + oldVersion);
+                log("要升级的数据库版本号为:" + newVersion);
+
+
+            }
         }
+
+        //====================================== 第一步：设置数据库名称 ======================================
+
+        /**
+         * @param sqlName
+         * @return
+         * @初始化数据库名称
+         */
+        public Hibernate init_1_SqlName(String sqlName) {
+            DATABASE_NAME = sqlName + ".db";
+            return this;
+        }
+
+        //====================================== 第二步：设置数据库版本 ======================================
+
+        /**
+         * @param sqlVersion
+         * @return
+         * @初始化数据库版本号
+         */
+        public Hibernate init_2_SqlVersion(int sqlVersion) {
+            DATABASE_VERSION = sqlVersion;
+            return this;
+        }
+
+        //====================================== 第三步：设置扫描表路径 ======================================
+
+        /**
+         * @param scanTablePath (使用详情请参考官网)
+         * @return
+         * @初始化扫描数据库实体类路径
+         * @可输入的值如下：
+         * @1.实体类的包路径 com.gsls.gtlibrary.enity
+         * @2.实体类的class User.class
+         * @3.实体类的 List/Set/Array ：List<Class<?>> 、 Set<Class<?>、 Class<?>[]
+         */
+        public Hibernate init_3_SqlTable(Object scanTable) {
+
+            //判空
+            if (scanTable == null) return this;
+
+            //实例化 数据库表集合
+            if (tableList == null) {
+                tableList = new ArrayList<>();
+            } else {
+                tableList.clear();//清空
+            }
+
+            boolean isReflect = true;//是否需要反射得到 class
+
+            //解析路径 或 引用赋值
+            String EnityPackagePath = "";
+            if (scanTable instanceof Class<?>) {
+                Class<?> classs = (Class<?>) scanTable;
+                EnityPackagePath = classs.getPackage().toString().split(" ")[1];//解析 class 获取路径
+            } else if (scanTable instanceof String) {
+                EnityPackagePath = scanTable.toString();//如果是路径直接赋值
+            } else if (scanTable instanceof List) {
+                tableList = (List<Class<?>>) scanTable;//如果是class 集合直接引用
+                isReflect = false;//已经是 class 无需反射
+            } else if (scanTable instanceof Set) {
+                Set<Class<?>> tableSet = (Set<Class<?>>) scanTable;//如果是 Set 转换到 List 去
+                for (Class<?> classs : tableSet) {
+                    tableList.add(classs);
+                }
+                isReflect = false;//已经是 class 无需反射
+            } else if (scanTable instanceof Class<?>[]) {
+                Class<?>[] classArray = (Class<?>[]) scanTable;//如果是 Array 转换到 List 去
+                for (Class<?> classs : classArray) {
+                    tableList.add(classs);
+                }
+                isReflect = false;//已经是 class 无需反射
+            } else {
+                errs("当前不支持 " + EnityPackagePath + "  类型。");
+            }
+
+            //检测扫描路径
+            if (isReflect) {//如果需要反射就进行反射得到 class
+                if (!"".equals(EnityPackagePath)) {
+                    loadHibernateAnnotation(EnityPackagePath, context);
+                } else {
+                    errs("当前扫描数据库实体类的路径有错误！请检查该路径。EnityPackagePath = " + EnityPackagePath);
+                }
+            }
+
+            //进行 class 反射解析
+            if (tableList != null && tableList.size() > 0) {
+                analysisClassData();//解析 class
+            }
+
+
+            return this;
+        }
+        //====================================== 第三步：反射解析 class 信息 =================================
+
+        /**
+         * @反射解析 Class 数据
+         * @return
+         */
+        private Hibernate analysisClassData(){
+            //User{userName=String, passWord=String, age=Integer}
+            for(int i = 0; i < tableList.size(); i++){
+                Class<?> aClass = tableList.get(i);
+                log("tableList[" + i + "]" + aClass);
+
+
+            }
+            return this;
+        }
+
+
+        //====================================== 第四步：创建数据库对象 ======================================
+        public Hibernate init_4_Sql() {
+            DatabaseHelper databaseHelper = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+            try {
+                sqLiteDatabase = databaseHelper.getWritableDatabase();
+            } catch (RuntimeException e) {
+                errs("数据库报错 RuntimeException:" + e);
+            }
+            return this;
+        }
+
+        //====================================== 加载 SQL 注解 ===============================================
+        private void loadHibernateAnnotation(String EnityPackagePath, Context context) {
+            DexFile dexFile = null;
+            try {
+                dexFile = new DexFile(context.getPackageCodePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Enumeration<String> enumeration = dexFile.entries();
+            while (enumeration.hasMoreElements()) {
+                String className = enumeration.nextElement();
+                if (className.contains(EnityPackagePath)) {//在当前所有可执行的类里面查找包含有该包名的所有类
+                    Class<?> clazz1 = null;
+                    try {
+                        clazz1 = Class.forName(className);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    tableList.add(clazz1);
+                }
+            }
+        }
+
 
     }
 
@@ -4724,6 +4985,53 @@ public class GT {
             return null;
         }
 
+        /**
+         * @获取当前手机里的应用列表
+         */
+        public static class PrintPhoneAppList {
+
+            public List<String> getAllAppList(Activity activity) {
+                List<ResolveInfo> resolveInfos = getResolveInfos(activity);
+                List<String> appData = getAppData(resolveInfos, activity);
+                return appData;
+            }
+
+            private List<ResolveInfo> getResolveInfos(Activity activity) {
+                List<ResolveInfo> appList = null;
+
+                Intent intent = new Intent(Intent.ACTION_MAIN, null);
+                intent.addCategory(Intent.CATEGORY_LAUNCHER);
+                PackageManager pm = activity.getPackageManager();
+                appList = pm.queryIntentActivities(intent, 0);
+                Collections.sort(appList, new ResolveInfo.DisplayNameComparator(pm));
+
+                return appList;
+
+            }
+
+            private List<String> getAppData(List<ResolveInfo> resolveInfos, Activity activity) {
+
+                List<String> appData = new ArrayList<>();
+                PackageManager packageManager = activity.getPackageManager();
+                for (int i = 0; i < resolveInfos.size(); i++) {
+                    String pkg = resolveInfos.get(i).activityInfo.packageName;
+                    String cls = resolveInfos.get(i).activityInfo.name;
+                    String title = null;
+
+                    try {
+                        ApplicationInfo applicationInfo = packageManager.getPackageInfo(pkg, i).applicationInfo;
+                        title = applicationInfo.loadLabel(packageManager).toString();
+                    } catch (Exception e) {
+
+                    }
+                    appData.add(title + "：" + pkg + "/" + cls);
+                }
+                return appData;
+            }
+
+        }
+
+
     }
 
     //=========================================== APP迭代类（更新、热修复bug） =========================================
@@ -5222,7 +5530,7 @@ public class GT {
 
             /**
              * @param classs 读取那个类存储的数据
-             * @param key   存储的key
+             * @param key    存储的key
              * @return 成功返回 查询的值 否则返回 null
              * @查询数据
              */
@@ -5240,7 +5548,7 @@ public class GT {
 
             /**
              * @param classs 读取那个类存储的数据
-             * @param key   存储的key
+             * @param key    存储的key
              * @return 成功返回 true
              * @修改数据
              */
