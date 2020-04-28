@@ -1,5 +1,9 @@
 package com.gsls.gt;
 
+import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -10,16 +14,28 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -30,13 +46,17 @@ import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.util.AttributeSet;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -47,13 +67,20 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
+import android.view.animation.RotateAnimation;
+import android.view.animation.ScaleAnimation;
+import android.view.animation.TranslateAnimation;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -62,17 +89,19 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.Utils;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.lzy.okgo.callback.StringCallback;
 
 import org.json.JSONArray;
@@ -90,11 +119,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -108,6 +139,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -128,7 +161,16 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+
+import dalvik.system.DexClassLoader;
+import dalvik.system.PathClassLoader;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -138,42 +180,49 @@ import okhttp3.RequestBody;
 
 import static com.lzy.okgo.utils.HttpUtils.runOnUiThread;
 
-
 /**
  * 工具类说明：
  * GSLS_Tool
  * <p>
- * //GT 须依赖的包：
- * implementation 'com.google.code.gson:gson:2.8.5'         //JSON 数据解析
- * implementation 'com.lzy.net:okgo:3.0.4'                  //OkGo 网络框架
- * implementation 'com.squareup.okhttp3:okhttp:3.12.0'      //OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.9.0'   //加载图片的 glide
- * implementation 'org.jsoup:jsoup:1.10.3'                  //Jsoup格式化html数据
+ * //GT全部功能 需要添加的包
+ * implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+ * implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
+ * implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
+ * implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
+ * implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
+ * implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+ * implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
  * <p>
  * <p>
  * <p>
  * <p>
- * 更新时间:2019.8.31
- * <p>
- *
- * 更新内容：（1.0.7版本 大更新）
- * 1.新增 AndroidUtilCode 工具包 （如果不想初始化加载可在初始化GT前调用：GT.setIsGTUtil(false);）
- *
+ * 更新时间:2019.12.26
+ * * <p>
+ * * <p>
+ * * 更新内容：（1.1.5 版本）
+ * * 1.去掉多余的 日志打印方法，目前仅保留 log(普通) 和 err(错误) 日志打印方法
+ * * 2.增加 权限管理类 AppAuthorityManagement
+ * * 3.增加 字符串加密类 Encryption （目前有加密算法：MD5 、 DES）
+ * * 4.增加 App存储池类 AppDataPool (App内部存储池、App外部存储池)
+ * * 数据池 使用场景：
+ * (1)内部池使用场景： Activity 之间，Fragment 之间、 Activity 与 Fragment 之间数据的传递
+ * (2)外部池使用场景：APP 之间数据的 传递
+ * * 5.优化基础类增加 startFragment 操作
  * <p>
  * <p>
  * <p>
  * 小提示：(用于 AndroidStudio )
  * 收起所有的 方法: Ctrl + Shift +  - (减号)
  * 展开所有的 方法: Ctrl + Shift +  + (加号)
+ * 代码格式化快捷键是 Ctrl + Alt + L
  */
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings("ALL")
 public class GT {
 
     //================================== 所有属于 GT 类的属性 =======================================
 
-    @SuppressLint("StaticFieldLeak")
-    private static GT gt = null;                 //定义 GT 对象
+    private static GT gtAndroid = null;                 //定义 GT 对象
     private static boolean LOG_TF = true;        //控制外部所有的 Log 显示
     private static boolean GT_LOG_TF = false;    //控制内部所有的 Log 显示
     private static boolean TOAST_TF = true;      //控制外部所有的 toast 显示
@@ -193,14 +242,14 @@ public class GT {
      * @return GT  返回 GT 对象
      */
     public static GT getGT() {
-        if (gt == null) {
+        if (gtAndroid == null) {
             synchronized (GT.class) {
-                if (gt == null) {
-                    gt = new GT();
+                if (gtAndroid == null) {
+                    gtAndroid = new GT();
                 }
             }
         }
-        return gt;
+        return gtAndroid;
     }
 
     /**
@@ -253,8 +302,8 @@ public class GT {
      *
      * @param CONTEXT
      */
-    public void build(Context CONTEXT) {
-        this.CONTEXT = CONTEXT;
+    public void build(Context context) {
+        this.CONTEXT = context;
         initGTUtilActivity();//初始化 GT 必要的工具
     }
 
@@ -265,6 +314,18 @@ public class GT {
      * @param view
      */
     public void build(Object object, View view) {
+
+        initGTUtilFragment(object, view);//初始化 GT 必要的工具
+    }
+
+    /**
+     * 为外部提供访问 GT Context 接口
+     *
+     * @param object
+     * @param view
+     */
+    public void build(Context context, Object object, View view) {
+        this.CONTEXT = context;
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
     }
 
@@ -315,6 +376,7 @@ public class GT {
 
     /**
      * 设置是否初始化 GT 必要初始化的工具包
+     *
      * @param isGTUtil
      */
     public static void setIsGTUtil(boolean isGTUtil) {
@@ -357,29 +419,7 @@ public class GT {
      *
      * @param msg object 类型的消息
      */
-    public static void log_v(Object msg) {
-        if (LOG_TF) {
-            Log.v("GT_v", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
-    public static void log_d(Object msg) {
-        if (LOG_TF) {
-            Log.d("GT_d", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
-    public static void log_i(Object msg) {
+    public static void log(Object msg) {
         if (LOG_TF) {
             Log.i("GT_i", "------- " + msg);
         }
@@ -390,18 +430,7 @@ public class GT {
      *
      * @param msg object 类型的消息
      */
-    public static void log_w(Object msg) {
-        if (LOG_TF) {
-            Log.w("GT_w", "------- " + msg);
-        }
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param msg object 类型的消息
-     */
-    public static void log_e(Object msg) {
+    public static void err(Object msg) {
         if (LOG_TF) {
             Log.e("GT_e", "------- " + msg);
         }
@@ -413,45 +442,7 @@ public class GT {
      * @param title 日志标题
      * @param msg   日志消息
      */
-    public static void log_v(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.v("GT_v",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
-    public static void log_d(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.d("GT_d",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
-    public static void log_i(Object title, Object msg) {
+    public static void log(Object title, Object msg) {
         if (LOG_TF) {
             Log.i("GT_i",
                     "------- Run" +
@@ -470,26 +461,7 @@ public class GT {
      * @param title 日志标题
      * @param msg   日志消息
      */
-    public static void log_w(Object title, Object msg) {
-        if (LOG_TF) {
-            Log.w("GT_w",
-                    "------- Run" +
-                            "\n\n---------------------" + title + "------------------------\n" +
-                            "                   " + msg + "\n" +
-                            "---------------------" + title + "-----------------------\n\n" +
-                            "------- Close"
-            );
-        }
-
-    }
-
-    /**
-     * 提示消息 Log
-     *
-     * @param title 日志标题
-     * @param msg   日志消息
-     */
-    public static void log_e(Object title, Object msg) {
+    public static void err(Object title, Object msg) {
         if (LOG_TF) {
             Log.e("GT_e",
                     "------- Run" +
@@ -507,7 +479,7 @@ public class GT {
      *
      * @return String 报错的文件与行号
      */
-    public String getLineInfo() {
+    public static String getLineInfo() {
         StackTraceElement ste = new Throwable().getStackTrace()[1];
         return "报错的文件  " + ste.getFileName() + "  行号 " + ste.getLineNumber();
     }
@@ -523,7 +495,7 @@ public class GT {
                 Toast.makeText(getGT().CONTEXT, String.valueOf(msg), Toast.LENGTH_SHORT).show();
             } else {
                 if (LOG_TF)//设置为默认输出日志
-                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                    err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
         }
@@ -555,11 +527,11 @@ public class GT {
                 }, time);
             } else {
                 if (LOG_TF)//设置为默认输出日志
-                    log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                    err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
             }
 
         }
-    }
+    }/**/
 
     /**
      * 可多个消息框 Toast
@@ -599,6 +571,35 @@ public class GT {
         }
     }
 
+    private static Toast toast;
+
+    /**
+     * @param content
+     * @标准Toast
+     */
+    public static void toast(Object content) {
+        if (getGT().getCONTEXT() != null) {
+            if (toast == null) {
+                toast = Toast.makeText(getGT().getCONTEXT(), content.toString(), Toast.LENGTH_SHORT);
+            } else {
+                toast.setText(content.toString());
+            }
+            toast.show();
+        } else {
+            log(getLineInfo(), "当前没有赋值 Context 无法显示 Toast ");
+        }
+
+    }
+
+    public static void toast(Context context, Object content) {
+        if (toast == null) {
+            toast = Toast.makeText(context, content.toString(), Toast.LENGTH_SHORT);
+        } else {
+            toast.setText(content.toString());
+        }
+        toast.show();
+    }
+
     /**
      * Toast 自定义 View
      */
@@ -633,7 +634,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -648,7 +649,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -671,7 +672,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -690,7 +691,7 @@ public class GT {
                     toast.setView(view);
                 } else {
                     if (LOG_TF) {//设置为默认输出日志
-                        log_e("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
+                        err("GT_bug", "消息框错误日志：你没有为 Context 进行赋值 ，却引用了 Toast 导致该功能无法实现。解决措施 在调用 toast 代码之前添加：GT.getGT().setCONTEXT(activity);");
                     }
                 }
             }
@@ -699,7 +700,6 @@ public class GT {
 
 
     }
-
 
     /**
      * AlertDialog.Builder 对话框类
@@ -968,7 +968,7 @@ public class GT {
 
         private static int NOTIFYID = 0x1997; //通知id
         private static String CHANEL_ID = "com.gsls.king";
-        private static String CHANEL_DESCRIPTION = "GT_Android 描述";
+        private static String CHANEL_DESCRIPTION = "GT 描述";
         private static String CHANEL_NAME = "GT_Android复习";
 
         /**
@@ -1082,6 +1082,7 @@ public class GT {
                 // 通道的初始值不执行任何操作，因此可以安全地执行
                 // 启动顺序
                 NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                assert notificationManager != null;
                 notificationManager.createNotificationChannel(notificationChannel);
 
                 return CHANEL_ID;
@@ -1101,7 +1102,7 @@ public class GT {
         if (getGT().CONTEXT != null) {
             getGT().CONTEXT.startActivity(new Intent(getGT().CONTEXT, activityClass));//跳转 Activity
         } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 为 null 无法进行相应的 Activity 跳转");
+            GT.err(getLineInfo(), "跳转 Activity 失败，CONTEXT 为 null 无法进行相应的 Activity 跳转");
         }
     }
 
@@ -1115,7 +1116,7 @@ public class GT {
         if (getGT().CONTEXT != null && intent != null) {
             getGT().CONTEXT.startActivity(intent);//跳转 Activity
         } else {
-            GT.log_e(getGT().getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
+            GT.err(getLineInfo(), "跳转 Activity 失败，CONTEXT 或 Intent为 null 无法进行相应的 Activity 跳转");
         }
     }
 
@@ -1165,7 +1166,7 @@ public class GT {
         public static final int PRIVATE = 0;        //只有本应用可读写
         public static final int PROTECTED = 1;      //其他应用可以只读
         public static final int PUBLIC = 2;         //其他应用可以读写
-        private Gson gson = new Gson();             //是俩胡 Gson 对象
+        private Gson gson = new Gson();             //是 Gson 对象
 
         /**
          * 初始化 SP
@@ -1204,7 +1205,7 @@ public class GT {
             } else if (object instanceof Set) {
                 sp_e.putStringSet(key, (Set) object);
             } else {
-                if (GT_LOG_TF) log_v(context, "进行对象保存");
+                if (GT_LOG_TF) log(context, "进行对象保存");
                 String json = new Gson().toJson(object);
                 String json_class = object.getClass().toString();
                 sp_e.putString(key, json);                           //保存对象的 Json 数据
@@ -1226,7 +1227,7 @@ public class GT {
                 sp_e.remove(key);
                 if (commit) sp_e.apply();
             } else {
-                if (GT_LOG_TF) log_v("删除失败  当前 sp 中无此 key");
+                if (GT_LOG_TF) log("删除失败  当前 sp 中无此 key");
             }
             return sp_e;
         }
@@ -1241,7 +1242,7 @@ public class GT {
         public GT_SharedPreferences updata(String key, Object object) {
             if (query(key) != null) {
                 if (GT_LOG_TF)
-                    log_v(context, "进入到 updata 查询的数据不为null");
+                    log(context, "进入到 updata 查询的数据不为null");
                 save(key, object);
             }
             return this;
@@ -1259,7 +1260,7 @@ public class GT {
                 obj = sp.getInt(key, 0);
             } catch (ClassCastException e1) {
                 if (GT_LOG_TF)
-                    log_v(context, "Int 数据装换异常");
+                    log(context, "Int 数据装换异常");
                 try {
                     String str_class = sp.getString(key + "_class", null);     //获取对象 class 数据
                     String str = sp.getString(key, null);                          //获取对象 Json  数据
@@ -1271,27 +1272,27 @@ public class GT {
                     }
                 } catch (ClassCastException e2) {
                     if (GT_LOG_TF)
-                        log_v(context, "String 数据装换异常");
+                        log(context, "String 数据装换异常");
                     try {
                         obj = sp.getLong(key, 0);
                     } catch (ClassCastException e3) {
                         if (GT_LOG_TF)
-                            log_v(context, "Long 数据装换异常");
+                            log(context, "Long 数据装换异常");
                         try {
                             obj = sp.getFloat(key, 0f);
                         } catch (ClassCastException e4) {
                             if (GT_LOG_TF)
-                                log_v(context, "Float 数据装换异常");
+                                log(context, "Float 数据装换异常");
                             try {
                                 obj = sp.getBoolean(key, false);
                             } catch (ClassCastException e5) {
                                 if (GT_LOG_TF)
-                                    log_v(context, "Boolean 数据装换异常");
+                                    log(context, "Boolean 数据装换异常");
                                 try {
                                     obj = sp.getStringSet(key, null);
                                 } catch (ClassCastException e6) {
                                     if (GT_LOG_TF)
-                                        log_v(context, "StringSet 数据装换异常");
+                                        log(context, "StringSet 数据装换异常");
                                     obj = null;
                                 }
                             }
@@ -1585,11 +1586,11 @@ public class GT {
         public void createDatabase(String databaseName, Object password) {
             sqlMap.put(databaseName, new HashMap<>());
             String db = new Gson().toJson(sqlMap);
-            log_e("创建数据库的 json 数据", db);
+            err("创建数据库的 json 数据", db);
 
-//            db = password;
+            //            db = password;
 
-            log_e("加密后的数据库 json 数据", db);
+            err("加密后的数据库 json 数据", db);
             sp_e.putString(databaseName, db);
             sp_e.apply();
         }
@@ -1600,7 +1601,7 @@ public class GT {
             if (formerName != null) {
 
             } else {
-                if (GT_LOG_TF) log_e("修改数据库 失败！ 原由：暂未找到需要修改的数据库名称");
+                if (GT_LOG_TF) err("修改数据库 失败！ 原由：暂未找到需要修改的数据库名称");
             }
         }
 
@@ -1831,9 +1832,9 @@ public class GT {
          */
         public static String getFormatSize(double size) {
             double kiloByte = size / 1024;
-//        if (kiloByte < 1) {
-//            return size + "Byte";
-//        }
+            //        if (kiloByte < 1) {
+            //            return size + "Byte";
+            //        }
 
             double megaByte = kiloByte / 1024;
             if (megaByte < 1) {
@@ -1865,7 +1866,6 @@ public class GT {
         }
 
     }
-
 
     //=========================================== 网络类 =========================================
 
@@ -1944,6 +1944,109 @@ public class GT {
             return true;
         }
 
+        /**
+         * 获取当前网络属于 无网络(返回0)、WF(返回1)、2G(返回2)、3G(返回3)、4G(返回4) 网络
+         *
+         * @param context
+         * @return
+         */
+        public static int getNetworkState(Context context) {
+            return IntenetUtil.getNetworkState(context);
+        }
+
+        /**
+         * 获取当前网络属于 无网络、WF、2G、3G、4G网络
+         * //没有网络连接
+         * public static final int NETWORN_NONE = 0;
+         * //wifi连接
+         * public static final int NETWORN_WIFI = 1;
+         * //手机网络数据连接类型
+         * public static final int NETWORN_2G = 2;
+         * public static final int NETWORN_3G = 3;
+         * public static final int NETWORN_4G = 4;
+         * public static final int NETWORN_MOBILE = 5;
+         */
+        private static class IntenetUtil {
+
+            //没有网络连接
+            public static final int NETWORN_NONE = 0;
+            //wifi连接
+            public static final int NETWORN_WIFI = 1;
+            //手机网络数据连接类型
+            public static final int NETWORN_2G = 2;
+            public static final int NETWORN_3G = 3;
+            public static final int NETWORN_4G = 4;
+            public static final int NETWORN_MOBILE = 5;
+
+            /**
+             * 获取当前网络连接类型
+             *
+             * @param context
+             * @return
+             */
+            public static int getNetworkState(Context context) {
+                //获取系统的网络服务
+                ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                //如果当前没有网络
+                if (null == connManager)
+                    return NETWORN_NONE;
+                //获取当前网络类型，如果为空，返回无网络
+                @SuppressLint("MissingPermission") NetworkInfo activeNetInfo = connManager.getActiveNetworkInfo();
+                if (activeNetInfo == null || !activeNetInfo.isAvailable()) {
+                    return NETWORN_NONE;
+                }
+                // 判断是不是连接的是不是wifi
+                @SuppressLint("MissingPermission") NetworkInfo wifiInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                if (null != wifiInfo) {
+                    NetworkInfo.State state = wifiInfo.getState();
+                    if (null != state)
+                        if (state == NetworkInfo.State.CONNECTED || state == NetworkInfo.State.CONNECTING) {
+                            return NETWORN_WIFI;
+                        }
+                }
+                // 如果不是wifi，则判断当前连接的是运营商的哪种网络2g、3g、4g等
+                @SuppressLint("MissingPermission") NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+                if (null != networkInfo) {
+                    NetworkInfo.State state = networkInfo.getState();
+                    String strSubTypeName = networkInfo.getSubtypeName();
+                    if (null != state)
+                        if (state == NetworkInfo.State.CONNECTED || state == NetworkInfo.State.CONNECTING) {
+                            switch (activeNetInfo.getSubtype()) {
+                                //如果是2g类型
+                                case TelephonyManager.NETWORK_TYPE_GPRS: // 联通2g
+                                case TelephonyManager.NETWORK_TYPE_CDMA: // 电信2g
+                                case TelephonyManager.NETWORK_TYPE_EDGE: // 移动2g
+                                case TelephonyManager.NETWORK_TYPE_1xRTT:
+                                case TelephonyManager.NETWORK_TYPE_IDEN:
+                                    return NETWORN_2G;
+                                //如果是3g类型
+                                case TelephonyManager.NETWORK_TYPE_EVDO_A: // 电信3g
+                                case TelephonyManager.NETWORK_TYPE_UMTS:
+                                case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                                case TelephonyManager.NETWORK_TYPE_HSDPA:
+                                case TelephonyManager.NETWORK_TYPE_HSUPA:
+                                case TelephonyManager.NETWORK_TYPE_HSPA:
+                                case TelephonyManager.NETWORK_TYPE_EVDO_B:
+                                case TelephonyManager.NETWORK_TYPE_EHRPD:
+                                case TelephonyManager.NETWORK_TYPE_HSPAP:
+                                    return NETWORN_3G;
+                                //如果是4g类型
+                                case TelephonyManager.NETWORK_TYPE_LTE:
+                                    return NETWORN_4G;
+                                default:
+                                    //中国移动 联通 电信 三种3G制式
+                                    if (strSubTypeName.equalsIgnoreCase("TD-SCDMA") || strSubTypeName.equalsIgnoreCase("WCDMA") || strSubTypeName.equalsIgnoreCase("CDMA2000")) {
+                                        return NETWORN_3G;
+                                    } else {
+                                        return NETWORN_MOBILE;
+                                    }
+                            }
+                        }
+                }
+                return NETWORN_NONE;
+            }
+        }
+
     }
 
     /**
@@ -1964,9 +2067,12 @@ public class GT {
                 JSONObject jsonObject = new JSONObject(string);
             } catch (JSONException e) {
                 if (GT_LOG_TF)
-                    log_v("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getGT().getLineInfo() + "】");
-//                e.printStackTrace();
+                    log("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getLineInfo() + "】");
+                //                e.printStackTrace();
             }
+        }
+
+        public JSON() {
         }
 
         /*********************************  根据 Bean 获取数据*************************************/
@@ -1980,8 +2086,8 @@ public class GT {
             Object o = null;
             try {
                 o = new Gson().fromJson(string, aClass);
-            } catch (JsonSyntaxException exception) {
-                log_e(getGT().getLineInfo(), "你的 JSON 解析类型不匹配，请检查  " + aClass + "  是否与请求的Json数据一致！");
+            } catch (Exception exception) {
+                err(getLineInfo(), "你的 JSON 解析类型不匹配，请检查  " + aClass + "  是否与请求的Json数据一致！");
             }
             return o;
         }
@@ -2032,12 +2138,12 @@ public class GT {
                     e.printStackTrace();
                 }
             } else {
-                log_e(getGT().getLineInfo(), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
+                err(getLineInfo(), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
             }
 
-//            GT.log_e("在转 data 数据之前:" + data);
+            //            GT.err("在转 data 数据之前:" + data);
             o = rplStr(o.toString(), "\\", "");//忽略掉转义符
-//            GT.log_e("转 data 数据之后:" + data);
+            //            GT.err("转 data 数据之后:" + data);
 
             return o;
         }   //获取普通的值 返回数据前会进行 忽略掉转义符
@@ -2077,7 +2183,7 @@ public class GT {
             try {
                 jsonArray = new JSONArray(string);
             } catch (JSONException e) {
-                log_e(getGT().getLineInfo(), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
+                err(getLineInfo(), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
             }
 
             return jsonArray;
@@ -2098,7 +2204,7 @@ public class GT {
                 jsonObject = (JSONObject) list.get(index);  //获取当前索引下
                 o = jsonObject.get(key);        //key 值 的对象
             } catch (JSONException e) {
-                log_e(getGT().getLineInfo(), "JSON 数据解析异常，无法通过 没有初始化的 JSON 数据进行解析节点");
+                err(getLineInfo(), "JSON 数据解析异常，无法通过 没有初始化的 JSON 数据进行解析节点");
             }
             return o;
         }   //获取 JSON 对象
@@ -2269,7 +2375,7 @@ public class GT {
          *
          * @param callback new 一个 Callback 类的内部类
          */
-        public void loadDAta(Callback callback) {
+        public void loadData(Callback callback) {
             if (url != null) {
                 Request request = null;
                 if (map != null && map.size() > 0) {
@@ -2291,6 +2397,191 @@ public class GT {
                 call.enqueue(callback);
 
             }
+        }
+
+    }
+
+    /**
+     * HttpUtil 原始网络请求类
+     */
+    public static class HttpUtil {
+
+        static final String ENCODE = "utf-8";
+        static final String GET = "GET";
+        static final String POST = "POST";
+
+
+        /**
+         * get请求封装
+         */
+        public static void getRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
+            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
+                @Override
+                public void run() {
+                    StringBuffer sb = new StringBuffer(url);
+                    sb.append("?");
+                    if (params != null && !params.isEmpty()) {
+                        for (Map.Entry<String, String> entry : params.entrySet()) {    //增强for遍历循环添加拼接请求内容
+                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
+                        if (listener != null) {
+                            try {
+                                URL path = new URL(sb.toString());
+                                HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                                con.setRequestMethod(GET);    //设置请求方式
+                                con.setConnectTimeout(3000);    //链接超时3秒
+                                con.setDoOutput(true);
+                                con.setDoInput(true);
+                                OutputStream os = con.getOutputStream();
+                                os.write(sb.toString().getBytes(encode));
+                                os.close();
+                                if (con.getResponseCode() == 200) {    //应答码200表示请求成功
+                                    onSuccess(encode, listener, con);
+                                }
+                            } catch (Exception error) {
+                                error.printStackTrace();
+                                onError(listener, error);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * get请求封装
+         */
+        public static void getRequest(final String url, final OnLoadData listener) {
+            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
+                @Override
+                public void run() {
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(GET);    //设置请求方式
+                            con.setConnectTimeout(3000);    //链接超时3秒
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            OutputStream os = con.getOutputStream();
+                            os.write(url.getBytes(ENCODE));
+                            os.close();
+                            if (con.getResponseCode() == 200) {    //应答码200表示请求成功
+                                onSuccess(ENCODE, listener, con);
+                            }
+                        } catch (Exception error) {
+                            error.printStackTrace();
+                            onError(listener, error);
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * POST请求
+         */
+        public static void postRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
+            Thread.runJava(new Runnable() {// 为网络请求开启子线程
+                @Override
+                public void run() {
+                    StringBuffer sb = new StringBuffer();
+                    if (params != null && !params.isEmpty()) {
+                        for (Map.Entry<String, String> entry : params.entrySet()) {
+                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
+                        }
+                        sb.deleteCharAt(sb.length() - 1);
+                    }
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(POST);   //设置请求方法POST
+                            con.setConnectTimeout(3000);
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            byte[] bytes = sb.toString().getBytes();
+                            OutputStream outputStream = con.getOutputStream();
+                            outputStream.write(bytes);
+                            outputStream.close();
+                            if (con.getResponseCode() == 200) {
+                                onSuccess(encode, listener, con);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            onError(listener, e);
+                        }
+                    }
+                }
+            });
+        }
+
+        /**
+         * POST请求
+         */
+        public static void postRequest(final String url, final OnLoadData listener) {
+            Thread.runJava(new Runnable() {// 为网络请求开启子线程
+                @Override
+                public void run() {
+                    if (listener != null) {
+                        try {
+                            URL path = new URL(url);
+                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
+                            con.setRequestMethod(POST);   //设置请求方法POST
+                            con.setConnectTimeout(3000);
+                            con.setDoOutput(true);
+                            con.setDoInput(true);
+                            byte[] bytes = url.getBytes();
+                            OutputStream outputStream = con.getOutputStream();
+                            outputStream.write(bytes);
+                            outputStream.close();
+                            if (con.getResponseCode() == 200) {
+                                onSuccess(ENCODE, listener, con);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            onError(listener, e);
+                        }
+                    }
+                }
+            });
+
+        }
+
+        private static void onError(final OnLoadData listener, final Exception onError) {
+            Thread.runAndroid(new Runnable() {//为 请求失败 开启 UI 线程
+                @Override
+                public void run() {
+                    listener.onError(onError.toString());
+                }
+            });
+        }
+
+        private static void onSuccess(String encode, final OnLoadData listener, HttpURLConnection con) throws IOException {
+            InputStream inputStream = con.getInputStream();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();//创建内存输出流
+            int len;
+            byte[] bytes = new byte[1024];
+            if (inputStream != null) {
+                while ((len = inputStream.read(bytes)) != -1) {
+                    baos.write(bytes, 0, len);
+                }
+                final String str = new String(baos.toByteArray(), encode);
+                Thread.runAndroid(new Runnable() {//为 请求成功 开启 UI 线程
+                    @Override
+                    public void run() {
+                        listener.onSuccess(str);
+                    }
+                });
+            }
+        }
+
+        //请求接口
+        public interface OnLoadData {
+            void onSuccess(String response);
+
+            void onError(String error);
         }
 
     }
@@ -2400,7 +2691,6 @@ public class GT {
 
     }
 
-
     //============================================= 小工具类 =======================================
 
     /**
@@ -2411,88 +2701,88 @@ public class GT {
         /**
          * 使用案例
          * long currentTimeMillis = System.currentTimeMillis();
+         * <p>
+         * 输出：输入的时间：1567233280386
+         * System.out.println("输入的时间：" + currentTimeMillis);
+         * <p>
+         * currentTimeMillis = 1538364324000L;
+         * <p>
+         * Lunar lunar = new Lunar(currentTimeMillis);//初始化高级功能
+         * 节气: 如果指定的日期有节气则返回当天节气，如果没有则返回 "" 空字符串 不是 null
+         * System.out.println("节气:" + lunar.getTermString());
+         * <p>
+         * 生肖:狗
+         * System.out.println("生肖:" + lunar.getAnimalString());
+         * <p>
+         * 星期：2
+         * System.out.println("星期：" + lunar.getDayOfWeek());//星期几(星期日为:1, 星期六为:7)
+         * <p>
+         * 干支历:戊戌年辛酉月丙寅日
+         * System.out.println("干支历:" + lunar.getCyclicalDateString());
+         * <p>
+         * 农历:戊戌年八月廿二日
+         * System.out.println("农历:" + lunar.getLunarDateString());
+         * <p>
+         * 当前是否为 农历节日:true
+         * boolean lFestival = lunar.isLFestival();
+         * System.out.println("当前是否为 农历节日:" + lFestival);
+         * <p>
+         * 农历节日:燃灯佛诞
+         * if(lFestival){
+         * System.out.println("农历节日:" + lunar.getLFestivalName());
+         * }
+         * <p>
+         * 当前是否为公历节日:true
+         * boolean sFestival = lunar.isSFestival();
+         * System.out.println("当前是否为公历节日:" + lFestival);
+         * if(sFestival){
+         * 公历节日:国庆节
+         * System.out.println("公历节日:" + lunar.getSFestivalName());
+         * }
+         * <p>
+         * 当前是否为节日:true
+         * boolean festival = lunar.isFestival();
+         * System.out.println("当前是否为节日:" + festival);
+         * <p>
+         * 当前是否放假:true
+         * boolean holiday = lunar.isHoliday();
+         * System.out.println("当前是否放假:" + holiday);
+         * <p>
+         * <p>
+         * Date[] jieqi = Lunar.jieqilist(2019);
+         * for (int i = 0; i < Lunar.solarTerm.length; i++) {
+         * System.out.print(Lunar.solarTerm[i]);
          *
-         *	输出：输入的时间：1567233280386
-         System.out.println("输入的时间：" + currentTimeMillis);
-
-         currentTimeMillis = 1538364324000L;
-
-         Lunar lunar = new Lunar(currentTimeMillis);//初始化高级功能
-         节气: 如果指定的日期有节气则返回当天节气，如果没有则返回 "" 空字符串 不是 null
-         System.out.println("节气:" + lunar.getTermString());
-
-         生肖:狗
-         System.out.println("生肖:" + lunar.getAnimalString());
-
-         星期：2
-         System.out.println("星期：" + lunar.getDayOfWeek());//星期几(星期日为:1, 星期六为:7)
-
-         干支历:戊戌年辛酉月丙寅日
-         System.out.println("干支历:" + lunar.getCyclicalDateString());
-
-         农历:戊戌年八月廿二日
-         System.out.println("农历:" + lunar.getLunarDateString());
-
-         当前是否为 农历节日:true
-         boolean lFestival = lunar.isLFestival();
-         System.out.println("当前是否为 农历节日:" + lFestival);
-
-         农历节日:燃灯佛诞
-         if(lFestival){
-         System.out.println("农历节日:" + lunar.getLFestivalName());
-         }
-
-         当前是否为公历节日:true
-         boolean sFestival = lunar.isSFestival();
-         System.out.println("当前是否为公历节日:" + lFestival);
-         if(sFestival){
-         公历节日:国庆节
-         System.out.println("公历节日:" + lunar.getSFestivalName());
-         }
-
-         当前是否为节日:true
-         boolean festival = lunar.isFestival();
-         System.out.println("当前是否为节日:" + festival);
-
-         当前是否放假:true
-         boolean holiday = lunar.isHoliday();
-         System.out.println("当前是否放假:" + holiday);
-
-
-         Date[] jieqi = Lunar.jieqilist(2019);
-         for (int i = 0; i < Lunar.solarTerm.length; i++) {
-         System.out.print(Lunar.solarTerm[i]);
-         @SuppressWarnings("deprecation")
-         int month = jieqi[i].getMonth();
-         month += 1;
-         System.out.print(month + "月");
-         System.out.println(jieqi[i].getDate());
-         }
-         //对应结果
-         小寒1月6
-         大寒1月20
-         立春2月4
-         雨水2月19
-         惊蛰3月6
-         春分3月21
-         清明4月5
-         谷雨4月21
-         立夏5月6
-         小满5月22
-         芒种6月6
-         夏至6月22
-         小暑7月8
-         大暑7月23
-         立秋8月8
-         处暑8月24
-         白露9月8
-         秋分9月24
-         寒露10月9
-         霜降10月24
-         立冬11月8
-         小雪11月23
-         大雪12月8
-         冬至12月22
+         * @SuppressWarnings("deprecation") int month = jieqi[i].getMonth();
+         * month += 1;
+         * System.out.print(month + "月");
+         * System.out.println(jieqi[i].getDate());
+         * }
+         * //对应结果
+         * 小寒1月6
+         * 大寒1月20
+         * 立春2月4
+         * 雨水2月19
+         * 惊蛰3月6
+         * 春分3月21
+         * 清明4月5
+         * 谷雨4月21
+         * 立夏5月6
+         * 小满5月22
+         * 芒种6月6
+         * 夏至6月22
+         * 小暑7月8
+         * 大暑7月23
+         * 立秋8月8
+         * 处暑8月24
+         * 白露9月8
+         * 秋分9月24
+         * 寒露10月9
+         * 霜降10月24
+         * 立冬11月8
+         * 小雪11月23
+         * 大雪12月8
+         * 冬至12月22
          */
 
         private Lunar lunar = null;
@@ -2517,9 +2807,9 @@ public class GT {
         public GT_Date() {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
             time = df.format(new Date());   //获取当时间
-            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
-            ymd = times[0].split("-");  	//分割年月日 数组
-            hms = times[1].split(":");  	//分割时分秒 数组
+            times = time.split(" ");        //分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");    //分割年月日 数组
+            hms = times[1].split(":");    //分割时分秒 数组
         }
 
         /**
@@ -2530,9 +2820,9 @@ public class GT {
             //初始化基本的时间
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
             time = df.format(new Date());   //获取当时间
-            times = time.split(" ");    	//分割时间 年月日  时分秒 数组
-            ymd = times[0].split("-");  	//分割年月日 数组
-            hms = times[1].split(":");  	//分割时分秒 数组
+            times = time.split(" ");        //分割时间 年月日  时分秒 数组
+            ymd = times[0].split("-");    //分割年月日 数组
+            hms = times[1].split(":");    //分割时分秒 数组
 
             //初始化高级功能
             lunar = new Lunar(timestamp);
@@ -2563,7 +2853,6 @@ public class GT {
                 w = 0;
             return weekDays[w];
         }
-
 
 
         /**
@@ -2786,7 +3075,7 @@ public class GT {
              * @return 日期数
              */
             public static long getbeforesolarTerm(int year, Date date) {
-                List<Date> jieqi =Alljieqi(year);
+                List<Date> jieqi = Alljieqi(year);
                 int[] jieqibeforeafter = getnearsolarTerm(year, date);
                 return MyDate.DateDays(date, jieqi.get(jieqibeforeafter[0]));
             }
@@ -2803,15 +3092,15 @@ public class GT {
 
             }
 
-            public static List<Date> Alljieqi(int year){
+            public static List<Date> Alljieqi(int year) {
 
-                List<Date> jieqi = new  ArrayList<Date>();
-                Date[] temp ;
+                List<Date> jieqi = new ArrayList<Date>();
+                Date[] temp;
                 temp = jieqilist(year - 1);
                 jieqi.addAll(Arrays.asList(temp));
                 temp = jieqilist(year);
                 jieqi.addAll(Arrays.asList(temp));
-                temp = jieqilist(year+1);
+                temp = jieqilist(year + 1);
                 jieqi.addAll(Arrays.asList(temp));
                 return jieqi;
             }
@@ -2823,7 +3112,7 @@ public class GT {
              * @return
              */
             public static int[] getnearsolarTerm(int year, Date date) {
-                List<Date> jieqi =Alljieqi(year);
+                List<Date> jieqi = Alljieqi(year);
 
                 int[] returnValue = new int[2];
                 for (int i = 0; i < jieqi.size(); i++) {
@@ -2961,6 +3250,7 @@ public class GT {
                     return -1;
                 }
             }
+
             private final static Pattern sFreg = Pattern.compile("^(\\d{2})(\\d{2})([\\s\\*])(.+)$");
             private final static Pattern wFreg = Pattern.compile("^(\\d{2})(\\d)(\\d)([\\s\\*])(.+)$");
 
@@ -3047,7 +3337,7 @@ public class GT {
              * 返回农历年闰月月份
              *
              * @param lunarYear 指定农历年份(数字)
-             * @return 该农历年闰月的月份(数字,没闰返回0)
+             * @return 该农历年闰月的月份(数字, 没闰返回0)
              */
             private static int getLunarLeapMonth(int lunarYear) {
                 // 数据表中,每个农历年用16bit来表示,
@@ -3099,9 +3389,9 @@ public class GT {
             /**
              * 返回农历年正常月份的总天数
              *
-             * @param lunarYear 指定农历年份(数字)
+             * @param lunarYear  指定农历年份(数字)
              * @param lunarMonth 指定农历月份(数字)
-             * @return 该农历年闰月的月份(数字,没闰返回0)
+             * @return 该农历年闰月的月份(数字, 没闰返回0)
              */
             private static int getLunarMonthDays(int lunarYear, int lunarMonth) {
                 // 数据表中,每个农历年用16bit来表示,
@@ -3126,6 +3416,7 @@ public class GT {
                     return utcCal.get(Calendar.DAY_OF_MONTH);
                 }
             }
+
             private static GregorianCalendar utcCal = null;
 
             private static synchronized void makeUTCCalendar() {
@@ -3137,10 +3428,10 @@ public class GT {
             /**
              * 返回全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数。
              *
-             * @param y 指定年份
-             * @param m 指定月份
-             * @param d 指定日期
-             * @param h 指定小时
+             * @param y   指定年份
+             * @param m   指定月份
+             * @param d   指定日期
+             * @param h   指定小时
              * @param min 指定分钟
              * @param sec 指定秒数
              * @return 全球标准时间 (UTC) (或 GMT) 的 1970 年 1 月 1 日到所指定日期之间所间隔的毫秒数
@@ -3158,8 +3449,8 @@ public class GT {
              * 返回公历年节气的日期
              *
              * @param solarYear 指定公历年份(数字)
-             * @param index 指定节气序号(数字,0从小寒算起)
-             * @return 日期(数字,所在月份的第几天)
+             * @param index     指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字, 所在月份的第几天)
              */
             private static int getSolarTermDay(int solarYear, int index) {
 
@@ -3170,8 +3461,8 @@ public class GT {
              * 返回公历年节气的日期
              *
              * @param solarYear 指定公历年份(数字)
-             * @param index 指定节气序号(数字,0从小寒算起)
-             * @return 日期(数字,所在月份的第几天)
+             * @param index     指定节气序号(数字,0从小寒算起)
+             * @return 日期(数字, 所在月份的第几天)
              */
             public static Date getSolarTermCalendar(int solarYear, int index) {
                 long l = (long) 31556925974.7 * (solarYear - 1900)
@@ -3275,7 +3566,6 @@ public class GT {
 
             /**
              * 取干支历 不是历年，历月干支，而是中国的从立春节气开始的节月，是中国的太阳十二宫，阳历的。
-
              */
             private void getCyclicalData() {
                 this.solarYear = this.solar.get(Calendar.YEAR);
@@ -3315,7 +3605,7 @@ public class GT {
             /**
              * 取农历年生肖
              *
-             * @return 农历年生肖(例:龙)
+             * @return 农历年生肖(例 : 龙)
              */
             public String getAnimalString() {
                 return Lunar.Animals[(this.lunarYear - 4) % 12];
@@ -3324,7 +3614,7 @@ public class GT {
             /**
              * 返回公历日期的节气字符串
              *
-             * @return 二十四节气字符串,若不是节气日,返回空串(例:冬至)
+             * @return 二十四节气字符串, 若不是节气日, 返回空串(例 : 冬至)
              */
             public String getTermString() {
                 // 二十四节气
@@ -3340,7 +3630,7 @@ public class GT {
             /**
              * 取得干支历字符串
              *
-             * @return 干支历字符串(例:甲子年甲子月甲子日)
+             * @return 干支历字符串(例 : 甲子年甲子月甲子日)
              */
             public String getCyclicalDateString() {
                 return this.getCyclicaYear() + "年" + this.getCyclicaMonth() + "月"
@@ -3458,7 +3748,7 @@ public class GT {
             /**
              * 返回农历表示字符串
              *
-             * @return 农历字符串(例:甲子年正月初三)
+             * @return 农历字符串(例 : 甲子年正月初三)
              */
             public String getLunarDateString() {
                 return this.getLunarYearString() + "年"
@@ -3559,7 +3849,7 @@ public class GT {
             /**
              * 星期几
              *
-             * @return 星期几(星期日为:1, 星期六为:7)
+             * @return 星期几(星期日为 : 1, 星期六为 : 7)
              */
             public int getDayOfWeek() {
                 return this.solar.get(Calendar.DAY_OF_WEEK);
@@ -3589,7 +3879,7 @@ public class GT {
             /**
              * 取得公历节日名称
              *
-             * @return 公历节日名称,如果不是节日返回空串
+             * @return 公历节日名称, 如果不是节日返回空串
              */
             public String getSFestivalName() {
                 return this.sFestivalName;
@@ -3598,7 +3888,7 @@ public class GT {
             /**
              * 取得农历节日名称
              *
-             * @return 农历节日名称,如果不是节日返回空串
+             * @return 农历节日名称, 如果不是节日返回空串
              */
             public String getLFestivalName() {
                 return this.lFestivalName;
@@ -3652,7 +3942,7 @@ public class GT {
             /**
              * 其它日期说明
              *
-             * @return 日期说明(如:民国2年)
+             * @return 日期说明(如 : 民国2年)
              */
             public String getDescription() {
                 if (!this.isFinded) {
@@ -3747,7 +4037,7 @@ public class GT {
 
 
             //日期工具辅助类
-            private static  class MyDate {
+            private static class MyDate {
 
                 private static final int[] dayMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
                 public int day;
@@ -3830,7 +4120,6 @@ public class GT {
                     }
 
 
-
                     return days;
 
                 }
@@ -3892,40 +4181,6 @@ public class GT {
     }
 
     /**
-     * 分享功能
-     */
-    public static class GT_Share {
-
-        private Activity activity;
-
-        /**
-         * 初始化 上下文
-         *
-         * @param activity
-         */
-        public GT_Share(Activity activity) {
-            this.activity = activity;
-        }
-
-        /**
-         * 发送文字
-         *
-         * @param title
-         * @param content
-         */
-        public void senText(String title, String content) {
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, content);
-            shareIntent = Intent.createChooser(shareIntent, title);
-            activity.startActivity(shareIntent);
-        }
-
-
-    }
-
-    /**
      * 图片优化类
      */
     public static class ImageOptimize {
@@ -3957,8 +4212,2144 @@ public class GT {
 
     }
 
+    /**
+     * 手机屏幕操作
+     */
+    public static class ScreenOperation {
+
+        /**
+         * 点击屏幕 可根据 屏幕的比例 与 具体的 X,Y 坐标点击
+         */
+        public static class AutoTouch {
+            private static int width = 0;
+            private static int height = 0;
+
+            /**
+             * 传入在屏幕中的比例位置，坐标左上角为基准
+             *
+             * @param act    传入Activity对象
+             * @param ratioX 需要点击的x坐标在屏幕中的比例位置
+             * @param ratioY 需要点击的y坐标在屏幕中的比例位置
+             */
+            public static void autoClickRatio(Activity act, final double ratioX, final double ratioY) {
+                width = act.getWindowManager().getDefaultDisplay().getWidth();
+                height = act.getWindowManager().getDefaultDisplay().getHeight();
+                Thread.runJava(new Runnable() {
+                    @Override
+                    public void run() {
+                        // 线程睡眠0.3s
+                        Thread.sleep(300);
+                        // 生成点击坐标
+                        int x = (int) (width * ratioX);
+                        int y = (int) (height * ratioY);
+
+                        // 利用ProcessBuilder执行shell命令
+                        String[] order = {"input", "tap", "" + x, "" + y};
+                        try {
+                            new ProcessBuilder(order).start();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
+            /**
+             * 传入在屏幕中的坐标，坐标左上角为基准
+             *
+             * @param act 传入Activity对象
+             * @param x   需要点击的x坐标
+             * @param y   需要点击的x坐标
+             */
+            public static void autoClickPos(Activity act, final double x, final double y) {
+                width = act.getWindowManager().getDefaultDisplay().getWidth();
+                height = act.getWindowManager().getDefaultDisplay().getHeight();
+                // 利用ProcessBuilder执行shell命令
+                String[] order = {"input", "tap", "" + x, "" + y};
+                try {
+                    new ProcessBuilder(order).start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
+    }
+
+    /**
+     * @ApplicationUtils 应用程序的小工具集合
+     */
+    public static class ApplicationUtils {
+
+        /**
+         * 分享文字
+         *
+         * @param activity
+         * @param title
+         * @param content
+         */
+        public void senText(Activity activity, String title, String content) {
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(Intent.EXTRA_TEXT, content);
+            shareIntent = Intent.createChooser(shareIntent, title);
+            activity.startActivity(shareIntent);
+        }
+
+        /**
+         * @param activity
+         * @param sharTitle
+         * @param filePath
+         * @分享文件
+         */
+        public void shareFile(Activity activity, String sharTitle, String filePath) {
+            Intent intent = new Intent(Intent.ACTION_SEND);// 发送多个文件
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filePath)));
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            activity.startActivity(Intent.createChooser(intent, sharTitle));
+
+        }
+
+        /**
+         * @param editText
+         * @param activity
+         * @弹出软件盘
+         */
+        public static void editKeyboard(EditText editText, Activity activity) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(editText, InputMethodManager.RESULT_SHOWN);
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, InputMethodManager.HIDE_IMPLICIT_ONLY);
+            editText.requestFocus();// 为搜索框 获取光标
+        }
+
+        /**
+         * @param editText
+         * @param activity
+         * @收起软键盘
+         */
+        public static void editKeyShrink(EditText editText, Activity activity) {
+            InputMethodManager inputMethodManager = (InputMethodManager) activity
+                    .getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(editText.getWindowToken(), 0);
+        }
+
+        /**
+         * @param context
+         * @param text
+         * @将字符串复制到粘贴板上
+         */
+        public static void copyToClipboard(Context context, String text) {
+            ClipboardManager systemService = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+            systemService.setPrimaryClip(ClipData.newPlainText("text", text));
+        }
+
+        /**
+         * @param context  上下文
+         * @param view     保存图片的组件
+         * @param fileName 文件名
+         * @保存图片
+         */
+        public static void saveImage(Context context, View view, String fileName) {
+            Bitmap bm = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bm);
+            view.draw(canvas);
+            String sd = "sdcard/";
+            String fliename = sd + fileName + ".png";
+            File file = new File(fliename);
+            try {
+                FileOutputStream out = new FileOutputStream(fliename);
+                bm.compress(Bitmap.CompressFormat.PNG, 90, out);
+                out.flush();
+                out.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            // 通知系统更新图库
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            intent.setData(Uri.fromFile(file));
+            context.sendBroadcast(intent);
+        }
+
+        /**
+         * @param activity
+         * @return
+         * @获取App名字
+         */
+        public static String getAppName(Activity activity) {
+            return activity.getResources().getString(R.string.app_name);
+        }
+
+        /**
+         * @param mContext
+         * @return
+         * @获取软件版本号
+         */
+        public static int getVersionCode(Context mContext) {
+            int versionCode = 0;
+            try {
+                // 获取软件版本号，对应AndroidManifest.xml下android:versionCode
+                versionCode = mContext.getPackageManager().getPackageInfo(mContext.getPackageName(), 0).versionCode;
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            return versionCode;
+        }
+
+        /**
+         * @param context
+         * @return
+         * @获取版本号名称
+         */
+        public static String getVerName(Context context) {
+            String verName = "";
+            try {
+                verName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+            return verName;
+        }
+
+        /**
+         * @param zipPtath        解压文件的路径
+         * @param outputDirectory 解压后的输出路径
+         * @param isDeleteZipPage 是否保留压缩文件
+         * @throws IOException
+         * @解压文件
+         */
+        public static void unzipFile(String zipPtath, String outputDirectory, boolean isDeleteZipPage)
+                throws IOException {
+            /**
+             * 解压assets的zip压缩文件到指定目录
+             *
+             * @param context上下文对象
+             * @param assetName压缩文件名
+             * @param outputDirectory输出目录
+             * @param isReWrite是否覆盖
+             * @throws IOException
+             */
+
+//	        Log.i(TAG,"开始解压的文件： "  + zipPtath + "\n" + "解压的目标路径：" + outputDirectory );
+            // 创建解压目标目录
+            File file = new File(outputDirectory);
+            // 如果目标目录不存在，则创建
+            if (!file.exists()) {
+                file.mkdirs();
+            }
+            // 打开压缩文件
+            InputStream inputStream = new FileInputStream(zipPtath);
+            ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+
+            // 读取一个进入点
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            // 使用1Mbuffer
+            byte[] buffer = new byte[1024 * 1024];
+            // 解压时字节计数
+            int count = 0;
+            // 如果进入点为空说明已经遍历完所有压缩包中文件和目录
+            while (zipEntry != null) {
+                if (!zipEntry.isDirectory()) { // 如果是一个文件
+                    // 如果是文件
+                    String fileName = zipEntry.getName();
+                    fileName = fileName.substring(fileName.lastIndexOf("/") + 1); // 截取文件的名字 去掉原文件夹名字
+                    file = new File(outputDirectory + File.separator + fileName); // 放到新的解压的文件路径
+
+                    file.createNewFile();
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    while ((count = zipInputStream.read(buffer)) > 0) {
+                        fileOutputStream.write(buffer, 0, count);
+                    }
+                    fileOutputStream.close();
+
+                }
+
+                // 定位到下一个文件入口
+                zipEntry = zipInputStream.getNextEntry();
+            }
+            zipInputStream.close();
+//	            log(TAG,"解压完成");
+            if (isDeleteZipPage) {
+                new File(zipPtath).delete();// 删除当前补丁压缩包
+            }
+
+        }
+
+        /**
+         * @param path
+         * @return
+         * @获取文件夹中所有文件名
+         */
+        public static List<String> getFilesAllName(String path) {
+            File file = new File(path);
+            File[] files = file.listFiles();
+            if (files == null) {
+                Log.e("error", "空目录");
+                return null;
+            }
+            List<String> s = new ArrayList<String>();
+            for (int i = 0; i < files.length; i++) {
+                s.add(files[i].getAbsolutePath());
+            }
+            return s;
+        }
+
+        /**
+         * @param file         清空的文件路径
+         * @param isSaveFolder 是否保存当前文件夹 true：b
+         * @清空文件夹中所有文件
+         */
+        public static void deleteAllFile(File file, boolean isSaveFolder) {
+
+            if (file.isDirectory()) {
+                File[] files = file.listFiles();
+                for (int i = 0; i < files.length; i++) {
+                    File f = files[i];
+                    deleteAllFile(f, isSaveFolder);
+                }
+                if (!isSaveFolder) {// 是否保留本文件夹
+                    file.delete();// 如要保留文件夹，只删除文件，请注释这行
+                }
+            } else if (file.exists()) {
+                file.delete();
+            }
+        }
+
+        /**
+         * @return
+         * @获取手机根目录
+         */
+        public static String getAppDirectory() {
+            return Environment.getExternalStorageDirectory().toString();
+        }
+
+        /**
+         * @param context
+         * @return
+         * @获取当前apk包名
+         */
+        public static String getPackageName(Context context) {
+            try {
+                PackageManager packageManager = context.getPackageManager();
+                PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
+                return packageInfo.packageName;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+    }
+
+
+    //=========================================== APP迭代类（更新、热修复bug） =========================================
+
+    /**
+     * APP 迭代类
+     */
+    public static class AppIteration {
+
+        //更新 APP 版本
+        public static class UpdateApp {
+
+            /**
+             * 内置 更新 APP 版本 注意
+             *
+             * 详细教程：https://blog.csdn.net/qq_39799899/article/details/102470084
+             *
+             * 1.在清单文件添加数据共享
+             * <application>
+             * ...
+             <!--数据共享-->
+             <provider
+             android:name="androidx.core.content.FileProvider"
+             android:authorities="自己包名.fileprovider"
+             android:grantUriPermissions="true"
+             android:exported="false">
+             <meta-data
+             android:name="android.support.FILE_PROVIDER_PATHS"
+             android:resource="@xml/file_paths" />
+             </provider>
+             * ...
+             * </<application>
+             *
+             * 2.添加 file_paths.xml 文件
+             * <paths>
+             *     <external-path path="." name="external_storage_root" />
+             * </paths>
+             *
+             * 3.记得添加权限
+             *  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- 写入手机权限 -->
+             *  <uses-permission android:name="android.permission.INTERNET" />  <!-- 网络权限 -->
+             *  <uses-permission android:name="android.permission.READ_PHONE_STATE" />  <!-- 读取手机权限 -->
+             *
+             */
+
+            /**
+             * @param downloadUrl
+             * @param savePath
+             * @在网络下载文件到本地
+             * @下载服务器的APK
+             */
+            public static void downloadFile(final String downloadUrl, final String savePath) {
+
+                Thread.runJava(new Runnable() {
+                    @Override
+                    public void run() {
+                        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + savePath);//记得加扩展名
+                        file.getParentFile().mkdir();
+                        try {
+                            file.createNewFile();
+                            URL url2 = new URL(downloadUrl);
+                            HttpURLConnection conn = (HttpURLConnection) url2.openConnection();
+                            conn.connect();
+                            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                                InputStream ips = conn.getInputStream();
+                                FileOutputStream fops = new FileOutputStream(file);
+
+                                byte[] buf = new byte[1024];
+                                int read = ips.read(buf);
+                                while (read != -1) {
+                                    fops.write(buf, 0, read);
+                                    fops.flush();
+                                    read = ips.read(buf);
+                                }
+                                fops.close();
+                                ips.close();
+                                conn.disconnect();
+                            }
+                        } catch (Exception e) {
+                            if (getGT().getGtLogTf()) {
+                                err(getLineInfo(), "网络下载文件报错： " + e);
+                            }
+                        }
+                    }
+                });
+
+            }
+
+            /**
+             * @param apkPath
+             * @安装APK
+             * @安装新版本
+             */
+            public static void installNewApk(Activity activity, String apkPath) {
+                String url = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + apkPath;
+                Uri uri;
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+
+                //支持7.0
+                if (Build.VERSION.SDK_INT >= 24) {
+                    uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".fileprovider", new File(url));
+                } else {
+                    uri = Uri.fromFile(new File(url));
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+
+                intent.setDataAndType(uri, "application/vnd.android.package-archive"); // 对应apk类型
+
+                activity.getApplication().startActivity(intent);
+            }
+
+
+        }
+
+
+        // 热修复 APP
+        public static class RepairAPP {
+
+            // 这下面两个属性可自己修改
+            private static String repairFileName = null; // 修复文件名 默认补丁包文件名为 当前APP版本号 开头
+            private static String repairFilePath = null; // 修复文件路径 默认补丁包的路径为 当前App包名 下的 thermalRemediation文件夹下
+            private static String repairFileFolderName = "thermalRemediation"; // 默认存储热修复默认的文件夹名称
+            private static String repairBugFilePath = null;// 热修复 bug 文件路径
+
+            public static String getRepairFileName() {
+                return repairFileName;
+            }
+
+            public static String getRepairFilePath() {
+                return repairFilePath;
+            }
+
+            public static void setRepairFileName(String repairFileName) {
+                RepairAPP.repairFileName = repairFileName;
+            }
+
+            public static void setRepairFilePath(String repairFilePath) {
+                RepairAPP.repairFilePath = repairFilePath;
+            }
+
+            public static String getRepairFileFolderName() {
+                return repairFileFolderName;
+            }
+
+            public static void setRepairFileFolderName(String repairFileFolderName) {
+                RepairAPP.repairFileFolderName = repairFileFolderName;
+            }
+
+            private static final String DEX_SUFFIX = ".dex";
+            private static final String APK_SUFFIX = ".apk";
+            private static final String JAR_SUFFIX = ".jar";
+            private static final String ZIP_SUFFIX = ".zip";
+            private static final String DEX_DIR = "odex";
+            private static final String OPTIMIZE_DEX_DIR = "optimize_dex";
+            private static HashSet<File> loadedDex = new HashSet<File>();
+
+            static {
+                loadedDex.clear();
+            }
+
+            /**
+             * @param context
+             * @初始化 热修复路径与文件格式
+             */
+            public static void init(Context context) {
+                // 如果 补丁包文件夹名为 null
+                if (repairFilePath == null) {
+                    repairFilePath = ApplicationUtils.getPackageName(context) + "/" + repairFileFolderName;// 设置补丁包目录为当前
+                }
+
+                // 如果 补丁包文件名为 null
+                if (repairFileName == null) {
+                    repairFileName = ApplicationUtils.getVerName(context);// 默认补丁包文件名为 当前APP版本号 开头
+                }
+
+            }
+
+            /**
+             * 开启修复
+             *
+             * @param context
+             */
+            public static void startRepair(final Context context) {
+                init(context);
+                File externalStorageDirectory = Environment.getExternalStorageDirectory();
+                // 遍历所有的修复dex , 因为可能是多个dex修复包
+                File fileDir = externalStorageDirectory != null
+                        ? new File(externalStorageDirectory, RepairAPP.repairFilePath)
+                        : new File(context.getFilesDir(), RepairAPP.DEX_DIR);// data/user/0/包名/files/odex（这个可以任意位置）
+                if (!fileDir.exists()) {// 如果目录不存在就创建所有目录，这里需要添加权限
+                    fileDir.mkdirs();
+                }
+
+                repairBugFilePath = getRepairAppDirectory(context);// 赋值热修复 Bug 文件路径
+
+                if (RepairAPP.isGoingToFix(context)) {// 是否需要热修复
+                    RepairAPP.loadFixedDex(context, Environment.getExternalStorageDirectory());// 加载补丁包
+//                    log("正在修复");
+
+//                    log("bug文件目录:" + repairBugFilePath);
+
+                    // 解决 oat 文件的 bug
+                    for (String path : ApplicationUtils.getFilesAllName(repairBugFilePath)) {
+                        if (path.indexOf("oat") != -1) {
+                            repairBugFilePath += "/oat";
+//                            log("【进入删除 oat 文件 bug】");
+                            GT.ApplicationUtils.deleteAllFile(new File(repairBugFilePath), false);
+                        }
+
+                    }
+
+                }
+            }
+
+            /**
+             * @return
+             * @获取手机热修复根目录
+             */
+            public static String getRepairAppDirectory(Context context) {
+                if (GT.AppIteration.RepairAPP.getRepairFilePath() == null) {
+                    init(context);
+                }
+                return Environment.getExternalStorageDirectory() + "/" + GT.AppIteration.RepairAPP.getRepairFilePath()
+                        + "/";
+
+            }
+
+            /**
+             * 加载补丁，使用默认目录：data/data/包名/files/odex
+             *
+             * @param context
+             */
+            public static void loadFixedDex(Context context) {
+                loadFixedDex(context, null);
+            }
+
+            /**
+             * 加载补丁
+             *
+             * @param context       上下文
+             * @param patchFilesDir 补丁所在目录
+             */
+            public static void loadFixedDex(Context context, File patchFilesDir) {
+                // dex合并之前的dex
+                doDexInject(context, loadedDex);
+            }
+
+            /**
+             * @验证是否需要热修复
+             * @author bthvi
+             * @time 2019/10/10 11:42
+             * @desc 验证是否需要热修复
+             */
+            public static boolean isGoingToFix(Context context) {
+                boolean canFix = false;
+                File externalStorageDirectory = Environment.getExternalStorageDirectory();
+                // 遍历所有的修复dex , 因为可能是多个dex修复包
+                File fileDir = externalStorageDirectory != null ? new File(externalStorageDirectory, repairFilePath)
+                        : new File(context.getFilesDir(), DEX_DIR);// data/data/包名/files/odex（这个可以任意位置）
+                File[] listFiles = fileDir.listFiles();
+                if (listFiles != null) {
+                    for (File file : listFiles) {
+                        if (file.getName().startsWith(repairFileName) && (file.getName().endsWith(DEX_SUFFIX)
+                                || file.getName().endsWith(APK_SUFFIX) || file.getName().endsWith(JAR_SUFFIX)
+                                || file.getName().endsWith(ZIP_SUFFIX))) {
+
+                            loadedDex.add(file);// 存入集合
+                            // 有目标dex文件, 需要修复
+                            canFix = true;
+                        }
+                    }
+                }
+                return canFix;
+            }
+
+            /**
+             * @param context
+             * @param downloadUrl
+             * @下载Zip补丁包并加载
+             */
+            public static void downloadZipServicePack(final Context context, final String downloadUrl) {
+                final String savePath = GT.AppIteration.RepairAPP.getRepairAppDirectory(context)
+                        + "thermalRemediation.zip";
+
+                File file = new File(GT.AppIteration.RepairAPP.getRepairAppDirectory(context));
+                if (!file.exists()) {
+                    file.mkdirs();
+                }
+
+                Thread.runJava(new Runnable() {
+                    @Override
+                    public void run() {
+                        File file = new File(savePath);// 记得加扩展名
+                        file.getParentFile().mkdir();
+                        try {
+                            file.createNewFile();
+                            URL url2 = new URL(downloadUrl);
+                            HttpURLConnection conn = (HttpURLConnection) url2.openConnection();
+                            conn.connect();
+                            if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                                InputStream ips = conn.getInputStream();
+                                FileOutputStream fops = new FileOutputStream(file);
+
+                                byte[] buf = new byte[1024];
+                                int read = ips.read(buf);
+                                while (read != -1) {
+                                    fops.write(buf, 0, read);
+                                    fops.flush();
+                                    read = ips.read(buf);
+                                }
+                                fops.close();
+                                ips.close();
+                                conn.disconnect();
+                            }
+                        } catch (Exception e) {
+                            if (GT.getGT().getGtLogTf()) {
+                                GT.log(getLineInfo(), "网络下载app报错： " + e);
+                            }
+                        }
+                        try {
+                            ApplicationUtils.unzipFile(savePath,
+                                    GT.AppIteration.RepairAPP.getRepairAppDirectory(context), true);
+                        } catch (IOException e) {
+                            if (GT.getGT().getGtLogTf()) {
+                                log(getLineInfo(), "解压失败： " + e);
+                            }
+                            e.printStackTrace();
+                        }
+
+                        GT.AppIteration.RepairAPP.startRepair(context);// 开始热修复
+
+                    }
+                });
+            }
+
+            private static void doDexInject(Context context, HashSet<File> loadedDex) {
+
+                String optimizeDir = context.getFilesDir().getAbsolutePath() + File.separator + OPTIMIZE_DEX_DIR;
+                File fopt = new File(optimizeDir);
+                if (!fopt.exists()) {
+                    fopt.mkdirs();
+                }
+
+                try {
+                    // 1.加载应用程序dex的Loader
+                    PathClassLoader pathLoader = (PathClassLoader) context.getClassLoader();
+                    for (File dex : loadedDex) {
+                        // 2.加载指定的修复的dex文件的Loader
+                        DexClassLoader dexLoader = new DexClassLoader(dex.getAbsolutePath(), // 修复好的dex（补丁）所在目录
+                                fopt.getAbsolutePath(), // 存放dex的解压目录（用于jar、zip、apk格式的补丁）
+                                null, // 加载dex时需要的库
+                                pathLoader// 父类加载器
+                        );
+                        // 3.开始合并
+                        // 合并的目标是Element[],重新赋值它的值即可
+
+                        /**
+                         * BaseDexClassLoader中有 变量: DexPathList pathList DexPathList中有 变量 Element[]
+                         * dexElements 依次反射即可
+                         */
+
+                        // 3.1 准备好pathList的引用
+                        Object dexPathList = getPathList(dexLoader);
+                        Object pathPathList = getPathList(pathLoader);
+                        // 3.2 从pathList中反射出element集合
+                        Object leftDexElements = getDexElements(dexPathList);
+                        Object rightDexElements = getDexElements(pathPathList);
+                        // 3.3 合并两个dex数组
+                        Object dexElements = combineArray(leftDexElements, rightDexElements);
+                        // 重写给PathList里面的Element[] dexElements;赋值
+                        Object pathList = getPathList(pathLoader);// 一定要重新获取，不要用pathPathList，会报错
+                        setField(pathList, pathList.getClass(), "dexElements", dexElements);
+                    }
+//                   Toast.makeText(appContext, "修复完成", Toast.LENGTH_SHORT).show();
+//                    log("修复完成");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            /**
+             * 反射给对象中的属性重新赋值
+             */
+            private static void setField(Object obj, Class<?> cl, String field, Object value)
+                    throws NoSuchFieldException, IllegalAccessException {
+                Field declaredField = cl.getDeclaredField(field);
+                declaredField.setAccessible(true);
+                declaredField.set(obj, value);
+            }
+
+            /**
+             * 反射得到对象中的属性值
+             */
+            private static Object getField(Object obj, Class<?> cl, String field)
+                    throws NoSuchFieldException, IllegalAccessException {
+                Field localField = cl.getDeclaredField(field);
+                localField.setAccessible(true);
+                return localField.get(obj);
+            }
+
+            /**
+             * 反射得到类加载器中的pathList对象
+             */
+            private static Object getPathList(Object baseDexClassLoader)
+                    throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+                // TODO 当前这行代码在有些机型上会产生oat文件，我已经做了处理
+                return getField(baseDexClassLoader, Class.forName("dalvik.system.BaseDexClassLoader"), "pathList");
+            }
+
+            /**
+             * 反射得到pathList中的dexElements
+             */
+            private static Object getDexElements(Object pathList) throws NoSuchFieldException, IllegalAccessException {
+                return getField(pathList, pathList.getClass(), "dexElements");
+            }
+
+            /**
+             * 数组合并
+             */
+            private static Object combineArray(Object arrayLhs, Object arrayRhs) {
+                Class<?> clazz = arrayLhs.getClass().getComponentType();
+                int i = Array.getLength(arrayLhs);// 得到左数组长度（补丁数组）
+                int j = Array.getLength(arrayRhs);// 得到原dex数组长度
+                int k = i + j;// 得到总数组长度（补丁数组+原dex数组）
+                Object result = Array.newInstance(clazz, k);// 创建一个类型为clazz，长度为k的新数组
+                System.arraycopy(arrayLhs, 0, result, 0, i);
+                System.arraycopy(arrayRhs, 0, result, i, j);
+                return result;
+            }
+
+        }
+
+
+    }
+
+
+    //=========================================== APP 存储池 =========================================
+
+    /**
+     * @App存储池
+     */
+    public static class AppDataPool {
+
+        /**
+         * @App内部存储池
+         * @临时数据
+         */
+        public static class Interior {
+
+            /**
+             * @内部存储池
+             * @存储数据的临时容器
+             */
+            private final static Map<Object, Object> interiorDataPool = new HashMap<>();
+
+            /**
+             * @param classs
+             * @param key
+             * @param data
+             * @return 操作成功 返回 true
+             * @保存数据
+             */
+            public static boolean saveDataPool(Object classs, Object key, Object data) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (!interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.put(idKey, data);//存储数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，保存数据失败！当前数据池中存在该值");
+                    }
+                    return false;
+                }
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return 操作成功 返回 true
+             * @删除数据
+             */
+            public static boolean deleteDataPool(Object classs, Object key) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.remove(idKey);//删除数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，删除数据失败！当前数据池中不存在该值");
+                    }
+                    return false;
+                }
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return 成功返回 查询的值 否则返回 null
+             * @查询数据
+             */
+            public static Object queryDataPool(Object classs, Object key) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    return interiorDataPool.get(idKey);//获取数据
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，查询数据失败！当前数据池中不存在该值");
+                    }
+                    return null;
+                }
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return 成功返回 true
+             * @修改数据
+             */
+            public static boolean updateDataPool(Object classs, Object key, Object toData) {
+                Object idKey = getIdKey(classs, key);//形成唯一的 IdKey
+                if (interiorDataPool.containsKey(idKey)) {
+                    interiorDataPool.put(idKey, toData);//修改数据
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "App内部存储池，修改数据失败！当前数据池中不存在该值");
+                    }
+                    return false;
+                }
+            }
+
+            /**
+             * @return
+             * @清空
+             */
+            public static boolean clearData() {
+                if (interiorDataPool != null) {
+                    try {
+                        interiorDataPool.clear();
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * @param classs
+             * @param key
+             * @return
+             * @APP存储池中返回IdKey
+             */
+            private static String getIdKey(Object classs, Object key) {
+                return classs.getClass().getName().replace(".", "/") + ".java 【" + key + "】";// 获取文件包名与Java文件名
+            }
+
+        }
+
+        /**
+         * @APP外部存储池
+         * @持久性数据（需要在清单文件中添加以下文件读取与写入权限）
+         * @<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+         * @<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+         */
+        public static class External {
+
+            /**
+             * @外部存储池
+             * @存储数据的永久容器
+             */
+            private static Map<Object, Object> externalDataPool = null;    //当前App所有数据的容器
+            private static Object passWord = null;             //当前文件的密码
+            private static GT_File gt_file = null;             //GT_File 工具包
+            private static String fileSaveDataPath = null;     //文件保存数据的路径
+            private static String fileName = null;             //保存数据的文件名
+            private static String filePath = null;             //当前文件的全部路径
+            private static Gson gson = null;
+
+            /**
+             * @param activity
+             * @param passWord
+             * @初始化
+             */
+            public static void init(Activity activity, Object passWord) {
+                AppAuthorityManagement.readWritePermission(activity);//申请文件读写的6.0以上权限
+                External.passWord = Encryption.MD5.encryptMD5(AppUtils.getAppPackageName() + passWord);//将 密码 进行 MD5 加密
+                gt_file = new GT_File();//创建 File 对象
+                gson = new Gson();
+
+                fileSaveDataPath = "/Android/data/com.gsls.gtlibrary/AppDataPool/";//GT APP 公共池数据源
+                fileName = ApplicationUtils.getAppName(activity) + ".GT";//文件名与扩展名
+
+//                log("读取数据池的路径:" + ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+
+                if (!file.exists()) {//如果当前文件不存在
+//                    log("当前文件不存在 创建 Map");
+                    externalDataPool = new HashMap<>();//创建 Map
+                } else {
+//                    log("当前文件存在");
+                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
+                    if (filesAllName != null && filesAllName.size() > 0) {
+                        String fileName = filesAllName.get(0);
+                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
+                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
+                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
+                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
+                    }
+
+                }
+
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @保存数据(保存只能保存自己app池下的数据)
+             */
+            public static boolean saveDataPool(Object key, Object data) {
+
+                if (externalDataPool != null && !externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.put(key, data);//将数据保存到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("保存成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前保存 外部数据池出错，数据池 中已存在该 Key 保存失败");
+                    }
+                    return false;
+                }
+
+            }
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @查询数据(查询自己app池下的数据)
+             */
+            public static Object queryDataPool(Object key) {
+
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
+
+                if (!file.exists()) {//如果当前文件不存在
+//                    log("当前文件不存在 创建 Map");
+                    externalDataPool = new HashMap<>();//创建 Map
+                } else {
+//                    log("当前文件存在");
+                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
+                    if (filesAllName != null && filesAllName.size() > 0) {
+                        String fileName = filesAllName.get(0);
+                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
+                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
+                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
+                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
+                        if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                            return externalDataPool.get(key);//获取数据
+                        } else {
+                            if (getGT().getGtLogTf()) {
+                                log(getLineInfo(), "当前查询 内部数据池出错，数据池 中已存在该 Key 查询失败");
+                            }
+                            return null;
+                        }
+                    }
+
+                }
+                return null;
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @查询数据(查询需要输入指定查询App的包名)
+             */
+            public static Object queryDataPool(Object packageName, Object passWord, Object key) {
+
+                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + packageName + "/" + fileName);
+                if (file.exists()) {   //如果当前文件不存在
+//                    log("当前文件存在");
+                    String queryData = gt_file.query(fileSaveDataPath + packageName, fileName);//读取文件内的数据
+//                    log("读取出来加密的数据:" + queryData);
+                    passWord = Encryption.MD5.encryptMD5(packageName.toString() + passWord);//将 密码 进行 MD5 加密
+                    String encryptData = Encryption.DES.decryptPassword(queryData, passWord);//将加密的数据解密
+//                    log("解密出来的数据:" + encryptData);
+                    Map<Object, Object> map = new HashMap<>();
+                    map = gson.fromJson(encryptData, HashMap.class);
+//                    log("初始化时 读取出来的map:" + map);
+                    if (map.containsKey(key)) {
+                        return map.get(key);
+                    } else {
+                        if (getGT().getGtLogTf()) {
+                            log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 Key 查询失败");
+                        }
+                        return null;
+                    }
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前查询 外部数据池出错，数据池 中不存在该 app包名 的数据池 查询失败");
+                    }
+                    return null;
+                }
+
+            }
+
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @修改数据(修改只能修改自己app池下的数据)
+             */
+            public static boolean updateDataPool(Object key, Object toData) {
+
+                if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.put(key, toData);//将数据保存到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("修改存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("修改成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
+                    }
+                    return false;
+                }
+
+            }
+
+
+            /**
+             * @param packageName
+             * @param passWord
+             * @param key
+             * @param toData
+             * @return
+             * @删除数据(删除只能删除自己app池下的数据)
+             */
+            public static boolean deleteDataPool(Object key) {
+
+                if (externalDataPool != null && externalDataPool.containsKey(key)) {
+                    //保存操作
+                    externalDataPool.remove(key);//将数据删除到map中
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+//                    log("删除存入的数据:" + encryptData);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+//                    log("删除成功");
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前删除 外部数据池出错，数据池 中不已存在该 Key 删除失败");
+                    }
+                    return false;
+                }
+            }
+
+
+            /**
+             * @param packName
+             * @param key
+             * @param data
+             * @return 返回为 true 则表示 保存成功
+             * @清空数据(清空只能保存自己app池下的数据)
+             */
+            public static boolean clearDataPool(Object key, Object data) {
+
+                if (externalDataPool != null && !externalDataPool.containsKey(key)) {
+                    externalDataPool.clear();
+                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
+                    return true;
+                } else {
+                    if (getGT().getGtLogTf()) {
+                        log(getLineInfo(), "当前清空 外部数据池出错，数据池 中不已存在该 Key 清空失败");
+                    }
+                    return false;
+                }
+
+            }
+
+
+        }
+
+
+    }
+
+    //=========================================== 字符串加密类 =========================================
+
+    /**
+     * @加密类
+     */
+    public static class Encryption {
+
+        /**
+         * @MD5 加密算法
+         */
+        public static class MD5 {
+
+            private static final String hexDigIts[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d",
+                    "e", "f"};
+
+            /**
+             * MD5加密
+             *
+             * @param origin      字符
+             * @param charsetname 编码
+             * @return
+             */
+            public static String encryptMD5(String origin) {
+                String resultString = null;
+                try {
+                    resultString = new String(origin);
+                    MessageDigest md = MessageDigest.getInstance("MD5");
+                    if (null == "UTF-8" || "".equals("UTF-8")) {
+                        resultString = byteArrayToHexString(md.digest(resultString.getBytes()));
+                    } else {
+                        resultString = byteArrayToHexString(md.digest(resultString.getBytes("UTF-8")));
+                    }
+                } catch (Exception e) {
+                }
+                return resultString;
+            }
+
+            public static String byteArrayToHexString(byte b[]) {
+                StringBuffer resultSb = new StringBuffer();
+                for (int i = 0; i < b.length; i++) {
+                    resultSb.append(byteToHexString(b[i]));
+                }
+                return resultSb.toString();
+            }
+
+            public static String byteToHexString(byte b) {
+                int n = b;
+                if (n < 0) {
+                    n += 256;
+                }
+                int d1 = n / 16;
+                int d2 = n % 16;
+                return hexDigIts[d1] + hexDigIts[d2];
+            }
+
+        }
+
+        /**
+         * @DES 加密算法
+         */
+        public static class DES {
+            /**
+             * 加密
+             *
+             * @param clearText
+             * @return
+             */
+            public static String encryptPassword(Object clearText, Object password) {
+                try {
+                    DESKeySpec keySpec = null;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        keySpec = new DESKeySpec(String.valueOf(password).getBytes(StandardCharsets.UTF_8));
+                    }
+                    SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+                    SecretKey key = keyFactory.generateSecret(keySpec);
+
+                    Cipher cipher = Cipher.getInstance("DES");
+                    cipher.init(Cipher.ENCRYPT_MODE, key);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        return Base64.encodeToString(cipher.doFinal(String.valueOf(clearText).getBytes(StandardCharsets.UTF_8)), Base64.DEFAULT);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return String.valueOf(clearText);
+            }
+
+            /**
+             * 解密
+             *
+             * @param encryptedPwd
+             * @return
+             */
+            public static String decryptPassword(Object encryptedPwd, Object password) {
+                try {
+                    DESKeySpec keySpec = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                        keySpec = new DESKeySpec(String.valueOf(password).getBytes(StandardCharsets.UTF_8));
+                    }
+                    SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DES");
+                    SecretKey key = keyFactory.generateSecret(keySpec);
+
+                    byte[] encryptedWithoutB64 = Base64.decode(String.valueOf(encryptedPwd), Base64.DEFAULT);
+                    Cipher cipher = Cipher.getInstance("DES");
+                    cipher.init(Cipher.DECRYPT_MODE, key);
+                    byte[] plainTextPwdBytes = cipher.doFinal(encryptedWithoutB64);
+                    return new String(plainTextPwdBytes);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return String.valueOf(encryptedPwd);
+            }
+        }
+
+
+    }
+
+
+    //=========================================== APP权限类 =========================================
+
+    /**
+     * APP 权限管理 类
+     */
+    public static class AppAuthorityManagement {
+
+        //android6.0之后要动态获取权限
+        public static void readWritePermission(Activity activity) {
+            final int REQUEST_EXTERNAL_STORAGE = 1;
+            String[] PERMISSIONS_STORAGE = {
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+            try {
+                //检测是否有写的权限
+                int permission = ActivityCompat.checkSelfPermission(activity,
+                        "android.permission.WRITE_EXTERNAL_STORAGE");
+                if (permission != PackageManager.PERMISSION_GRANTED) {
+                    if (getGT().getLogTf()) {
+                        err(getLineInfo(), "读写获取权限失败");
+                    }
+                    // 没有写的权限，去申请写的权限，会弹出对话框
+                    ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
+                }
+            } catch (Exception e) {
+                if (getGT().getLogTf()) {
+                    err(getLineInfo(), "读写获取权限报错");
+                }
+                e.printStackTrace();
+            }
+        }
+
+    }
+
 
     //============================================= UI类 ===========================================
+
+    /**
+     * Android GT 动画
+     * 动画后面加 F 的则表示 该动画 是假的动画 后面为 T 的则表示为 真动画
+     */
+    public static class GT_Animation {
+
+        public GT_Animation() {
+        }
+
+        /**
+         * @param x           初始 X 位置
+         * @param toX         最终 X 位置
+         * @param y           初始 Y 位置
+         * @param toY         最终 Y 位置
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限循环
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @移动动画（假）
+         */
+        public GT_Animation translate_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation translateAnimation = new TranslateAnimation(x, toX, y, toY);
+            translateAnimation.setDuration(time);                   //设置动画持续周期
+            translateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            translateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                translateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(translateAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @param x           初始 X 位置
+         * @param toX         最终 X 位置
+         * @param y           初始 Y 位置
+         * @param toY         最终 Y 位置
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示为无限次数
+         * @param toAndFro    是否来回播放
+         * @return
+         * @移动item动画（假）
+         */
+        public Animation translat_Item_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation translateAnimation = new TranslateAnimation(x, toX, y, toY);
+            translateAnimation.setDuration(time);               //设置动画持续周期
+            translateAnimation.setFillAfter(isSaveClose);       //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            translateAnimation.setFillBefore(!isSaveClose);     // 动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                translateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                translateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) translateAnimation.setRepeatMode(Animation.RESTART);   //是否来回的播放
+            return translateAnimation;
+        }
+
+        /**
+         * @param x        初始 X 位置
+         * @param toX      最终 X 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
+         * @return
+         * @左右动画（真）
+         */
+        public GT_Animation translateX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            translateX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translateX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            translateX.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @param x        初始 X 位置
+         * @param toX      最终 X 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
+         * @return
+         * @左右item动画（真）
+         */
+        public ObjectAnimator translateX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator translateX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            translateX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                translateX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translateX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) translateX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return translateX;
+        }
+
+        /**
+         * @param y        初始 Y 位置
+         * @param toY      最终 Y 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
+         * @return
+         * @上下动画（真）
+         */
+        public GT_Animation translateY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+            translateY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translateY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            translateY.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @param y        初始 Y 位置
+         * @param toY      最终 Y 位置
+         * @param time     执行动画时间
+         * @param runCount 执行动画次数
+         * @param toAndFro 是否来回播放
+         * @param view     给View加入动画
+         * @return
+         * @上下item动画（真）
+         */
+        public ObjectAnimator translateY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator translateY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+            translateY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                translateY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translateY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) translateY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return translateY;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @平移动画（真）
+         */
+        public GT_Animation translate_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator translationX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            ObjectAnimator translationY = ObjectAnimator.ofFloat(view, "translationY", y, toY);
+
+            //设置动画时间
+            translationX.setDuration(time);
+            translationY.setDuration(time);
+
+            if (runCount == -1) {
+                translationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                translationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translationX.setRepeatCount(runCount);//循环多少次
+                translationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                translationX.setRepeatMode(ObjectAnimator.REVERSE);
+                translationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(translationX).with(translationY);
+            animatorSet.start();
+
+            return this;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @平移item动画（真）
+         */
+        public AnimatorSet translate_Item_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator translationX = ObjectAnimator.ofFloat(view, "translationX", x, toX);
+            ObjectAnimator translationY = ObjectAnimator.ofFloat(view, "translationY", y, toY).setDuration(time);
+
+            //设置动画时间
+            translationX.setDuration(time);
+            translationY.setDuration(time);
+
+            if (runCount == -1) {
+                translationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                translationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                translationX.setRepeatCount(runCount);//循环多少次
+                translationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                translationX.setRepeatMode(ObjectAnimator.REVERSE);
+                translationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(translationX).with(translationY);
+
+            return animatorSet;
+        }
+
+
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放动画（假）
+         */
+        public GT_Animation scale_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation scaleAnimation = new ScaleAnimation(x, toX, y, toY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            scaleAnimation.setDuration(time);                   //动画时间
+            scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                scaleAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(scaleAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @return
+         * @缩放item动画（假）
+         */
+        public Animation scales_F(float x, float toX, float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation scaleAnimation = new ScaleAnimation(x, toX, y, toY, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            scaleAnimation.setDuration(time);                   //动画时间
+            scaleAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            scaleAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                scaleAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                scaleAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) scaleAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return scaleAnimation;
+        }
+
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scaleX_T(float x, float toX, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            scaleX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            scaleX.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @param x           原始 X 尺寸
+         * @param toX         结束 X 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放item动画（真）
+         */
+        public ObjectAnimator scaleX_item_T(float x, float toX, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            scaleX.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleX.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return scaleX;
+        }
+
+        /**
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scaleY_T(float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+            scaleY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            scaleY.start();//执行动画
+            return this;
+        }
+
+        /**
+         * @param y           原始 Y 尺寸
+         * @param toY         结束 Y 尺寸
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        给 View 添加动画
+         * @return
+         * @缩放item动画（真）
+         */
+        public ObjectAnimator scaleY_item_T(float y, float toY, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+            scaleY.setDuration(time);      //动画执行时间
+            if (runCount == -1) {
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+            if (toAndFro) scaleY.setRepeatMode(ValueAnimator.REVERSE);//是否来回播放
+            return scaleY;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @缩放动画（真）
+         */
+        public GT_Animation scale_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+
+            //设置动画时间
+            scaleX.setDuration(time);
+            scaleY.setDuration(time);
+
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                scaleX.setRepeatMode(ObjectAnimator.REVERSE);
+                scaleY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(scaleX).with(scaleY);
+            animatorSet.start();
+
+            return this;
+        }
+
+        /**
+         * @param x        初始 X 坐标
+         * @param toX      最终 X 坐标
+         * @param y        初始 Y 坐标
+         * @param toY      最终 Y 坐标
+         * @param time     消耗时间
+         * @param runCount 执行次数
+         * @param toAndFro 是否来回播放
+         * @param view     动画的View
+         * @return
+         * @缩放item动画（真）
+         */
+        public AnimatorSet scale_item_T(float x, float toX, float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+
+            AnimatorSet animatorSet = new AnimatorSet();
+
+            ObjectAnimator scaleX = ObjectAnimator.ofFloat(view, "scaleX", x, toX);
+            ObjectAnimator scaleY = ObjectAnimator.ofFloat(view, "scaleY", y, toY);
+
+            //设置动画时间
+            scaleX.setDuration(time);
+            scaleY.setDuration(time);
+
+            if (runCount == -1) {
+                scaleX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+                scaleY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                scaleX.setRepeatCount(runCount);//循环多少次
+                scaleY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                scaleX.setRepeatMode(ObjectAnimator.REVERSE);
+                scaleY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            animatorSet.play(scaleX).with(scaleY);
+
+            return animatorSet;
+        }
+
+
+        /**
+         * @param degrees     View初始角度
+         * @param toDegrees   View旋转角度
+         * @param time        动画执行时间
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        执行View动画
+         * @return
+         * @平面旋转动画（假）
+         */
+        public GT_Animation rotate_F(float degrees, float toDegrees, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation rotateAnimation = new RotateAnimation(degrees, toDegrees, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            rotateAnimation.setDuration(time);                   //动画时间
+            rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                rotateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(rotateAnimation);                //开始播放
+            return this;
+        }
+
+        /**
+         * @param degrees     View初始角度
+         * @param toDegrees   View旋转角度
+         * @param time        动画执行时间
+         * @param time        动画持续时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @return
+         * @平面旋转item动画（假）
+         */
+        public Animation rotates_F(float degrees, float toDegrees, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation rotateAnimation = new RotateAnimation(degrees, toDegrees, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+            rotateAnimation.setDuration(time);                   //动画时间
+            rotateAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            rotateAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                rotateAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                rotateAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) rotateAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return rotateAnimation;
+        }
+
+        /**
+         * @param x        初始化 X 坐标
+         * @param toX      最终的 X 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画X（真）
+         */
+        public GT_Animation rotatesX_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "rotationX", x, toX);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param x        初始化 X 坐标
+         * @param toX      最终的 X 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画X（真）
+         */
+        public ObjectAnimator rotatesX_Item_T(float x, float toX, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "rotationX", x, toX);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return rotationX;
+        }
+
+        /**
+         * @param y        初始化 Y 坐标
+         * @param toY      最终的 Y 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画Y（真）
+         */
+        public GT_Animation rotatesY_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationY = ObjectAnimator.ofFloat(view, "rotationY", y, toY);
+
+            rotationY.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationY.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param y        初始化 Y 坐标
+         * @param toY      最终的 Y 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画Y（真）
+         */
+        public ObjectAnimator rotatesY_Item_T(float y, float toY, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationY = ObjectAnimator.ofFloat(view, "rotationY", y, toY);
+
+            rotationY.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationY.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationY.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationY.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            return rotationY;
+        }
+
+        /**
+         * @param z        初始化 Z 坐标
+         * @param toZ      最终的 Z 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转动画Z（真）
+         */
+        public GT_Animation rotatesZ_T(float z, float toZ, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationZ = ObjectAnimator.ofFloat(view, "rotation", z, toZ);
+
+            rotationZ.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationZ.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationZ.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationZ.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationZ.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param z        初始化 Z 坐标
+         * @param toZ      最终的 Z 坐标
+         * @param time     动画耗时
+         * @param runCount 动画播放次数
+         * @param toAndFro 是否来回播放
+         * @param view     要使用动画的View
+         * @return
+         * @旋转item动画Z（真）
+         */
+        public ObjectAnimator rotatesZ_item_T(float z, float toZ, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationZ = ObjectAnimator.ofFloat(view, "rotation", z, toZ);
+
+            rotationZ.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationZ.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationZ.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationZ.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+            return rotationZ;
+        }
+
+
+        /**
+         * @param alpha       初始透明度
+         * @param toAlpha     最终透明度
+         * @param time        动画执行时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @param view        执行View动画
+         * @return
+         * @透明动画（假）
+         */
+        public GT_Animation alpha_F(float alpha, float toAlpha, long time, boolean isSaveClose, int runCount, boolean toAndFro, View view) {
+            Animation alphaAnimation = new AlphaAnimation(alpha, toAlpha);
+            alphaAnimation.setDuration(time);                   //动画时间
+            alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                alphaAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            view.startAnimation(alphaAnimation);                //开启动画
+            return this;
+        }
+
+        /**
+         * @param alpha       初始透明度
+         * @param toAlpha     最终透明度
+         * @param time        动画执行时间
+         * @param isSaveClose 是否保持动画结束时的最终状态
+         * @param runCount    播放动画的次数 -1 表示无限次数
+         * @param toAndFro    是否来回播放
+         * @return
+         * @透明item动画（假）
+         */
+        public Animation alphas_F(float alpha, float toAlpha, long time, boolean isSaveClose, int runCount, boolean toAndFro) {
+            Animation alphaAnimation = new AlphaAnimation(alpha, toAlpha);
+            alphaAnimation.setDuration(time);                   //动画时间
+            alphaAnimation.setFillAfter(isSaveClose);           //设置动画结束之后的状态是否是动画的最终状态，true，表示是保持动画结束时的最终状态
+            alphaAnimation.setFillBefore(!isSaveClose);         //动画播放完后，视图是否会停留在动画开始的状态，默认为true
+            if (runCount == -1) {
+                alphaAnimation.setRepeatCount(Animation.INFINITE);  //播放无限次数
+            } else {
+                alphaAnimation.setRepeatCount(runCount);            //播放的次数
+            }
+            if (toAndFro) alphaAnimation.setRepeatMode(Animation.RESTART);       //是否来回的播放
+            return alphaAnimation;
+        }
+
+        /**
+         * @param alpha    初始透明度
+         * @param toAlpha  最终透明度
+         * @param time     动画执行时间
+         * @param runCount 播放动画的次数 -1 表示无限次数
+         * @param toAndFro 是否来回播放
+         * @return
+         * @透明动画（真）
+         */
+        public GT_Animation alpha_T(float alpha, float toAlpha, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "alpha", alpha, toAlpha);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            rotationX.start();//开启动画
+            return this;
+        }
+
+        /**
+         * @param alpha    初始透明度
+         * @param toAlpha  最终透明度
+         * @param time     动画执行时间
+         * @param runCount 播放动画的次数 -1 表示无限次数
+         * @param toAndFro 是否来回播放
+         * @return
+         * @透明item动画（真）
+         */
+        public ObjectAnimator alpha_item_T(float alpha, float toAlpha, long time, int runCount, boolean toAndFro, View view) {
+            ObjectAnimator rotationX = ObjectAnimator.ofFloat(view, "alpha", alpha, toAlpha);
+
+            rotationX.setDuration(time);//设置时间
+
+            if (runCount == -1) {
+                rotationX.setRepeatCount(ValueAnimator.INFINITE);//无限循环
+            } else {
+                rotationX.setRepeatCount(runCount);//循环多少次
+            }
+
+            //设置动画是否来回播放
+            if (toAndFro) {
+                rotationX.setRepeatMode(ObjectAnimator.REVERSE);
+            }
+
+            return rotationX;
+        }
+
+
+        /**
+         * @param annotationList
+         * @param view
+         * @return
+         * @添加组合动画（假）
+         */
+        public GT_Animation animationSet_F(List<Animation> annotationList, View view) {
+            AnimationSet animationSet = new AnimationSet(true);
+            if (annotationList != null && annotationList.size() > 1) {
+                for (Animation animation : annotationList) {
+                    animationSet.addAnimation(animation);
+                }
+            }
+            view.startAnimation(animationSet);//开启组合动画
+            return this;
+        }
+
+        /**
+         * @param annotationList
+         * @return
+         * @添加组合item动画（假）
+         */
+        public AnimationSet animationSets_F(List<Animation> annotationList) {
+            AnimationSet animationSet = new AnimationSet(true);
+            if (annotationList != null && annotationList.size() > 1) {
+                for (Animation animation : annotationList) {
+                    animationSet.addAnimation(animation);
+                }
+            }
+            return animationSet;
+        }
+
+    }
 
     /**
      * Window 窗体类
@@ -4063,7 +6454,6 @@ public class GT {
          */
         public static void hideActionBar(AppCompatActivity activity) {
             ActionBar actionBar = activity.getSupportActionBar();
-            GT.log_e("测试:" + actionBar);
             if (activity != null) {
                 actionBar.hide();
             }
@@ -4187,55 +6577,6 @@ public class GT {
 
     }
 
-
-    /**
-     * Game 游戏类
-     */
-    public static class Game {
-
-        /**
-         * 开启游戏窗体模式
-         *
-         * @param activity
-         */
-        public static void startGameWindow(Activity activity) {
-            try {
-                Window.light(activity);//屏幕常亮
-                Window.immersionMode(activity);//沉浸式模式
-                Window.Close_virtualButton(activity);//关闭虚拟按钮
-                GT.Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
-            } catch (Exception e) {
-                GT.log_e(getGT().getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
-            }
-        }
-
-        /**
-         * 开启永久的游戏窗口模式
-         * 开启线程去一直开启全屏模式
-         * 除非必要，否则勿用该方法
-         *
-         * @param activity
-         */
-        public static void startGameWindows(final Activity activity) {
-            GT.Thread.runJava(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        GT.Thread.sleep(1000);
-                        GT.Thread.runAndroid(new Runnable() {
-                            @Override
-                            public void run() {
-                                GT.Game.startGameWindow(activity);//开启游戏窗口
-                            }
-                        });
-                    }
-                }
-            });
-        }
-
-
-    }
-
     /**
      * 设置触摸放大
      */
@@ -4256,11 +6597,11 @@ public class GT {
                     if (arg1.getAction() == MotionEvent.ACTION_DOWN) {//如果用户手指触摸屏幕
                         viewWidth = view.getWidth();        //保存按钮的宽度
                         viewHeight = view.getHeight();        //保存按钮的高度
-//                        view.setTextSize(18);								//设置按钮放大时字体大小
+                        //                        view.setTextSize(18);								//设置按钮放大时字体大小
                         layoutParams.width = viewWidth + 20;                //设置按钮放大时的宽度
                         layoutParams.height = viewHeight + 10;            //设置按钮放大时的高度
                     } else if (arg1.getAction() == MotionEvent.ACTION_UP) {//如果用户手指离开屏幕
-//                        button.setTextSize(15);							//设置按钮为原来字体大小
+                        //                        button.setTextSize(15);							//设置按钮为原来字体大小
                         layoutParams.width = viewWidth;                //设置按钮为原来的宽度
                         layoutParams.height = viewHeight;                //设置按钮为原来的高度
                     }
@@ -4401,79 +6742,88 @@ public class GT {
 
             /**
              * 构建 GT 工具包
+             *
              * @param object
              * @param view
              */
-            protected void build(Object object,View view){
-                GT.getGT().build(object,view);
+            protected void build(Object object, View view) {
+                GT.getGT().build(object, view);
             }
 
             /**
              * 跳转 Activity
+             *
              * @param activityClass
              */
-            protected void startActivity(Class activityClass){
+            protected void startActivity(Class activityClass) {
                 GT.startAct(activityClass);
             }
 
             /**
              * 普通日志
+             *
              * @param object
              */
-            protected void log(Object object){
-                GT.log_i(object);
+            protected void log(Object object) {
+                GT.log(object);
             }
 
             /**
              * 带 TAG 的普通日志
+             *
              * @param tag
              * @param object
              */
-            protected void log(Object tag,Object object){
-                GT.log_i(tag,object);
+            protected void log(Object tag, Object object) {
+                GT.log(tag, object);
             }
 
             /**
              * 错误日志
+             *
              * @param object
              */
-            protected void err(Object object){
-                GT.log_e(object);
+            protected void err(Object object) {
+                GT.err(object);
             }
 
             /**
              * 带 TAG 的错误日志
+             *
              * @param tag
              * @param object
              */
-            protected void err(Object tag,Object object){
-                GT.log_e(tag,object);
+            protected void err(Object tag, Object object) {
+                GT.err(tag, object);
             }
 
             /**
              * 普通的 Toast
+             *
              * @param object
              */
-            protected void toast(Object object){
+            protected void toast(Object object) {
                 GT.toast_s(object);
             }
 
             /**
              * 带 Context 的 Toast
+             *
              * @param context
              * @param object
              */
-            protected void toast(Context context, Object object){
-                GT.toast_s(context,object);
+            protected void toast(Context context, Object object) {
+                GT.toast_s(context, object);
             }
 
             /**
              * 带 延时的 的 Toast
+             *
              * @param time
              * @param object
              */
-            protected void toast(long time, Object object){
-                GT.toast_time(object,time);
+            protected void toast(long time, Object object) {
+                GT.toast_time(object, time);
             }
 
         }
@@ -4553,79 +6903,88 @@ public class GT {
 
             /**
              * 构建 GT 工具包
+             *
              * @param object
              * @param view
              */
-            protected void build(Object object,View view){
-                GT.getGT().build(object,view);
+            protected void build(Object object, View view) {
+                GT.getGT().build(object, view);
             }
 
             /**
              * 跳转 Activity
+             *
              * @param activityClass
              */
-            protected void startActivity(Class activityClass){
+            protected void startActivity(Class activityClass) {
                 GT.startAct(activityClass);
             }
 
             /**
              * 普通日志
+             *
              * @param object
              */
-            protected void log(Object object){
-                GT.log_i(object);
+            protected void log(Object object) {
+                GT.log(object);
             }
 
             /**
              * 带 TAG 的普通日志
+             *
              * @param tag
              * @param object
              */
-            protected void log(Object tag,Object object){
-                GT.log_i(tag,object);
+            protected void log(Object tag, Object object) {
+                GT.log(tag, object);
             }
 
             /**
              * 错误日志
+             *
              * @param object
              */
-            protected void err(Object object){
-                GT.log_e(object);
+            protected void err(Object object) {
+                GT.err(object);
             }
 
             /**
              * 带 TAG 的错误日志
+             *
              * @param tag
              * @param object
              */
-            protected void err(Object tag,Object object){
-                GT.log_e(tag,object);
+            protected void err(Object tag, Object object) {
+                GT.err(tag, object);
             }
 
             /**
              * 普通的 Toast
+             *
              * @param object
              */
-            protected void toast(Object object){
+            protected void toast(Object object) {
                 GT.toast_s(object);
             }
 
             /**
              * 带 Context 的 Toast
+             *
              * @param context
              * @param object
              */
-            protected void toast(Context context, Object object){
-                GT.toast_s(context,object);
+            protected void toast(Context context, Object object) {
+                GT.toast_s(context, object);
             }
 
             /**
              * 带 延时的 的 Toast
+             *
              * @param time
              * @param object
              */
-            protected void toast(long time, Object object){
-                GT.toast_time(object,time);
+            protected void toast(long time, Object object) {
+                GT.toast_time(object, time);
             }
 
         }
@@ -4685,7 +7044,7 @@ public class GT {
         private Object topFragment;                     //记录当前未加入退回栈的最顶层
         private List<String> topList;                   //记录当前 加入回退栈最顶层的 Fragment
         private Bundle savedInstanceState;              //用于鉴别当前 Activity 是否为初次创建
-        private static Map<String, Object> mapSQL;       //用于存储 Fragment 之间数据传递的 Map
+        private static Map<String, Object> mapSQL;      //用于存储 Fragment 之间数据传递的 Map
 
         /**
          * 提供给外部的访问接口
@@ -4729,7 +7088,7 @@ public class GT {
                 mapSQL = new HashMap<>();
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
+                    GT.log(getLineInfo(), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
                 }
             }
             return this;
@@ -4759,7 +7118,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
+                        GT.log(getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
             }
@@ -4787,7 +7146,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
+                        GT.log(getLineInfo(), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
                     }
                 }
             }
@@ -4821,7 +7180,7 @@ public class GT {
                     this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
+                        GT.log(getLineInfo(), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
                     }
                 }
             }
@@ -4844,12 +7203,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
+                        GT.log(getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
+                    GT.log(getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
             return this;
@@ -4870,12 +7229,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
+                        GT.log(getLineInfo(), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
+                    GT.log(getLineInfo(), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
                 }
             }
             return this;
@@ -4897,12 +7256,12 @@ public class GT {
                     transaction.commit();//提交事务
                 } else {
                     if (GT_LOG_TF) {
-                        GT.log_v(getGT().getLineInfo(), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
+                        GT.log(getLineInfo(), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
                     }
                 }
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
+                    GT.log(getLineInfo(), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
                 }
             }
             return this;
@@ -4929,7 +7288,7 @@ public class GT {
                 topList.add(HXM);//添加当退回栈记录中
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "切换新的 Fragment 时 NewFragment 为 null");
+                    GT.log(getLineInfo(), "切换新的 Fragment 时 NewFragment 为 null");
                 }
             }
             return this;
@@ -4948,7 +7307,7 @@ public class GT {
                 topList.remove(HXM);//移除当前已经退出栈 Fragment 的 哈希码
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "退回栈bug：fm、topList为 null 或 topListSize == 0");
+                    GT.log(getLineInfo(), "退回栈bug：fm、topList为 null 或 topListSize == 0");
                 }
             }
             return this;
@@ -4964,7 +7323,7 @@ public class GT {
                 transaction = fm.beginTransaction();
             } else {
                 if (GT_LOG_TF) {
-                    GT.log_v(getGT().getLineInfo(), "fm 管理器为 null");
+                    GT.log(getLineInfo(), "fm 管理器为 null");
                 }
             }
             return transaction;
@@ -5127,7 +7486,7 @@ public class GT {
                 if (!mapSQL.containsKey(key.toString())) {
                     mapSQL.put(key.toString(), data);
                 } else {
-                    log_e(getGT().getLineInfo(), "FragmentSQL 报错：添加 数据时 已存在当前 key 建议调用 update 方法进行修改");
+                    err(getLineInfo(), "FragmentSQL 报错：添加 数据时 已存在当前 key 建议调用 update 方法进行修改");
                 }
             }
             return this;
@@ -5139,7 +7498,7 @@ public class GT {
                 if (mapSQL.containsKey(key.toString())) {
                     mapSQL.remove(key.toString());
                 } else {
-                    log_e(getGT().getLineInfo(), "FragmentSQL 报错：删除 数据时 当前 key 不存在，无法进行删除");
+                    err(getLineInfo(), "FragmentSQL 报错：删除 数据时 当前 key 不存在，无法进行删除");
                 }
             }
             return this;
@@ -5151,7 +7510,7 @@ public class GT {
                 if (mapSQL.containsKey(key.toString())) {
                     return mapSQL.get(key.toString());
                 } else {
-                    log_e(getGT().getLineInfo(), "FragmentSQL 报错：查询 数据时 当前 key 不存在，无法进行查询");
+                    err(getLineInfo(), "FragmentSQL 报错：查询 数据时 当前 key 不存在，无法进行查询");
                 }
             }
             return null;
@@ -5163,7 +7522,7 @@ public class GT {
                 if (mapSQL.containsKey(key.toString())) {
                     mapSQL.put(key.toString(), data);
                 } else {
-                    log_e(getGT().getLineInfo(), "FragmentSQL 报错：修改 数据时 当前 key 不存在，无法进行修改");
+                    err(getLineInfo(), "FragmentSQL 报错：修改 数据时 当前 key 不存在，无法进行修改");
                 }
             }
             return this;
@@ -5183,19 +7542,29 @@ public class GT {
     /**
      * 封装普通的 Activity 管理器
      */
-    public abstract static class BaseActivity extends AppCompatActivity{
+    public abstract static class BaseActivity extends AppCompatActivity {
 
-        /** 初始化 加载布局 */
+        /**
+         * 初始化 加载布局
+         */
         protected abstract int initLayout(Bundle savedInstanceState);
 
-        /** 在绘制完 View 之前设置数据 */
-        protected void initDrawView(){}
+        /**
+         * 在绘制完 View 之前设置数据
+         */
+        protected void initDrawView() {
+        }
 
-        /** 初始化 UI */
+        /**
+         * 初始化 UI
+         */
         protected abstract void initView();
 
-        /** 功能方法 */
-        protected void function(){}
+        /**
+         * 功能方法
+         */
+        protected void function() {
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -5208,78 +7577,97 @@ public class GT {
 
         /**
          * 构建 GT 工具包
+         *
          * @param context
          */
-        protected void build(Context context){
+        protected void build(Context context) {
             GT.getGT().build(context);
         }
 
         /**
          * 跳转 Activity
+         *
          * @param activityClass
          */
-        protected void startActivity(Class activityClass){
+        protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
         }
 
         /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
+        }
+
+        /**
          * 普通日志
+         *
          * @param object
          */
-        protected void log(Object object){
-            GT.log_i(object);
+        protected void log(Object object) {
+            GT.log(object);
         }
 
         /**
          * 带 TAG 的普通日志
+         *
          * @param tag
          * @param object
          */
-        protected void log(Object tag,Object object){
-            GT.log_i(tag,object);
+        protected void log(Object tag, Object object) {
+            GT.log(tag, object);
         }
 
         /**
          * 错误日志
+         *
          * @param object
          */
-        protected void err(Object object){
-            GT.log_e(object);
+        protected void err(Object object) {
+            GT.err(object);
         }
 
         /**
          * 带 TAG 的错误日志
+         *
          * @param tag
          * @param object
          */
-        protected void err(Object tag,Object object){
-            GT.log_e(tag,object);
+        protected void err(Object tag, Object object) {
+            GT.err(tag, object);
         }
 
         /**
          * 普通的 Toast
+         *
          * @param object
          */
-        protected void toast(Object object){
+        protected void toast(Object object) {
             GT.toast_s(object);
         }
 
         /**
          * 带 Context 的 Toast
+         *
          * @param context
          * @param object
          */
-        protected void toast(Context context, Object object){
-            GT.toast_s(context,object);
+        protected void toast(Context context, Object object) {
+            GT.toast_s(context, object);
         }
 
         /**
          * 带 延时的 的 Toast
+         *
          * @param time
          * @param object
          */
-        protected void toast(long time, Object object){
-            GT.toast_time(object,time);
+        protected void toast(long time, Object object) {
+            GT.toast_time(object, time);
         }
 
 
@@ -5288,16 +7676,24 @@ public class GT {
     /**
      * 封装注解的 Activity 管理器
      */
-    public abstract static class AnnotationActivity extends AppCompatActivity{
+    public abstract static class AnnotationActivity extends AppCompatActivity {
 
-        /** 在绘制完 View 之前设置数据 */
-        protected void initDrawView(){}
+        /**
+         * 在绘制完 View 之前设置数据
+         */
+        protected void initDrawView() {
+        }
 
-        /** 初始化 UI */
+        /**
+         * 初始化 UI
+         */
         protected abstract void initView(Bundle savedInstanceState);
 
-        /** 功能方法 */
-        protected void function(){}
+        /**
+         * 功能方法
+         */
+        protected void function() {
+        }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -5309,81 +7705,640 @@ public class GT {
 
         /**
          * 构建 GT 工具包
+         *
          * @param context
          */
-        protected void build(Context context){
+        protected void build(Context context) {
             GT.getGT().build(context);
         }
 
         /**
          * 跳转 Activity
+         *
          * @param activityClass
          */
-        protected void startActivity(Class activityClass){
+        protected void startActivity(Class activityClass) {
             GT.startAct(activityClass);
         }
 
         /**
+         * @param toFragment
+         * @跳转 Fragment
+         */
+        protected void startFragment(Object toFragment) {
+            if (GT_Fragment.getGT_fragment() != null) {
+                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            }
+        }
+
+        /**
          * 普通日志
+         *
          * @param object
          */
-        protected void log(Object object){
-            GT.log_i(object);
+        protected void log(Object object) {
+            GT.log(object);
         }
 
         /**
          * 带 TAG 的普通日志
+         *
          * @param tag
          * @param object
          */
-        protected void log(Object tag,Object object){
-            GT.log_i(tag,object);
+        protected void log(Object tag, Object object) {
+            GT.log(tag, object);
         }
 
         /**
          * 错误日志
+         *
          * @param object
          */
-        protected void err(Object object){
-            GT.log_e(object);
+        protected void err(Object object) {
+            GT.err(object);
         }
 
         /**
          * 带 TAG 的错误日志
+         *
          * @param tag
          * @param object
          */
-        protected void err(Object tag,Object object){
-            GT.log_e(tag,object);
+        protected void err(Object tag, Object object) {
+            GT.err(tag, object);
         }
 
         /**
          * 普通的 Toast
+         *
          * @param object
          */
-        protected void toast(Object object){
+        protected void toast(Object object) {
             GT.toast_s(object);
         }
 
         /**
          * 带 Context 的 Toast
+         *
          * @param context
          * @param object
          */
-        protected void toast(Context context, Object object){
-            GT.toast_s(context,object);
+        protected void toast(Context context, Object object) {
+            GT.toast_s(context, object);
         }
 
         /**
          * 带 延时的 的 Toast
+         *
          * @param time
          * @param object
          */
-        protected void toast(long time, Object object){
-            GT.toast_time(object,time);
+        protected void toast(long time, Object object) {
+            GT.toast_time(object, time);
         }
 
     }
+
+
+    //============================================= 游戏类 ======================================
+
+    /**
+     * Game 游戏类
+     */
+    public static class Game {
+
+        /**
+         * 开启游戏窗体模式
+         *
+         * @param activity
+         */
+        public static void startGameWindow(Activity activity) {
+            try {
+                Window.light(activity);//屏幕常亮
+                Window.immersionMode(activity);//沉浸式模式
+                Window.Close_virtualButton(activity);//关闭虚拟按钮
+                GT.Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
+            } catch (Exception e) {
+                if (getGT().getGtLogTf())
+                    GT.err(getLineInfo(), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
+            }
+        }
+
+        /**
+         * 开启永久的游戏窗口模式
+         * 开启线程去一直开启全屏模式
+         * 除非必要，否则勿用该方法
+         *
+         * @param activity
+         */
+        public static void startGameWindows(final Activity activity) {
+            GT.Thread.runJava(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        GT.Thread.sleep(1000);
+                        GT.Thread.runAndroid(new Runnable() {
+                            @Override
+                            public void run() {
+                                GT.Game.startGameWindow(activity);//开启游戏窗口
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        /**
+         * 遥感控制
+         * 使用教程请查看官网：https://github.com/1079374315/GT
+         */
+        public static class RockerView extends View {
+            private static final int DEFAULT_SIZE = 400;
+            private static final int DEFAULT_ROCKER_RADIUS = 50;
+            private Paint mAreaBackgroundPaint;
+            private Paint mRockerPaint;
+            private Point mRockerPosition;
+            private Point mCenterPoint;
+            private int mAreaRadius;
+            private int mRockerRadius;
+            private RockerView.CallBackMode mCallBackMode;
+            private RockerView.OnAngleChangeListener mOnAngleChangeListener;
+            private RockerView.OnShakeListener mOnShakeListener;
+            private RockerView.DirectionMode mDirectionMode;
+            private RockerView.Direction tempDirection;
+            private static final double ANGLE_0 = 0.0D;
+            private static final double ANGLE_360 = 360.0D;
+            private static final double ANGLE_HORIZONTAL_2D_OF_0P = 90.0D;
+            private static final double ANGLE_HORIZONTAL_2D_OF_1P = 270.0D;
+            private static final double ANGLE_VERTICAL_2D_OF_0P = 0.0D;
+            private static final double ANGLE_VERTICAL_2D_OF_1P = 180.0D;
+            private static final double ANGLE_4D_OF_0P = 0.0D;
+            private static final double ANGLE_4D_OF_1P = 90.0D;
+            private static final double ANGLE_4D_OF_2P = 180.0D;
+            private static final double ANGLE_4D_OF_3P = 270.0D;
+            private static final double ANGLE_ROTATE45_4D_OF_0P = 45.0D;
+            private static final double ANGLE_ROTATE45_4D_OF_1P = 135.0D;
+            private static final double ANGLE_ROTATE45_4D_OF_2P = 225.0D;
+            private static final double ANGLE_ROTATE45_4D_OF_3P = 315.0D;
+            private static final double ANGLE_8D_OF_0P = 22.5D;
+            private static final double ANGLE_8D_OF_1P = 67.5D;
+            private static final double ANGLE_8D_OF_2P = 112.5D;
+            private static final double ANGLE_8D_OF_3P = 157.5D;
+            private static final double ANGLE_8D_OF_4P = 202.5D;
+            private static final double ANGLE_8D_OF_5P = 247.5D;
+            private static final double ANGLE_8D_OF_6P = 292.5D;
+            private static final double ANGLE_8D_OF_7P = 337.5D;
+            private static final int AREA_BACKGROUND_MODE_PIC = 0;
+            private static final int AREA_BACKGROUND_MODE_COLOR = 1;
+            private static final int AREA_BACKGROUND_MODE_XML = 2;
+            private static final int AREA_BACKGROUND_MODE_DEFAULT = 3;
+            private int mAreaBackgroundMode;
+            private Bitmap mAreaBitmap;
+            private int mAreaColor;
+            private static final int ROCKER_BACKGROUND_MODE_PIC = 4;
+            private static final int ROCKER_BACKGROUND_MODE_COLOR = 5;
+            private static final int ROCKER_BACKGROUND_MODE_XML = 6;
+            private static final int ROCKER_BACKGROUND_MODE_DEFAULT = 7;
+            private int mRockerBackgroundMode;
+            private Bitmap mRockerBitmap;
+            private int mRockerColor;
+
+            public RockerView(Context context, AttributeSet attrs) {
+                super(context, attrs);
+                this.mCallBackMode = RockerView.CallBackMode.CALL_BACK_MODE_MOVE;
+                this.tempDirection = RockerView.Direction.DIRECTION_CENTER;
+                this.mAreaBackgroundMode = 3;
+                this.mRockerBackgroundMode = 7;
+                this.initAttribute(context, attrs);
+                if (this.isInEditMode()) {
+                    //            GT.log("RockerView", "RockerView: isInEditMode");
+                }
+
+                this.mAreaBackgroundPaint = new Paint();
+                this.mAreaBackgroundPaint.setAntiAlias(true);
+                this.mRockerPaint = new Paint();
+                this.mRockerPaint.setAntiAlias(true);
+                this.mCenterPoint = new Point();
+                this.mRockerPosition = new Point();
+            }
+
+            private void initAttribute(Context context, AttributeSet attrs) {
+                TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.RockerView);
+                Drawable areaBackground = typedArray.getDrawable(R.styleable.RockerView_areaBackground);
+                if (null != areaBackground) {
+                    if (areaBackground instanceof BitmapDrawable) {
+                        this.mAreaBitmap = ((BitmapDrawable) areaBackground).getBitmap();
+                        this.mAreaBackgroundMode = 0;
+                    } else if (areaBackground instanceof GradientDrawable) {
+                        this.mAreaBitmap = this.drawable2Bitmap(areaBackground);
+                        this.mAreaBackgroundMode = 2;
+                    } else if (areaBackground instanceof ColorDrawable) {
+                        this.mAreaColor = ((ColorDrawable) areaBackground).getColor();
+                        this.mAreaBackgroundMode = 1;
+                    } else {
+                        this.mAreaBackgroundMode = 3;
+                    }
+                } else {
+                    this.mAreaBackgroundMode = 3;
+                }
+
+                Drawable rockerBackground = typedArray.getDrawable(R.styleable.RockerView_rockerBackground);
+                if (null != rockerBackground) {
+                    if (rockerBackground instanceof BitmapDrawable) {
+                        this.mRockerBitmap = ((BitmapDrawable) rockerBackground).getBitmap();
+                        this.mRockerBackgroundMode = 4;
+                    } else if (rockerBackground instanceof GradientDrawable) {
+                        this.mRockerBitmap = this.drawable2Bitmap(rockerBackground);
+                        this.mRockerBackgroundMode = 6;
+                    } else if (rockerBackground instanceof ColorDrawable) {
+                        this.mRockerColor = ((ColorDrawable) rockerBackground).getColor();
+                        this.mRockerBackgroundMode = 5;
+                    } else {
+                        this.mRockerBackgroundMode = 7;
+                    }
+                } else {
+                    this.mRockerBackgroundMode = 7;
+                }
+
+                this.mRockerRadius = typedArray.getDimensionPixelOffset(R.styleable.RockerView_rockerRadius, 50);
+                //        GT.log("RockerView", "initAttribute: mAreaBackground = " + areaBackground + "   mRockerBackground = " + rockerBackground + "  mRockerRadius = " + this.mRockerRadius);
+                typedArray.recycle();
+            }
+
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+                int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+                int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+                int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+                int measureWidth;
+                if (widthMode == 1073741824) {
+                    measureWidth = widthSize;
+                } else {
+                    measureWidth = 400;
+                }
+
+                int measureHeight;
+                if (heightMode == 1073741824) {
+                    measureHeight = heightSize;
+                } else {
+                    measureHeight = 400;
+                }
+
+            /*GT.log("RockerView", "onMeasure: --------------------------------------");
+            GT.log("RockerView", "onMeasure: widthMeasureSpec = " + widthMeasureSpec + " heightMeasureSpec = " + heightMeasureSpec);
+            GT.log("RockerView", "onMeasure: widthMode = " + widthMode + "  measureWidth = " + widthSize);
+            GT.log("RockerView", "onMeasure: heightMode = " + heightMode + "  measureHeight = " + widthSize);
+            GT.log("RockerView", "onMeasure: measureWidth = " + measureWidth + " measureHeight = " + measureHeight);*/
+                this.setMeasuredDimension(measureWidth, measureHeight);
+            }
+
+            protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                int measuredWidth = this.getMeasuredWidth();
+                int measuredHeight = this.getMeasuredHeight();
+                int cx = measuredWidth / 2;
+                int cy = measuredHeight / 2;
+                this.mCenterPoint.set(cx, cy);
+                this.mAreaRadius = measuredWidth <= measuredHeight ? cx : cy;
+                if (0 == this.mRockerPosition.x || 0 == this.mRockerPosition.y) {
+                    this.mRockerPosition.set(this.mCenterPoint.x, this.mCenterPoint.y);
+                }
+
+                Rect src;
+                Rect dst;
+                if (0 != this.mAreaBackgroundMode && 2 != this.mAreaBackgroundMode) {
+                    if (1 == this.mAreaBackgroundMode) {
+                        this.mAreaBackgroundPaint.setColor(this.mAreaColor);
+                        canvas.drawCircle((float) this.mCenterPoint.x, (float) this.mCenterPoint.y, (float) this.mAreaRadius, this.mAreaBackgroundPaint);
+                    } else {
+                        this.mAreaBackgroundPaint.setColor(-7829368);
+                        canvas.drawCircle((float) this.mCenterPoint.x, (float) this.mCenterPoint.y, (float) this.mAreaRadius, this.mAreaBackgroundPaint);
+                    }
+                } else {
+                    src = new Rect(0, 0, this.mAreaBitmap.getWidth(), this.mAreaBitmap.getHeight());
+                    dst = new Rect(this.mCenterPoint.x - this.mAreaRadius, this.mCenterPoint.y - this.mAreaRadius, this.mCenterPoint.x + this.mAreaRadius, this.mCenterPoint.y + this.mAreaRadius);
+                    canvas.drawBitmap(this.mAreaBitmap, src, dst, this.mAreaBackgroundPaint);
+                }
+
+                if (4 != this.mRockerBackgroundMode && 6 != this.mRockerBackgroundMode) {
+                    if (5 == this.mRockerBackgroundMode) {
+                        this.mRockerPaint.setColor(this.mRockerColor);
+                        canvas.drawCircle((float) this.mRockerPosition.x, (float) this.mRockerPosition.y, (float) this.mRockerRadius, this.mRockerPaint);
+                    } else {
+                        this.mRockerPaint.setColor(-65536);
+                        canvas.drawCircle((float) this.mRockerPosition.x, (float) this.mRockerPosition.y, (float) this.mRockerRadius, this.mRockerPaint);
+                    }
+                } else {
+                    src = new Rect(0, 0, this.mRockerBitmap.getWidth(), this.mRockerBitmap.getHeight());
+                    dst = new Rect(this.mRockerPosition.x - this.mRockerRadius, this.mRockerPosition.y - this.mRockerRadius, this.mRockerPosition.x + this.mRockerRadius, this.mRockerPosition.y + this.mRockerRadius);
+                    canvas.drawBitmap(this.mRockerBitmap, src, dst, this.mRockerPaint);
+                }
+
+            }
+
+            public boolean onTouchEvent(MotionEvent event) {
+                switch (event.getAction()) {
+                    case 0:
+                        this.callBackStart();
+                    case 2:
+                        float moveX = event.getX();
+                        float moveY = event.getY();
+                        this.mRockerPosition = this.getRockerPositionPoint(this.mCenterPoint, new Point((int) moveX, (int) moveY), (float) this.mAreaRadius, (float) this.mRockerRadius);
+                        this.moveRocker((float) this.mRockerPosition.x, (float) this.mRockerPosition.y);
+                        break;
+                    case 1:
+                    case 3:
+                        this.callBackFinish();
+                        float upX = event.getX();
+                        float upY = event.getY();
+                        this.moveRocker((float) this.mCenterPoint.x, (float) this.mCenterPoint.y);
+                        //                GT.log("RockerView", "onTouchEvent: 抬起位置 : x = " + upX + " y = " + upY);
+                }
+
+                return true;
+            }
+
+            private Point getRockerPositionPoint(Point centerPoint, Point touchPoint, float regionRadius, float rockerRadius) {
+                float lenX = (float) (touchPoint.x - centerPoint.x);
+                float lenY = (float) (touchPoint.y - centerPoint.y);
+                float lenXY = (float) Math.sqrt((double) (lenX * lenX + lenY * lenY));
+                double radian = Math.acos((double) (lenX / lenXY)) * (double) (touchPoint.y < centerPoint.y ? -1 : 1);
+                double angle = this.radian2Angle(radian);
+                this.callBack(angle);
+                //        GT.log("RockerView", "getRockerPositionPoint: 角度 :" + angle);
+                if (lenXY + rockerRadius <= regionRadius) {
+                    return touchPoint;
+                } else {
+                    int showPointX = (int) ((double) centerPoint.x + (double) (regionRadius - rockerRadius) * Math.cos(radian));
+                    int showPointY = (int) ((double) centerPoint.y + (double) (regionRadius - rockerRadius) * Math.sin(radian));
+                    return new Point(showPointX, showPointY);
+                }
+            }
+
+            private void moveRocker(float x, float y) {
+                this.mRockerPosition.set((int) x, (int) y);
+                //        GT.log("RockerView", "onTouchEvent: 移动位置 : x = " + this.mRockerPosition.x + " y = " + this.mRockerPosition.y);
+                this.invalidate();
+            }
+
+            private double radian2Angle(double radian) {
+                double tmp = (double) Math.round(radian / 3.141592653589793D * 180.0D);
+                return tmp >= 0.0D ? tmp : 360.0D + tmp;
+            }
+
+            private Bitmap drawable2Bitmap(Drawable drawable) {
+                int width = drawable.getIntrinsicWidth();
+                int height = drawable.getIntrinsicHeight();
+                @SuppressLint("WrongConstant") Bitmap.Config config = drawable.getOpacity() != -1 ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
+                Bitmap bitmap = Bitmap.createBitmap(width, height, config);
+                Canvas canvas = new Canvas(bitmap);
+                drawable.setBounds(0, 0, width, height);
+                drawable.draw(canvas);
+                return bitmap;
+            }
+
+            private void callBackStart() {
+                this.tempDirection = RockerView.Direction.DIRECTION_CENTER;
+                if (null != this.mOnAngleChangeListener) {
+                    this.mOnAngleChangeListener.onStart();
+                }
+
+                if (null != this.mOnShakeListener) {
+                    this.mOnShakeListener.onStart();
+                }
+
+            }
+
+            private void callBack(double angle) {
+                if (null != this.mOnAngleChangeListener) {
+                    this.mOnAngleChangeListener.angle(angle);
+                }
+
+                if (null != this.mOnShakeListener) {
+                    if (RockerView.CallBackMode.CALL_BACK_MODE_MOVE == this.mCallBackMode) {
+                        switch (this.mDirectionMode) {
+                            case DIRECTION_2_HORIZONTAL:
+                                if ((0.0D > angle || 90.0D <= angle) && (270.0D > angle || 360.0D <= angle)) {
+                                    if (90.0D <= angle && 270.0D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                    }
+                                } else {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                }
+                                break;
+                            case DIRECTION_2_VERTICAL:
+                                if (0.0D <= angle && 180.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                } else if (180.0D <= angle && 360.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                }
+                                break;
+                            case DIRECTION_4_ROTATE_0:
+                                if (0.0D <= angle && 90.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_RIGHT);
+                                } else if (90.0D <= angle && 180.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_LEFT);
+                                } else if (180.0D <= angle && 270.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_LEFT);
+                                } else if (270.0D <= angle && 360.0D > angle) {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_RIGHT);
+                                }
+                                break;
+                            case DIRECTION_4_ROTATE_45:
+                                if ((0.0D > angle || 45.0D <= angle) && (315.0D > angle || 360.0D <= angle)) {
+                                    if (45.0D <= angle && 135.0D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                    } else if (135.0D <= angle && 225.0D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                    } else if (225.0D <= angle && 315.0D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                    }
+                                } else {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                }
+                                break;
+                            case DIRECTION_8:
+                                if ((0.0D > angle || 22.5D <= angle) && (337.5D > angle || 360.0D <= angle)) {
+                                    if (22.5D <= angle && 67.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_RIGHT);
+                                    } else if (67.5D <= angle && 112.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                    } else if (112.5D <= angle && 157.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_LEFT);
+                                    } else if (157.5D <= angle && 202.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                    } else if (202.5D <= angle && 247.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_LEFT);
+                                    } else if (247.5D <= angle && 292.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                    } else if (292.5D <= angle && 337.5D > angle) {
+                                        this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_RIGHT);
+                                    }
+                                } else {
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                }
+                        }
+                    } else if (RockerView.CallBackMode.CALL_BACK_MODE_STATE_CHANGE == this.mCallBackMode) {
+                        switch (this.mDirectionMode) {
+                            case DIRECTION_2_HORIZONTAL:
+                                if ((0.0D <= angle && 90.0D > angle || 270.0D <= angle && 360.0D > angle) && this.tempDirection != RockerView.Direction.DIRECTION_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                } else if (90.0D <= angle && 270.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                }
+                                break;
+                            case DIRECTION_2_VERTICAL:
+                                if (0.0D <= angle && 180.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                } else if (180.0D <= angle && 360.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                }
+                                break;
+                            case DIRECTION_4_ROTATE_0:
+                                if (0.0D <= angle && 90.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_RIGHT);
+                                } else if (90.0D <= angle && 180.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_LEFT);
+                                } else if (180.0D <= angle && 270.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_LEFT);
+                                } else if (270.0D <= angle && 360.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_RIGHT);
+                                }
+                                break;
+                            case DIRECTION_4_ROTATE_45:
+                                if ((0.0D <= angle && 45.0D > angle || 315.0D <= angle && 360.0D > angle) && this.tempDirection != RockerView.Direction.DIRECTION_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                } else if (45.0D <= angle && 135.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                } else if (135.0D <= angle && 225.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                } else if (225.0D <= angle && 315.0D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                }
+                                break;
+                            case DIRECTION_8:
+                                if ((0.0D <= angle && 22.5D > angle || 337.5D <= angle && 360.0D > angle) && this.tempDirection != RockerView.Direction.DIRECTION_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_RIGHT);
+                                } else if (22.5D <= angle && 67.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_RIGHT);
+                                } else if (67.5D <= angle && 112.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN);
+                                } else if (112.5D <= angle && 157.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_DOWN_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_DOWN_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_DOWN_LEFT);
+                                } else if (157.5D <= angle && 202.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_LEFT);
+                                } else if (202.5D <= angle && 247.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP_LEFT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP_LEFT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_LEFT);
+                                } else if (247.5D <= angle && 292.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP);
+                                } else if (292.5D <= angle && 337.5D > angle && this.tempDirection != RockerView.Direction.DIRECTION_UP_RIGHT) {
+                                    this.tempDirection = RockerView.Direction.DIRECTION_UP_RIGHT;
+                                    this.mOnShakeListener.direction(RockerView.Direction.DIRECTION_UP_RIGHT);
+                                }
+                        }
+                    }
+                }
+
+            }
+
+            private void callBackFinish() {
+                this.tempDirection = RockerView.Direction.DIRECTION_CENTER;
+                if (null != this.mOnAngleChangeListener) {
+                    this.mOnAngleChangeListener.onFinish();
+                }
+
+                if (null != this.mOnShakeListener) {
+                    this.mOnShakeListener.onFinish();
+                }
+
+            }
+
+            public void setCallBackMode(RockerView.CallBackMode mode) {
+                this.mCallBackMode = mode;
+            }
+
+            public void setOnAngleChangeListener(RockerView.OnAngleChangeListener listener) {
+                this.mOnAngleChangeListener = listener;
+            }
+
+            public void setOnShakeListener(RockerView.DirectionMode directionMode, RockerView.OnShakeListener listener) {
+                this.mDirectionMode = directionMode;
+                this.mOnShakeListener = listener;
+            }
+
+            public interface OnAngleChangeListener {
+                void onStart();
+
+                void angle(double var1);
+
+                void onFinish();
+            }
+
+            public interface OnShakeListener {
+                void onStart();
+
+                void direction(RockerView.Direction var1);
+
+                void onFinish();
+            }
+
+            public static enum Direction {
+                DIRECTION_LEFT,
+                DIRECTION_RIGHT,
+                DIRECTION_UP,
+                DIRECTION_DOWN,
+                DIRECTION_UP_LEFT,
+                DIRECTION_UP_RIGHT,
+                DIRECTION_DOWN_LEFT,
+                DIRECTION_DOWN_RIGHT,
+                DIRECTION_CENTER;
+
+                private Direction() {
+                }
+            }
+
+            public static enum DirectionMode {
+                DIRECTION_2_HORIZONTAL,
+                DIRECTION_2_VERTICAL,
+                DIRECTION_4_ROTATE_0,
+                DIRECTION_4_ROTATE_45,
+                DIRECTION_8;
+
+                private DirectionMode() {
+                }
+            }
+
+            public static enum CallBackMode {
+                CALL_BACK_MODE_MOVE,
+                CALL_BACK_MODE_STATE_CHANGE;
+
+                private CallBackMode() {
+                }
+            }
+        }
+
+    }
+
 
     //============================================= 设备监听类 ======================================
 
@@ -5761,11 +8716,11 @@ public class GT {
                     if (intent.hasExtra("state")) {
                         if (intent.getIntExtra("state", 0) == 0) {
                             if (GT_LOG_TF)
-                                log_v("耳机测试: 没插入耳机");
+                                log("耳机测试: 没插入耳机");
                             headset_TF = false;
                         } else if (intent.getIntExtra("state", 0) == 1) {
                             if (GT_LOG_TF)
-                                log_v("耳机测试: 插入耳机");
+                                log("耳机测试: 插入耳机");
                             headset_TF = true;
                         }
                     }
@@ -5788,7 +8743,7 @@ public class GT {
              * *         @Override
              * *         protected void getPosition(float xAngle, float yAngle) {
              * *             super.getPosition(xAngle, yAngle);
-             * *             GT.log_i("X:" + (int)xAngle + "," + "Y:" + (int)yAngle);
+             * *             GT.log("X:" + (int)xAngle + "," + "Y:" + (int)yAngle);
              * *         }
              * *     }
              * *
@@ -5846,10 +8801,10 @@ public class GT {
 
             //根据X轴和Y轴的旋转角度确定小篮球的位置
             protected void getPosition(float xAngle, float yAngle) {
-                /*
-                    这里会返回具体的手机位置信息
-                    使用 getMobilePosition 或 getScreenPosition 方法判定 当前手机的位置
-                 */
+                        /*
+                            这里会返回具体的手机位置信息
+                            使用 getMobilePosition 或 getScreenPosition 方法判定 当前手机的位置
+                         */
             }
 
             @Override
@@ -6005,8 +8960,8 @@ public class GT {
                 mediaPlayer.setDataSource(url);
                 mediaPlayer.prepare();//预加载音频
             } catch (IOException e) {
-//                e.printStackTrace();
-                GT.log_e(getGT().getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
+                //                e.printStackTrace();
+                GT.err(getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
             }
             isPlay = true;//恢复可播放状态
             return this;
@@ -6043,11 +8998,13 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer play_pause() {
-            recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
-            if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
-                mediaPlayer.start();//继续播放
-            } else {  //当前处于音乐暂停状态
-                mediaPlayer.pause();//暂停音乐
+            if (mediaPlayer != null) {
+                recover_play();//如果音频被停止了就恢复音频可播放，在进行 start
+                if (!mediaPlayer.isPlaying()) {        //如果当前的 mediaPlayer 处于暂停状态  且 播放状态为 false 没有在播放
+                    mediaPlayer.start();//继续播放
+                } else {  //当前处于音乐暂停状态
+                    mediaPlayer.pause();//暂停音乐
+                }
             }
             return this;
         }//播放 与 暂停
@@ -6058,8 +9015,10 @@ public class GT {
          * @return
          */
         public GT_MediaPlayer stop() {
-            isPlay = false;//设置为暂停状态
-            mediaPlayer.stop();
+            if (mediaPlayer != null && isPlay) {
+                isPlay = false;//设置为暂停状态
+                mediaPlayer.stop();
+            }
             return this;
         }//停止音乐
 
@@ -6069,24 +9028,26 @@ public class GT {
          * @return
          */
         private GT_MediaPlayer recover_play() {
-            if (!isPlay) {       //停止过播放
-                if (mediaPlayer.isPlaying()) {//如果属于播放状态
-                    mediaPlayer.stop();//停止播放
-                }
-                mediaPlayer.release();//释放资源
-                mediaPlayer = null;//清空内存中对象
-                if (resid != 0) {
-                    mediaPlayer = MediaPlayer.create(activity, resid);    //初始化 MediaPlayer 对象
-                } else if (url != null) {
-                    mediaPlayer = new MediaPlayer();
-                    try {
-                        mediaPlayer.setDataSource(url);
-                        mediaPlayer.prepare();//预加载音频
-                    } catch (IOException e) {
-                        GT.log_e(getGT().getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
+            if (mediaPlayer != null) {
+                if (!isPlay) {       //停止过播放
+                    if (mediaPlayer.isPlaying()) {//如果属于播放状态
+                        mediaPlayer.stop();//停止播放
                     }
+                    mediaPlayer.release();//释放资源
+                    mediaPlayer = null;//清空内存中对象
+                    if (resid != 0) {
+                        mediaPlayer = MediaPlayer.create(activity, resid);    //初始化 MediaPlayer 对象
+                    } else if (url != null) {
+                        mediaPlayer = new MediaPlayer();
+                        try {
+                            mediaPlayer.setDataSource(url);
+                            mediaPlayer.prepare();//预加载音频
+                        } catch (IOException e) {
+                            GT.err(getLineInfo(), "你的音频资源可能 需要添加 网络或访问SD卡的读取权限，否则无法进行有效的获取资源 url:" + url);
+                        }
+                    }
+                    isPlay = true;//恢复可播放状态
                 }
-                isPlay = true;//恢复可播放状态
             }
             return this;
         }//恢复可播放
@@ -6095,11 +9056,13 @@ public class GT {
          * 释放资源
          */
         public void close() {
-            if (mediaPlayer.isPlaying()) {//如果属于播放状态
-                mediaPlayer.stop();//停止播放
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying()) {//如果属于播放状态
+                    mediaPlayer.stop();//停止播放
+                }
+                mediaPlayer.release();//释放资源
+                mediaPlayer = null;
             }
-            mediaPlayer.release();//释放资源
-            mediaPlayer = null;
         }//释放资源
 
 
@@ -6196,7 +9159,7 @@ public class GT {
                     loadMusic();//初始化 音频流
 
                 } else {
-                    GT.log_v(getGT().getLineInfo(), "添加音频无效，当前已经包含相同的 key，无法再进行装载相同的 key");//提示无效的添加
+                    GT.log(getLineInfo(), "添加音频无效，当前已经包含相同的 key，无法再进行装载相同的 key");//提示无效的添加
                 }
             }
             return this;
@@ -6206,7 +9169,7 @@ public class GT {
          * 初始化音频
          */
         private void loadMusic() {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 for (String key : map.keySet()) {
                     mapMusic.put(key, soundPool.load(context, map.get(key), 1));//初始化 待播放的音频
                 }
@@ -6220,13 +9183,13 @@ public class GT {
          * @return
          */
         public GT_SoundPool removalMusic(Integer key) {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 if (map.containsKey(key)) {
                     map.remove(key);
                     mapMusic.remove(key);
                     loadMusic();//初始化音频
                 } else {
-                    log_v(getGT().getLineInfo(), "移除音频失败，当前并不存在此 key:" + key);
+                    log(getLineInfo(), "移除音频失败，当前并不存在此 key:" + key);
                 }
             }
             return this;
@@ -6238,7 +9201,7 @@ public class GT {
          * @return
          */
         public GT_SoundPool clear() {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 map.clear();
                 mapMusic.clear();
             }
@@ -6253,13 +9216,13 @@ public class GT {
          * @return
          */
         public GT_SoundPool updateMusic(String key, Integer rawId) {
-            if (map != null) {
+            if (map != null && mapMusic != null) {
                 if (map.containsKey(key)) {
                     map.put(key, rawId);
                     mapMusic.put(key, rawId);
                     loadMusic();//初始化音频
                 } else {
-                    GT.log_v(getGT().getLineInfo(), "修改音频无效，当前并不存在当前 key，无法进行更新操作");//提示无效的更新
+                    GT.log(getLineInfo(), "修改音频无效，当前并不存在当前 key，无法进行更新操作");//提示无效的更新
                 }
             }
             return this;
@@ -6275,15 +9238,16 @@ public class GT {
          */
         public GT_SoundPool play(String key, boolean loop, float rate) {
             //播放所选音频
-            soundPool.play(
-                    mapMusic.get(key),           //指定播放的音频 key
-                    1,              //左声道 为0.0 到 1.0
-                    1,             //右声道 为0.0 到 1.0
-                    0,                 //优先级 0
-                    (loop == true ? -1 : 0),    //是否循环 0为不循环, -1 为循环
-                    rate                        //速率 为正常速率 1  最低为 0.5，最高为 2
-            );
-
+            if (soundPool != null) {
+                soundPool.play(
+                        mapMusic.get(key),           //指定播放的音频 key
+                        1,              //左声道 为0.0 到 1.0
+                        1,             //右声道 为0.0 到 1.0
+                        0,                 //优先级 0
+                        (loop == true ? -1 : 0),    //是否循环 0为不循环, -1 为循环
+                        rate                        //速率 为正常速率 1  最低为 0.5，最高为 2
+                );
+            }
             return this;
         }
     }
@@ -6328,10 +9292,10 @@ public class GT {
          * @return
          */
         public GT_Video play() {
-            GT.log_e("mediaPlayer:" + mediaPlayer);
+            GT.err("mediaPlayer:" + mediaPlayer);
             if (mediaPlayer != null) {
                 recover_play();
-                GT.log_e("播放");
+                GT.err("播放");
                 mediaPlayer.start();
             }
             return this;
@@ -6428,7 +9392,7 @@ public class GT {
          * 为给 Activity 类 标的注解
          * 用法如下：
          *
-         * @Activity(R.layout.activity_main) public class MainActivity extends AppCompatActivity {....}
+         * @Activity(R.layout.activity_main) public class AndroidActivity extends AppCompatActivity {....}
          */
         @Target(ElementType.TYPE)
         @Retention(RetentionPolicy.RUNTIME)
@@ -6581,7 +9545,6 @@ public class GT {
 
         }
 
-
         /**
          * 资源注解
          */
@@ -6672,7 +9635,29 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_List {
-                Class[] value();
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
+
             }
 
 
@@ -6682,7 +9667,30 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Map {
-                Class[] value();
+
+                String[] valueKey() default {};
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
             }
 
 
@@ -6692,7 +9700,29 @@ public class GT {
             @Target(ElementType.FIELD)
             @Retention(RetentionPolicy.RUNTIME)
             @interface GT_Set {
-                Class[] value();
+
+                String[] valueObject() default {};
+
+                Class<?>[] valueClass() default {};
+
+                String[] valueString() default {};
+
+                byte[] valueByte() default {};
+
+                short[] valueShort() default {};
+
+                int[] valueInt() default {};
+
+                long[] valueLong() default {};
+
+                float[] valueFloat() default {};
+
+                double[] valueDouble() default {};
+
+                boolean[] valueBoolean() default {};
+
+                char[] valueChar() default {};
+
             }
 
         }
@@ -6782,13 +9812,13 @@ public class GT {
             Field[] fields = mClass.getDeclaredFields();//获致所有成员变更
             for (Field field : fields) {
                 Annotations.GT_Object initView = field.getAnnotation(Annotations.GT_Object.class);
-
                 if (initView != null) {
 
                     //获取 完整的类路径
                     String classPage = field.toString();
                     String[] s = classPage.split(" ");
-                    classPage = s[1];
+                    classPage = s[s.length - 2];
+
 
                     //实例化一个对象
                     Object object2 = null;
@@ -6805,7 +9835,6 @@ public class GT {
                     //获取参数的值类型
                     String type = initView.type();
                     String[] types = initView.types();
-
 
                     //创建保存 参数类型的容器
                     List<Object> valueList = new ArrayList<>();
@@ -6832,7 +9861,6 @@ public class GT {
                         }
                     }
 
-
                     //给注解下面的 成员变量注入值
                     try {
                         field.setAccessible(true);
@@ -6853,33 +9881,92 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_List initView = field.getAnnotation(Annotations.GT_Collection.GT_List.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
-                    List<Object> objectList = new ArrayList<>();//创建一个 ListView
-                    for (Class cla : classes) {
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
+                    String[] valueObject = initView.valueObject();
+                    Class<?>[] valueClass = initView.valueClass();
+                    String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                    byte[] valueByte = initView.valueByte();
+                    short[] valueShort = initView.valueShort();
+                    int[] valueInt = initView.valueInt();
+                    long[] valueLong = initView.valueLong();
+                    float[] valueFloat = initView.valueFloat();
+                    double[] valueDouble = initView.valueDouble();
+                    boolean[] valueBoolean = initView.valueBoolean();
+                    char[] valueChar = initView.valueChar();
+
+                    List<Object> objectList = new ArrayList<>();
+
+                    if (valueObject.length != 0) {
+                        for (Object value : valueObject) {
+                            objectList.add(value);
                         }
-                        objectList.add(object2);//添加每一个经过反射得到的 对象
+                    } else if (valueClass.length != 0) {
+                        for (Class cla : valueClass) {
+                            String classPage = cla.toString();
+                            String[] s = classPage.split(" ");
+                            classPage = s[1];
+
+                            //实例化一个对象
+                            Object object2 = null;
+                            try {
+                                object2 = Class.forName(classPage).newInstance();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            objectList.add(object2);//添加每一个经过反射得到的 对象
+                        }
+
+                    } else if (valueString.length != 0) {
+                        for (Object value : valueString) {
+                            objectList.add(value);
+                        }
+                    } else if (valueByte.length != 0) {
+                        for (Object value : valueByte) {
+                            objectList.add(value);
+                        }
+                    } else if (valueShort.length != 0) {
+                        for (Object value : valueShort) {
+                            objectList.add(value);
+                        }
+                    } else if (valueInt.length != 0) {
+                        for (Object value : valueInt) {
+                            objectList.add(value);
+                        }
+                    } else if (valueLong.length != 0) {
+                        for (Object value : valueLong) {
+                            objectList.add(value);
+                        }
+                    } else if (valueFloat.length != 0) {
+                        for (Object value : valueFloat) {
+                            objectList.add(value);
+                        }
+                    } else if (valueDouble.length != 0) {
+                        for (Object value : valueDouble) {
+                            objectList.add(value);
+                        }
+                    } else if (valueBoolean.length != 0) {
+                        for (Object value : valueBoolean) {
+                            objectList.add(value);
+                        }
+                    } else if (valueChar.length != 0) {
+                        for (Object value : valueChar) {
+                            objectList.add(value);
+                        }
                     }
+
+                    //实例注入 List
                     try {
                         field.setAccessible(true);
                         field.set(object, objectList);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
@@ -6894,33 +9981,105 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_Map initView = field.getAnnotation(Annotations.GT_Collection.GT_Map.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
+
                     Map<Object, Object> objectMap = new HashMap<>();//创建一个 Map
-                    for (Class cla : classes) {
+                    String[] valueKey = initView.valueKey();
+                    if (valueKey.length != 0) {    //如果不为 0 则创建 map 后并注入值 否则仅创建新的 Map 对象
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
+                        String[] valueObject = initView.valueObject();
+                        Class<?>[] valueClass = initView.valueClass();
+                        String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                        byte[] valueByte = initView.valueByte();
+                        short[] valueShort = initView.valueShort();
+                        int[] valueInt = initView.valueInt();
+                        long[] valueLong = initView.valueLong();
+                        float[] valueFloat = initView.valueFloat();
+                        double[] valueDouble = initView.valueDouble();
+                        boolean[] valueBoolean = initView.valueBoolean();
+                        char[] valueChar = initView.valueChar();
+
+                        for (String key : valueKey) {
+                            log("key:" + key);
                         }
-                        objectMap.put(cla, object2);//保存每个创建出来的 对象 key 为 每个对象的 class
+
+                        if (valueObject.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueObject[i]);
+                            }
+                        } else if (valueClass.length != 0) {
+                            for (Class cla : valueClass) {
+
+                                //截取 类的 class 路径属性
+                                String classPage = cla.toString();
+                                String[] s = classPage.split(" ");
+                                classPage = s[1];
+
+                                //实例化一个对象
+                                Object object2 = null;
+                                try {
+                                    object2 = Class.forName(classPage).newInstance();
+                                } catch (IllegalAccessException e) {
+                                    e.printStackTrace();
+                                } catch (InstantiationException e) {
+                                    e.printStackTrace();
+                                } catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+
+                                for (int i = 0; i < valueKey.length; i++) {
+                                    objectMap.put(valueKey[i], object2);
+                                }
+
+                            }
+
+                        } else if (valueString.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueString[i]);
+                            }
+                        } else if (valueByte.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueByte[i]);
+                            }
+                        } else if (valueShort.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueShort[i]);
+                            }
+                        } else if (valueInt.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueInt[i]);
+                            }
+                        } else if (valueLong.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueLong[i]);
+                            }
+                        } else if (valueFloat.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueFloat[i]);
+                            }
+                        } else if (valueDouble.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueDouble[i]);
+                            }
+                        } else if (valueBoolean.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueBoolean[i]);
+                            }
+                        } else if (valueChar.length != 0) {
+                            for (int i = 0; i < valueKey.length; i++) {
+                                objectMap.put(valueKey[i], valueChar[i]);
+                            }
+                        }
+
                     }
+
                     try {
                         field.setAccessible(true);
                         field.set(object, objectMap);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
@@ -6935,33 +10094,92 @@ public class GT {
             for (Field field : fields) {
                 Annotations.GT_Collection.GT_Set initView = field.getAnnotation(Annotations.GT_Collection.GT_Set.class);
                 if (initView != null) {
-                    Class[] classes = initView.value();
-                    Set<Object> objectSet = new HashSet<>();//创建一个 Set
-                    for (Class cla : classes) {
 
-                        String classPage = cla.toString();
-                        String[] s = classPage.split(" ");
-                        classPage = s[1];
+                    String[] valueObject = initView.valueObject();
+                    Class<?>[] valueClass = initView.valueClass();
+                    String[] valueString = initView.valueString();
 
-                        //实例化一个对象
-                        Object object2 = null;
-                        try {
-                            object2 = Class.forName(classPage).newInstance();
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                        } catch (InstantiationException e) {
-                            e.printStackTrace();
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                    byte[] valueByte = initView.valueByte();
+                    short[] valueShort = initView.valueShort();
+                    int[] valueInt = initView.valueInt();
+                    long[] valueLong = initView.valueLong();
+                    float[] valueFloat = initView.valueFloat();
+                    double[] valueDouble = initView.valueDouble();
+                    boolean[] valueBoolean = initView.valueBoolean();
+                    char[] valueChar = initView.valueChar();
+
+                    Set<Object> objectSet = new HashSet<>();
+
+                    if (valueObject.length != 0) {
+                        for (Object value : valueObject) {
+                            objectSet.add(value);
                         }
-                        objectSet.add(object2);//保存每个创建出来的 对象
+                    } else if (valueClass.length != 0) {
+                        for (Class cla : valueClass) {
+                            String classPage = cla.toString();
+                            String[] s = classPage.split(" ");
+                            classPage = s[1];
+
+                            //实例化一个对象
+                            Object object2 = null;
+                            try {
+                                object2 = Class.forName(classPage).newInstance();
+                            } catch (IllegalAccessException e) {
+                                e.printStackTrace();
+                            } catch (InstantiationException e) {
+                                e.printStackTrace();
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                            objectSet.add(object2);//添加每一个经过反射得到的 对象
+                        }
+
+                    } else if (valueString.length != 0) {
+                        for (Object value : valueString) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueByte.length != 0) {
+                        for (Object value : valueByte) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueShort.length != 0) {
+                        for (Object value : valueShort) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueInt.length != 0) {
+                        for (Object value : valueInt) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueLong.length != 0) {
+                        for (Object value : valueLong) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueFloat.length != 0) {
+                        for (Object value : valueFloat) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueDouble.length != 0) {
+                        for (Object value : valueDouble) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueBoolean.length != 0) {
+                        for (Object value : valueBoolean) {
+                            objectSet.add(value);
+                        }
+                    } else if (valueChar.length != 0) {
+                        for (Object value : valueChar) {
+                            objectSet.add(value);
+                        }
                     }
+
+                    //实例注入 List
                     try {
                         field.setAccessible(true);
                         field.set(object, objectSet);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+
                 }
             }
 
@@ -7401,9 +10619,9 @@ public class GT {
                             method.invoke(object, valueList.get(index));
                         } catch (Exception e) {
                             if (getGT().getGtLogTf()) {
-                                GT.log_e(getGT().getLineInfo(), "注解注入失败 ！");
+                                GT.err(getLineInfo(), "注解注入失败 ！");
                             }
-//                            e.printStackTrace();
+                            //                            e.printStackTrace();
                         }
                     }
                 }
@@ -7430,9 +10648,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, byte.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 byte 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 byte 类型数据 报错");
                         }
                     }
                     break;
@@ -7440,9 +10658,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, short.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Short 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Short 类型数据 报错");
                         }
                     }
                     break;
@@ -7450,9 +10668,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, int.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 int 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 int 类型数据 报错");
                         }
                     }
                     break;
@@ -7460,9 +10678,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, long.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Long 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Long 类型数据 报错");
                         }
                     }
                     break;
@@ -7470,9 +10688,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, float.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Float 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Float 类型数据 报错");
                         }
                     }
                     break;
@@ -7480,9 +10698,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, double.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Double 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Double 类型数据 报错");
                         }
                     }
                     break;
@@ -7490,9 +10708,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, boolean.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Boolean 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Boolean 类型数据 报错");
                         }
                     }
                     break;
@@ -7500,9 +10718,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, char.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 Character 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 Character 类型数据 报错");
                         }
                     }
                     break;
@@ -7510,9 +10728,9 @@ public class GT {
                     try {
                         method = aClass.getMethod(functionName, String.class);
                     } catch (NoSuchMethodException e) {
-//                    e.printStackTrace();
+                        //                    e.printStackTrace();
                         if (getGT().getGtLogTf()) {
-                            GT.log_e(getGT().getLineInfo(), "注解 赋值 String 类型数据 报错");
+                            GT.err(getLineInfo(), "注解 赋值 String 类型数据 报错");
                         }
                     }
                     break;
@@ -7731,8 +10949,8 @@ public class GT {
         public AnnotationAssist(Object obj, Object annotation) {
 
             if (GT_LOG_TF) {
-                log_i("obj:" + obj);
-                log_i("annotation:" + annotation);
+                log("obj:" + obj);
+                log("annotation:" + annotation);
             }
 
             /**
@@ -7740,22 +10958,22 @@ public class GT {
              */
             obj = classToObject(obj);
             Annotation[] annotations = obj.getClass().getAnnotations();
-            if (GT_LOG_TF) log_i("---------------该类有所的注解---------------------");
-            for (Annotation annotation1 : annotations) if (GT_LOG_TF) log_i(annotation1);
-            if (GT_LOG_TF) log_i("-------------------close--------------------------");
+            if (GT_LOG_TF) log("---------------该类有所的注解---------------------");
+            for (Annotation annotation1 : annotations) if (GT_LOG_TF) log(annotation1);
+            if (GT_LOG_TF) log("-------------------close--------------------------");
 
 
             /**
              * 获取声明注解	[Ljava.lang.annotation.Annotation;@28c97a5
              */
             Annotation[] deAnnos = obj.getClass().getDeclaredAnnotations();
-            if (GT_LOG_TF) log_i("被声明式注解标识过:" + deAnnos);
+            if (GT_LOG_TF) log("被声明式注解标识过:" + deAnnos);
 
 
             if (annotation != null) {
                 //获取被 SubAnnotation 注解过的类
                 Annotation subAnnotation = obj.getClass().getAnnotation((Class<Annotation>) annotation);
-                if (GT_LOG_TF) log_i("该类被 [" + subAnnotation + "] 注解过");
+                if (GT_LOG_TF) log("该类被 [" + subAnnotation + "] 注解过");
             }
 
         }
@@ -7997,7 +11215,7 @@ public class GT {
                         gtAsyncTask.execute();
                     } catch (IllegalStateException e) {
                         if (GT.GT_LOG_TF) {
-                            GT.log_v(getGT().getLineInfo(), "无法执行任务:任务已在运行。");
+                            GT.log(getLineInfo(), "无法执行任务:任务已在运行。");
                         }
                     }
                 }
@@ -8057,7 +11275,7 @@ public class GT {
     }
 
 
-//============================================ 随机类 ===============================================
+    //============================================ 随机类 ===============================================
 
     /**
      * 随机类
@@ -8067,7 +11285,7 @@ public class GT {
 
         /**
          * 实例化 随机类 类
-         */
+         *//**/
         public GT_Random() {
             random = new Random();
         }
@@ -8099,7 +11317,7 @@ public class GT {
     //GT 包官网：https://github.com/1079374315/GT
 
     // 定义 GT 包 简易使用教程
-    public interface CMD{
+    public interface CMD {
 
         /*
          * 关于 GT 包中的功能使用教程请参考官网详细教程
@@ -8107,652 +11325,652 @@ public class GT {
          */
 
 
-        /*
-         * 关于 AndroidUtilCode 工具包的使用教程如下：
-         *
-         * 教程网址：https://www.jianshu.com/p/72494773aace
-         *
-         * ActivityUtils.java -> Demo 使用参考值
-         * isActivityExists               : 判断 Activity 是否存在
-         * startActivity                  : 启动 Activity
-         * startActivities                : 启动多个 Activity
-         * startHomeActivity              : 回到桌面
-         * getActivityList                : 获取 Activity 栈链表
-         * getLauncherActivity            : 获取启动项 Activity
-         * getTopActivity                 : 获取栈顶 Activity
-         * isActivityExistsInStack        : 判断 Activity 是否存在栈中
-         * finishActivity                 : 结束 Activity
-         * finishToActivity               : 结束到指定 Activity
-         * finishOtherActivities          : 结束所有其他类型的 Activity
-         * finishAllActivities            : 结束所有 Activity
-         * finishAllActivitiesExceptNewest: 结束除最新之外的所有 Activity
-         *
-         *
-         *
-         *
-         *
-         *AppUtils.java -> Demo 使用参考值
-         * isInstallApp         : 判断 App 是否安装
-         * installApp           : 安装 App（支持 8.0）
-         * installAppSilent     : 静默安装 App
-         * uninstallApp         : 卸载 App
-         * uninstallAppSilent   : 静默卸载 App
-         * isAppRoot            : 判断 App 是否有 root 权限
-         * launchApp            : 打开 App
-         * exitApp              : 关闭应用
-         * getAppPackageName    : 获取 App 包名
-         * getAppDetailsSettings: 获取 App 具体设置
-         * getAppName           : 获取 App 名称
-         * getAppIcon           : 获取 App 图标
-         * getAppPath           : 获取 App 路径
-         * getAppVersionName    : 获取 App 版本号
-         * getAppVersionCode    : 获取 App 版本码
-         * isSystemApp          : 判断 App 是否是系统应用
-         * isAppDebug           : 判断 App 是否是 Debug 版本
-         * getAppSignature      : 获取 App 签名
-         * getAppSignatureSHA1  : 获取应用签名的的 SHA1 值
-         * isAppForeground      : 判断 App 是否处于前台
-         * getForegroundApp     : 获取前台应用包名
-         * getAppInfo           : 获取 App 信息
-         * getAppsInfo          : 获取所有已安装 App 信息
-         * cleanAppData         : 清除 App 所有数据
-         *
-         *
-         *
-         * BarUtils.java -> Demo 使用参考值
-         * getStatusBarHeight                   : 获取状态栏高度（px）
-         * setStatusBarVisibility               : 设置状态栏是否可见
-         * isStatusBarVisible                   : 判断状态栏是否可见
-         * addMarginTopEqualStatusBarHeight     : 为 view 增加 MarginTop 为状态栏高度
-         * subtractMarginTopEqualStatusBarHeight: 为 view 减少 MarginTop 为状态栏高度
-         * setStatusBarColor                    : 设置状态栏颜色
-         * setStatusBarAlpha                    : 设置状态栏透明度
-         * setStatusBarColor4Drawer             : 为 DrawerLayout 设置状态栏颜色
-         * setStatusBarAlpha4Drawer             : 为 DrawerLayout 设置状态栏透明度
-         * getActionBarHeight                   : 获取 ActionBar 高度
-         * setNotificationBarVisibility         : 设置通知栏是否可见
-         * getNavBarHeight                      : 获取导航栏高度
-         * setNavBarVisibility                  : 设置导航栏是否可见
-         * setNavBarImmersive                   : 设置导航栏沉浸式
-         * isNavBarVisible                      : 判断导航栏是否可见
-         *
-         *
-         *
-         *
-         *缓存相关 -> CacheUtils.java -> Test
-            getInstance    : 获取缓存实例
-            put            : 缓存中写入数据
-            getBytes       : 缓存中读取字节数组
-            getString      : 缓存中读取 String
-            getJSONObject  : 缓存中读取 JSONObject
-            getJSONArray   : 缓存中读取 JSONArray
-            getBitmap      : 缓存中读取 Bitmap
-            getDrawable    : 缓存中读取 Drawable
-            getParcelable  : 缓存中读取 Parcelable
-            getSerializable: 缓存中读取 Serializable
-            getCacheSize   : 获取缓存大小
-            getCacheCount  : 获取缓存个数
-            remove         : 根据键值移除缓存
-            clear          : 清除所有缓存
-         *
-         *
-         *
-         *
-         *
-         * 清除相关 -> CleanUtils.java -> Demo
-            cleanInternalCache   : 清除内部缓存
-            cleanInternalFiles   : 清除内部文件
-            cleanInternalDbs     : 清除内部数据库
-            cleanInternalDbByName: 根据名称清除数据库
-            cleanInternalSP      : 清除内部 SP
-            cleanExternalCache   : 清除外部缓存
-            cleanCustomCache     : 清除自定义目录下的文件
-            * 关闭相关 -> CloseUtils.java
-            closeIO       : 关闭 IO
-            closeIOQuietly: 安静关闭 IO
-         *
-         *
-         *
-         *
-         *
-         *转换相关 -> ConvertUtils.java -> Test
-            bytes2HexString, hexString2Bytes        : byteArr 与 hexString 互转
-            chars2Bytes, bytes2Chars                : charArr 与 byteArr 互转
-            memorySize2Byte, byte2MemorySize        : 以 unit 为单位的内存大小与字节数互转
-            byte2FitMemorySize                      : 字节数转合适内存大小
-            timeSpan2Millis, millis2TimeSpan        : 以 unit 为单位的时间长度与毫秒时间戳互转
-            millis2FitTimeSpan                      : 毫秒时间戳转合适时间长度
-            bytes2Bits, bits2Bytes                  : bytes 与 bits 互转
-            input2OutputStream, output2InputStream  : inputStream 与 outputStream 互转
-            inputStream2Bytes, bytes2InputStream    : inputStream 与 byteArr 互转
-            outputStream2Bytes, bytes2OutputStream  : outputStream 与 byteArr 互转
-            inputStream2String, string2InputStream  : inputStream 与 string 按编码互转
-            outputStream2String, string2OutputStream: outputStream 与 string 按编码互转
-            bitmap2Bytes, bytes2Bitmap              : bitmap 与 byteArr 互转
-            drawable2Bitmap, bitmap2Drawable        : drawable 与 bitmap 互转
-            drawable2Bytes, bytes2Drawable          : drawable 与 byteArr 互转
-            view2Bitmap                             : view 转 Bitmap
-            dp2px, px2dp                            : dp 与 px 互转
-            sp2px, px2sp                            : sp 与 px 互转
-         *
-         *
-         *
-         *
-         *
-         *
-         * 设备相关 -> DeviceUtils.java -> Demo
-            isDeviceRooted   : 判断设备是否 rooted
-            getSDKVersion    : 获取设备系统版本号
-            getAndroidID     : 获取设备 AndroidID
-            getMacAddress    : 获取设备 MAC 地址
-            getManufacturer  : 获取设备厂商
-            getModel         : 获取设备型号
-            shutdown         : 关机
-            reboot           : 重启
-            reboot2Recovery  : 重启到 recovery
-            reboot2Bootloader: 重启到 bootloader
-         *
-         *
-         *
-         *
-         *
-         *
-         *判空相关 -> EmptyUtils.java -> Test
-            isEmpty   : 判断对象是否为空
-            isNotEmpty: 判断对象是否非空
-         *
-         *
-         *
-         *
-         *
-         *编码解码相关 -> EncodeUtils.java -> Test
-            urlEncode          : URL 编码
-            urlDecode          : URL 解码
-            base64Encode       : Base64 编码
-            base64Encode2String: Base64 编码
-            base64Decode       : Base64 解码
-            base64UrlSafeEncode: Base64URL 安全编码
-            htmlEncode         : Html 编码
-            htmlDecode         : Html 解码
-
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *加密解密相关 -> EncryptUtils.java -> Test
-            encryptMD2, encryptMD2ToString                        : MD2 加密
-            encryptMD5, encryptMD5ToString                        : MD5 加密
-            encryptMD5File, encryptMD5File2String                 : MD5 加密文件
-            encryptSHA1, encryptSHA1ToString                      : SHA1 加密
-            encryptSHA224, encryptSHA224ToString                  : SHA224 加密
-            encryptSHA256, encryptSHA256ToString                  : SHA256 加密
-            encryptSHA384, encryptSHA384ToString                  : SHA384 加密
-            encryptSHA512, encryptSHA512ToString                  : SHA512 加密
-            encryptHmacMD5, encryptHmacMD5ToString                : HmacMD5 加密
-            encryptHmacSHA1, encryptHmacSHA1ToString              : HmacSHA1 加密
-            encryptHmacSHA224, encryptHmacSHA224ToString          : HmacSHA224 加密
-            encryptHmacSHA256, encryptHmacSHA256ToString          : HmacSHA256 加密
-            encryptHmacSHA384, encryptHmacSHA384ToString          : HmacSHA384 加密
-            encryptHmacSHA512, encryptHmacSHA512ToString          : HmacSHA512 加密
-            encryptDES, encryptDES2HexString, encryptDES2Base64   : DES 加密
-            decryptDES, decryptHexStringDES, decryptBase64DES     : DES 解密
-            encrypt3DES, encrypt3DES2HexString, encrypt3DES2Base64: 3DES 加密
-            decrypt3DES, decryptHexString3DES, decryptBase64_3DES : 3DES 解密
-            encryptAES, encryptAES2HexString, encryptAES2Base64   : AES 加密
-            decryptAES, decryptHexStringAES, decryptBase64AES     : AES 解密
-
-
-
-            文件相关 -> FileIOUtils.java -> Test
-            writeFileFromIS            : 将输入流写入文件
-            writeFileFromBytesByStream : 将字节数组写入文件
-            writeFileFromBytesByChannel: 将字节数组写入文件
-            writeFileFromBytesByMap    : 将字节数组写入文件
-            writeFileFromString        : 将字符串写入文件
-            readFile2List              : 读取文件到字符串链表中
-            readFile2String            : 读取文件到字符串中
-            readFile2BytesByStream     : 读取文件到字节数组中
-            readFile2BytesByChannel    : 读取文件到字节数组中
-            readFile2BytesByMap        : 读取文件到字节数组中
-            setBufferSize              : 设置缓冲区尺寸
-
-
-
-            文件相关 -> FileUtils.java -> Test
-            getFileByPath             : 根据文件路径获取文件
-            isFileExists              : 判断文件是否存在
-            rename                    : 重命名文件
-            isDir                     : 判断是否是目录
-            isFile                    : 判断是否是文件
-            createOrExistsDir         : 判断目录是否存在，不存在则判断是否创建成功
-            createOrExistsFile        : 判断文件是否存在，不存在则判断是否创建成功
-            createFileByDeleteOldFile : 判断文件是否存在，存在则在创建之前删除
-            copyDir                   : 复制目录
-            copyFile                  : 复制文件
-            moveDir                   : 移动目录
-            moveFile                  : 移动文件
-            deleteDir                 : 删除目录
-            deleteFile                : 删除文件
-            deleteAllInDir            : 删除目录下所有东西
-            deleteFilesInDir          : 删除目录下所有文件
-            deleteFilesInDirWithFilter: 删除目录下所有过滤的文件
-            listFilesInDir            : 获取目录下所有文件
-            listFilesInDirWithFilter  : 获取目录下所有过滤的文件
-            getFileLastModified       : 获取文件最后修改的毫秒时间戳
-            getFileCharsetSimple      : 简单获取文件编码格式
-            getFileLines              : 获取文件行数
-            getDirSize                : 获取目录大小
-            getFileSize               : 获取文件大小
-            getDirLength              : 获取目录长度
-            getFileLength             : 获取文件长度
-            getFileMD5                : 获取文件的 MD5 校验码
-            getFileMD5ToString        : 获取文件的 MD5 校验码
-            getDirName                : 根据全路径获取最长目录
-            getFileName               : 根据全路径获取文件名
-            getFileNameNoExtension    : 根据全路径获取文件名不带拓展名
-            getFileExtension          : 根据全路径获取文件拓展名
-
-
-
-            Fragment 相关 -> FragmentUtils.java -> Demo
-            add                   : 新增 fragment
-            show                  : 显示 fragment
-            hide                  : 隐藏 fragment
-            showHide              : 先显示后隐藏 fragment
-            replace               : 替换 fragment
-            pop                   : 出栈 fragment
-            popTo                 : 出栈到指定 fragment
-            popAll                : 出栈所有 fragment
-            remove                : 移除 fragment
-            removeTo              : 移除到指定 fragment
-            removeAll             : 移除所有 fragment
-            getTop                : 获取顶部 fragment
-            getTopInStack         : 获取栈中顶部 fragment
-            getTopShow            : 获取顶部可见 fragment
-            getTopShowInStack     : 获取栈中顶部可见 fragment
-            getFragments          : 获取同级别的 fragment
-            getFragmentsInStack   : 获取同级别栈中的 fragment
-            getAllFragments       : 获取所有 fragment
-            getAllFragmentsInStack: 获取栈中所有 fragment
-            findFragment          : 查找 fragment
-            dispatchBackPress     : 处理 fragment 回退键
-            setBackgroundColor    : 设置背景色
-            setBackgroundResource : 设置背景资源
-            setBackground         : 设置背景
-
-
-
-            图片相关 -> ImageUtils.java -> Demo
-            bitmap2Bytes, bytes2Bitmap      : bitmap 与 byteArr 互转
-            drawable2Bitmap, bitmap2Drawable: drawable 与 bitmap 互转
-            drawable2Bytes, bytes2Drawable  : drawable 与 byteArr 互转
-            view2Bitmap                     : view 转 bitmap
-            getBitmap                       : 获取 bitmap
-            scale                           : 缩放图片
-            clip                            : 裁剪图片
-            skew                            : 倾斜图片
-            rotate                          : 旋转图片
-            getRotateDegree                 : 获取图片旋转角度
-            toRound                         : 转为圆形图片
-            toRoundCorner                   : 转为圆角图片
-            addCornerBorder                 : 添加圆角边框
-            addCircleBorder                 : 添加圆形边框
-            addReflection                   : 添加倒影
-            addTextWatermark                : 添加文字水印
-            addImageWatermark               : 添加图片水印
-            toAlpha                         : 转为 alpha 位图
-            toGray                          : 转为灰度图片
-            fastBlur                        : 快速模糊
-            renderScriptBlur                : renderScript 模糊图片
-            stackBlur                       : stack 模糊图片
-            save                            : 保存图片
-            isImage                         : 根据文件名判断文件是否为图片
-            getImageType                    : 获取图片类型
-            compressByScale                 : 按缩放压缩
-            compressByQuality               : 按质量压缩
-            compressBySampleSize            : 按采样大小压缩
-
-
-
-            意图相关 -> IntentUtils.java
-            getInstallAppIntent        : 获取安装 App（支持 6.0）的意图
-            getUninstallAppIntent      : 获取卸载 App 的意图
-            getLaunchAppIntent         : 获取打开 App 的意图
-            getAppDetailsSettingsIntent: 获取 App 具体设置的意图
-            getShareTextIntent         : 获取分享文本的意图
-            getShareImageIntent        : 获取分享图片的意图
-            getComponentIntent         : 获取其他应用组件的意图
-            getShutdownIntent          : 获取关机的意图
-            getCaptureIntent           : 获取拍照的意图
-
-
-
-            键盘相关 -> KeyboardUtils.java -> Demo
-            showSoftInput                   : 动态显示软键盘
-            hideSoftInput                   : 动态隐藏软键盘
-            toggleSoftInput                 : 切换键盘显示与否状态
-            isSoftInputVisible              : 判断软键盘是否可见
-            registerSoftInputChangedListener: 注册软键盘改变监听器
-            clickBlankArea2HideSoftInput    : 点击屏幕空白区域隐藏软键盘
-
-
-
-            日志相关 -> LogUtils.java -> Demo
-            getConfig               : 获取 log 配置
-            Config.setLogSwitch     : 设置 log 总开关
-            Config.setConsoleSwitch : 设置 log 控制台开关
-            Config.setGlobalTag     : 设置 log 全局 tag
-            Config.setLogHeadSwitch : 设置 log 头部信息开关
-            Config.setLog2FileSwitch: 设置 log 文件开关
-            Config.setDir           : 设置 log 文件存储目录
-            Config.setFilePrefix    : 设置 log 文件前缀
-            Config.setBorderSwitch  : 设置 log 边框开关
-            Config.setConsoleFilter : 设置 log 控制台过滤器
-            Config.setFileFilter    : 设置 log 文件过滤器
-            Config.setStackDeep     : 设置 log 栈深度
-            v                       : tag 为类名的 Verbose 日志
-            vTag                    : 自定义 tag 的 Verbose 日志
-            d                       : tag 为类名的 Debug 日志
-            dTag                    : 自定义 tag 的 Debug 日志
-            i                       : tag 为类名的 Info 日志
-            iTag                    : 自定义 tag 的 Info 日志
-            w                       : tag 为类名的 Warn 日志
-            wTag                    : 自定义 tag 的 Warn 日志
-            e                       : tag 为类名的 Error 日志
-            eTag                    : 自定义 tag 的 Error 日志
-            a                       : tag 为类名的 Assert 日志
-            aTag                    : 自定义 tag 的 Assert 日志
-            file                    : log 到文件
-            json                    : log 字符串之 json
-            xml                     : log 字符串之 xml
-
-
-
-            网络相关 -> NetworkUtils.java -> Demo
-            openWirelessSettings  : 打开网络设置界面
-            isConnected           : 判断网络是否连接
-            isAvailableByPing     : 判断网络是否可用
-            getMobileDataEnabled  : 判断移动数据是否打开
-            setMobileDataEnabled  : 打开或关闭移动数据
-            isMobileData          : 判断网络是否是移动数据
-            is4G                  : 判断网络是否是 4G
-            getWifiEnabled        : 判断 wifi 是否打开
-            setWifiEnabled        : 打开或关闭 wifi
-            isWifiConnected       : 判断 wifi 是否连接状态
-            isWifiAvailable       : 判断 wifi 数据是否可用
-            getNetworkOperatorName: 获取移动网络运营商名称
-            getNetworkType        : 获取当前网络类型
-            getIPAddress          : 获取 IP 地址
-            getDomainAddress      : 获取域名 ip 地址
-
-
-
-            对象相关 -> ObjectUtils.java -> Test
-            isEmpty   : 判断对象是否为空
-            isNotEmpty: 判断对象是否非空
-            equals    : 判断对象是否相等
-
-
-
-            手机相关 -> PhoneUtils.java -> Demo
-            isPhone            : 判断设备是否是手机
-            getIMEI            : 获取 IMEI 码
-            getIMSI            : 获取 IMSI 码
-            getPhoneType       : 获取移动终端类型
-            isSimCardReady     : 判断 sim 卡是否准备好
-            getSimOperatorName : 获取 Sim 卡运营商名称
-            getSimOperatorByMnc: 获取 Sim 卡运营商名称
-            getPhoneStatus     : 获取手机状态信息
-            dial               : 跳至拨号界面
-            call               : 拨打 phoneNumber
-            sendSms            : 跳至发送短信界面
-            sendSmsSilent      : 发送短信
-            getAllContactInfo  : 获取手机联系人
-            getContactNum      : 打开手机联系人界面点击联系人后便获取该号码
-            getAllSMS          : 获取手机短信并保存到 xml 中
-
-
-
-            进程相关 -> ProcessUtils.java -> Demo
-            getForegroundProcessName  : 获取前台线程包名
-            killAllBackgroundProcesses: 杀死所有的后台服务进程
-            killBackgroundProcesses   : 杀死后台服务进程
-
-
-
-            正则相关 -> RegexUtils.java -> Test
-            isMobileSimple : 验证手机号（简单）
-            isMobileExact  : 验证手机号（精确）
-            isTel          : 验证电话号码
-            isIDCard15     : 验证身份证号码 15 位
-            isIDCard18     : 验证身份证号码 18 位
-            isEmail        : 验证邮箱
-            isURL          : 验证 URL
-            isZh           : 验证汉字
-            isUsername     : 验证用户名
-            isDate         : 验证 yyyy-MM-dd 格式的日期校验，已考虑平闰年
-            isIP           : 验证 IP 地址
-            isMatch        : 判断是否匹配正则
-            getMatches     : 获取正则匹配的部分
-            getSplits      : 获取正则匹配分组
-            getReplaceFirst: 替换正则匹配的第一部分
-            getReplaceAll  : 替换所有正则匹配的部分
-
-
-
-            屏幕相关 -> ScreenUtils.java
-            getScreenWidth     : 获取屏幕的宽度（单位：px）
-            getScreenHeight    : 获取屏幕的高度（单位：px）
-            getScreenDensity   : 获取屏幕密度
-            getScreenDensityDpi: 获取屏幕密度 DPI
-            setFullScreen      : 设置屏幕为全屏
-            setLandscape       : 设置屏幕为横屏
-            setPortrait        : 设置屏幕为竖屏
-            isLandscape        : 判断是否横屏
-            isPortrait         : 判断是否竖屏
-            getScreenRotation  : 获取屏幕旋转角度
-            screenShot         : 截屏
-            isScreenLock       : 判断是否锁屏
-            setSleepDuration   : 设置进入休眠时长
-            getSleepDuration   : 获取进入休眠时长
-            isTablet           : 判断是否是平板
-
-
-
-            SD 卡相关 -> SDCardUtils.java -> Demo
-            isSDCardEnable: 判断 SD 卡是否可用
-            getSDCardPaths: 获取 SD 卡路径
-
-
-
-            服务相关 -> ServiceUtils.java
-            getAllRunningService: 获取所有运行的服务
-            startService        : 启动服务
-            stopService         : 停止服务
-            bindService         : 绑定服务
-            unbindService       : 解绑服务
-            isServiceRunning    : 判断服务是否运行
-
-
-
-            Shell 相关 -> ShellUtils.java
-            execCmd: 是否是在 root 下执行命令
-
-
-
-            尺寸相关 -> SizeUtils.java
-            dp2px, px2dp     : dp 与 px 转换
-            sp2px, px2sp     : sp 与 px 转换
-            applyDimension   : 各种单位转换
-            forceGetViewSize : 在 onCreate 中获取视图的尺寸
-            measureView      : 测量视图尺寸
-            getMeasuredWidth : 获取测量视图宽度
-            getMeasuredHeight: 获取测量视图高度
-
-
-
-            Snackbar 相关 -> SnackbarUtils.java -> Demo
-            with           : 设置 snackbar 依赖 view
-            setMessage     : 设置消息
-            setMessageColor: 设置消息颜色
-            setBgColor     : 设置背景色
-            setBgResource  : 设置背景资源
-            setDuration    : 设置显示时长
-            setAction      : 设置行为
-            setBottomMargin: 设置底边距
-            show           : 显示 snackbar
-            showSuccess    : 显示预设成功的 snackbar
-            showWarning    : 显示预设警告的 snackbar
-            showError      : 显示预设错误的 snackbar
-            dismiss        : 消失 snackbar
-            getView        : 获取 snackbar 视图
-            addView        : 添加 snackbar 视图
-
-
-
-            SpannableString 相关 -> SpanUtils.java -> Demo
-            setFlag           : 设置标识
-            setForegroundColor: 设置前景色
-            setBackgroundColor: 设置背景色
-            setLineHeight     : 设置行高
-            setQuoteColor     : 设置引用线的颜色
-            setLeadingMargin  : 设置缩进
-            setBullet         : 设置列表标记
-            setIconMargin     : 设置图标
-            setFontSize       : 设置字体尺寸
-            setFontProportion : 设置字体比例
-            setFontXProportion: 设置字体横向比例
-            setStrikethrough  : 设置删除线
-            setUnderline      : 设置下划线
-            setSuperscript    : 设置上标
-            setSubscript      : 设置下标
-            setBold           : 设置粗体
-            setItalic         : 设置斜体
-            setBoldItalic     : 设置粗斜体
-            setFontFamily     : 设置字体系列
-            setTypeface       : 设置字体
-            setAlign          : 设置对齐
-            setClickSpan      : 设置点击事件
-            setUrl            : 设置超链接
-            setBlur           : 设置模糊
-            setShader         : 设置着色器
-            setShadow         : 设置阴影
-            setSpans          : 设置样式
-            append            : 追加样式字符串
-            appendLine        : 追加一行样式字符串
-            appendImage       : 追加图片
-            appendSpace       : 追加空白
-            create            : 创建样式字符串
-
-
-
-            SP 相关 -> SPUtils.java -> Test
-            getInstance: 获取 SP 实例
-            put        : SP 中写入数据
-            getString  : SP 中读取 String
-            getInt     : SP 中读取 int
-            getLong    : SP 中读取 long
-            getFloat   : SP 中读取 float
-            getBoolean : SP 中读取 boolean
-            getAll     : SP 中获取所有键值对
-            contains   : SP 中是否存在该 key
-            remove     : SP 中移除该 key
-            clear      : SP 中清除所有数据
-
-
-
-            字符串相关 -> StringUtils.java -> Test
-            isEmpty         : 判断字符串是否为 null 或长度为 0
-            isTrimEmpty     : 判断字符串是否为 null 或全为空格
-            isSpace         : 判断字符串是否为 null 或全为空白字符
-            equals          : 判断两字符串是否相等
-            equalsIgnoreCase: 判断两字符串忽略大小写是否相等
-            null2Length0    : null 转为长度为 0 的字符串
-            length          : 返回字符串长度
-            upperFirstLetter: 首字母大写
-            lowerFirstLetter: 首字母小写
-            reverse         : 反转字符串
-            toDBC           : 转化为半角字符
-            toSBC           : 转化为全角字符
-
-
-
-            时间相关 -> TimeUtils.java -> Test
-            millis2String           : 将时间戳转为时间字符串
-            string2Millis           : 将时间字符串转为时间戳
-            string2Date             : 将时间字符串转为 Date 类型
-            date2String             : 将 Date 类型转为时间字符串
-            date2Millis             : 将 Date 类型转为时间戳
-            millis2Date             : 将时间戳转为 Date 类型
-            getTimeSpan             : 获取两个时间差（单位：unit）
-            getFitTimeSpan          : 获取合适型两个时间差
-            getNowMills             : 获取当前毫秒时间戳
-            getNowString            : 获取当前时间字符串
-            getNowDate              : 获取当前 Date
-            getTimeSpanByNow        : 获取与当前时间的差（单位：unit）
-            getFitTimeSpanByNow     : 获取合适型与当前时间的差
-            getFriendlyTimeSpanByNow: 获取友好型与当前时间的差
-            getMillis               : 获取与给定时间等于时间差的时间戳
-            getString               : 获取与给定时间等于时间差的时间字符串
-            getDate                 : 获取与给定时间等于时间差的 Date
-            getMillisByNow          : 获取与当前时间等于时间差的时间戳
-            getStringByNow          : 获取与当前时间等于时间差的时间字符串
-            getDateByNow            : 获取与当前时间等于时间差的 Date
-            isToday                 : 判断是否今天
-            isLeapYear              : 判断是否闰年
-            getChineseWeek          : 获取中式星期
-            getUSWeek               : 获取美式式星期
-            getWeekIndex            : 获取星期索引
-            getWeekOfMonth          : 获取月份中的第几周
-            getWeekOfYear           : 获取年份中的第几周
-            getChineseZodiac        : 获取生肖
-            getZodiac               : 获取星座
-
-
-
-            吐司相关 -> ToastUtils.java -> Demo
-            setGravity     : 设置吐司位置
-            setBgColor     : 设置背景颜色
-            setBgResource  : 设置背景资源
-            setMessageColor: 设置消息颜色
-            showShort      : 显示短时吐司
-            showLong       : 显示长时吐司
-            showCustomShort: 显示短时自定义吐司
-            showCustomLong : 显示长时自定义吐司
-            cancel         : 取消吐司显示
-
-
-
-            压缩相关 -> ZipUtils.java -> Test
-            zipFile           : 压缩文件
-            unzipFile         : 解压文件
-            unzipFileByKeyword: 解压带有关键字的文件
-            getFilesPath      : 获取压缩文件中的文件路径链表
-            getComments       : 获取压缩文件中的注释链表
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         *
-         */
+                /*
+                 * 关于 AndroidUtilCode 工具包的使用教程如下：
+                 *
+                 * 教程网址：https://www.jianshu.com/p/72494773aace
+                 *
+                 * ActivityUtils.java -> Demo 使用参考值
+                 * isActivityExists               : 判断 Activity 是否存在
+                 * startActivity                  : 启动 Activity
+                 * startActivities                : 启动多个 Activity
+                 * startHomeActivity              : 回到桌面
+                 * getActivityList                : 获取 Activity 栈链表
+                 * getLauncherActivity            : 获取启动项 Activity
+                 * getTopActivity                 : 获取栈顶 Activity
+                 * isActivityExistsInStack        : 判断 Activity 是否存在栈中
+                 * finishActivity                 : 结束 Activity
+                 * finishToActivity               : 结束到指定 Activity
+                 * finishOtherActivities          : 结束所有其他类型的 Activity
+                 * finishAllActivities            : 结束所有 Activity
+                 * finishAllActivitiesExceptNewest: 结束除最新之外的所有 Activity
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *AppUtils.java -> Demo 使用参考值
+                 * isInstallApp         : 判断 App 是否安装
+                 * installApp           : 安装 App（支持 8.0）
+                 * installAppSilent     : 静默安装 App
+                 * uninstallApp         : 卸载 App
+                 * uninstallAppSilent   : 静默卸载 App
+                 * isAppRoot            : 判断 App 是否有 root 权限
+                 * launchApp            : 打开 App
+                 * exitApp              : 关闭应用
+                 * getAppPackageName    : 获取 App 包名
+                 * getAppDetailsSettings: 获取 App 具体设置
+                 * getAppName           : 获取 App 名称
+                 * getAppIcon           : 获取 App 图标
+                 * getAppPath           : 获取 App 路径
+                 * getAppVersionName    : 获取 App 版本号
+                 * getAppVersionCode    : 获取 App 版本码
+                 * isSystemApp          : 判断 App 是否是系统应用
+                 * isAppDebug           : 判断 App 是否是 Debug 版本
+                 * getAppSignature      : 获取 App 签名
+                 * getAppSignatureSHA1  : 获取应用签名的的 SHA1 值
+                 * isAppForeground      : 判断 App 是否处于前台
+                 * getForegroundApp     : 获取前台应用包名
+                 * getAppInfo           : 获取 App 信息
+                 * getAppsInfo          : 获取所有已安装 App 信息
+                 * cleanAppData         : 清除 App 所有数据
+                 *
+                 *
+                 *
+                 * BarUtils.java -> Demo 使用参考值
+                 * getStatusBarHeight                   : 获取状态栏高度（px）
+                 * setStatusBarVisibility               : 设置状态栏是否可见
+                 * isStatusBarVisible                   : 判断状态栏是否可见
+                 * addMarginTopEqualStatusBarHeight     : 为 view 增加 MarginTop 为状态栏高度
+                 * subtractMarginTopEqualStatusBarHeight: 为 view 减少 MarginTop 为状态栏高度
+                 * setStatusBarColor                    : 设置状态栏颜色
+                 * setStatusBarAlpha                    : 设置状态栏透明度
+                 * setStatusBarColor4Drawer             : 为 DrawerLayout 设置状态栏颜色
+                 * setStatusBarAlpha4Drawer             : 为 DrawerLayout 设置状态栏透明度
+                 * getActionBarHeight                   : 获取 ActionBar 高度
+                 * setNotificationBarVisibility         : 设置通知栏是否可见
+                 * getNavBarHeight                      : 获取导航栏高度
+                 * setNavBarVisibility                  : 设置导航栏是否可见
+                 * setNavBarImmersive                   : 设置导航栏沉浸式
+                 * isNavBarVisible                      : 判断导航栏是否可见
+                 *
+                 *
+                 *
+                 *
+                 *缓存相关 -> CacheUtils.java -> Test
+                    getInstance    : 获取缓存实例
+                    put            : 缓存中写入数据
+                    getBytes       : 缓存中读取字节数组
+                    getString      : 缓存中读取 String
+                    getJSONObject  : 缓存中读取 JSONObject
+                    getJSONArray   : 缓存中读取 JSONArray
+                    getBitmap      : 缓存中读取 Bitmap
+                    getDrawable    : 缓存中读取 Drawable
+                    getParcelable  : 缓存中读取 Parcelable
+                    getSerializable: 缓存中读取 Serializable
+                    getCacheSize   : 获取缓存大小
+                    getCacheCount  : 获取缓存个数
+                    remove         : 根据键值移除缓存
+                    clear          : 清除所有缓存
+                 *
+                 *
+                 *
+                 *
+                 *
+                 * 清除相关 -> CleanUtils.java -> Demo
+                    cleanInternalCache   : 清除内部缓存
+                    cleanInternalFiles   : 清除内部文件
+                    cleanInternalDbs     : 清除内部数据库
+                    cleanInternalDbByName: 根据名称清除数据库
+                    cleanInternalSP      : 清除内部 SP
+                    cleanExternalCache   : 清除外部缓存
+                    cleanCustomCache     : 清除自定义目录下的文件
+                    * 关闭相关 -> CloseUtils.java
+                    closeIO       : 关闭 IO
+                    closeIOQuietly: 安静关闭 IO
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *转换相关 -> ConvertUtils.java -> Test
+                    bytes2HexString, hexString2Bytes        : byteArr 与 hexString 互转
+                    chars2Bytes, bytes2Chars                : charArr 与 byteArr 互转
+                    memorySize2Byte, byte2MemorySize        : 以 unit 为单位的内存大小与字节数互转
+                    byte2FitMemorySize                      : 字节数转合适内存大小
+                    timeSpan2Millis, millis2TimeSpan        : 以 unit 为单位的时间长度与毫秒时间戳互转
+                    millis2FitTimeSpan                      : 毫秒时间戳转合适时间长度
+                    bytes2Bits, bits2Bytes                  : bytes 与 bits 互转
+                    input2OutputStream, output2InputStream  : inputStream 与 outputStream 互转
+                    inputStream2Bytes, bytes2InputStream    : inputStream 与 byteArr 互转
+                    outputStream2Bytes, bytes2OutputStream  : outputStream 与 byteArr 互转
+                    inputStream2String, string2InputStream  : inputStream 与 string 按编码互转
+                    outputStream2String, string2OutputStream: outputStream 与 string 按编码互转
+                    bitmap2Bytes, bytes2Bitmap              : bitmap 与 byteArr 互转
+                    drawable2Bitmap, bitmap2Drawable        : drawable 与 bitmap 互转
+                    drawable2Bytes, bytes2Drawable          : drawable 与 byteArr 互转
+                    view2Bitmap                             : view 转 Bitmap
+                    dp2px, px2dp                            : dp 与 px 互转
+                    sp2px, px2sp                            : sp 与 px 互转
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 * 设备相关 -> DeviceUtils.java -> Demo
+                    isDeviceRooted   : 判断设备是否 rooted
+                    getSDKVersion    : 获取设备系统版本号
+                    getAndroidID     : 获取设备 AndroidID
+                    getMacAddress    : 获取设备 MAC 地址
+                    getManufacturer  : 获取设备厂商
+                    getModel         : 获取设备型号
+                    shutdown         : 关机
+                    reboot           : 重启
+                    reboot2Recovery  : 重启到 recovery
+                    reboot2Bootloader: 重启到 bootloader
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *判空相关 -> EmptyUtils.java -> Test
+                    isEmpty   : 判断对象是否为空
+                    isNotEmpty: 判断对象是否非空
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *编码解码相关 -> EncodeUtils.java -> Test
+                    urlEncode          : URL 编码
+                    urlDecode          : URL 解码
+                    base64Encode       : Base64 编码
+                    base64Encode2String: Base64 编码
+                    base64Decode       : Base64 解码
+                    base64UrlSafeEncode: Base64URL 安全编码
+                    htmlEncode         : Html 编码
+                    htmlDecode         : Html 解码
+
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *加密解密相关 -> EncryptUtils.java -> Test
+                    encryptMD2, encryptMD2ToString                        : MD2 加密
+                    encryptMD5, encryptMD5ToString                        : MD5 加密
+                    encryptMD5File, encryptMD5File2String                 : MD5 加密文件
+                    encryptSHA1, encryptSHA1ToString                      : SHA1 加密
+                    encryptSHA224, encryptSHA224ToString                  : SHA224 加密
+                    encryptSHA256, encryptSHA256ToString                  : SHA256 加密
+                    encryptSHA384, encryptSHA384ToString                  : SHA384 加密
+                    encryptSHA512, encryptSHA512ToString                  : SHA512 加密
+                    encryptHmacMD5, encryptHmacMD5ToString                : HmacMD5 加密
+                    encryptHmacSHA1, encryptHmacSHA1ToString              : HmacSHA1 加密
+                    encryptHmacSHA224, encryptHmacSHA224ToString          : HmacSHA224 加密
+                    encryptHmacSHA256, encryptHmacSHA256ToString          : HmacSHA256 加密
+                    encryptHmacSHA384, encryptHmacSHA384ToString          : HmacSHA384 加密
+                    encryptHmacSHA512, encryptHmacSHA512ToString          : HmacSHA512 加密
+                    encryptDES, encryptDES2HexString, encryptDES2Base64   : DES 加密
+                    decryptDES, decryptHexStringDES, decryptBase64DES     : DES 解密
+                    encrypt3DES, encrypt3DES2HexString, encrypt3DES2Base64: 3DES 加密
+                    decrypt3DES, decryptHexString3DES, decryptBase64_3DES : 3DES 解密
+                    encryptAES, encryptAES2HexString, encryptAES2Base64   : AES 加密
+                    decryptAES, decryptHexStringAES, decryptBase64AES     : AES 解密
+
+
+
+                    文件相关 -> FileIOUtils.java -> Test
+                    writeFileFromIS            : 将输入流写入文件
+                    writeFileFromBytesByStream : 将字节数组写入文件
+                    writeFileFromBytesByChannel: 将字节数组写入文件
+                    writeFileFromBytesByMap    : 将字节数组写入文件
+                    writeFileFromString        : 将字符串写入文件
+                    readFile2List              : 读取文件到字符串链表中
+                    readFile2String            : 读取文件到字符串中
+                    readFile2BytesByStream     : 读取文件到字节数组中
+                    readFile2BytesByChannel    : 读取文件到字节数组中
+                    readFile2BytesByMap        : 读取文件到字节数组中
+                    setBufferSize              : 设置缓冲区尺寸
+
+
+
+                    文件相关 -> FileUtils.java -> Test
+                    getFileByPath             : 根据文件路径获取文件
+                    isFileExists              : 判断文件是否存在
+                    rename                    : 重命名文件
+                    isDir                     : 判断是否是目录
+                    isFile                    : 判断是否是文件
+                    createOrExistsDir         : 判断目录是否存在，不存在则判断是否创建成功
+                    createOrExistsFile        : 判断文件是否存在，不存在则判断是否创建成功
+                    createFileByDeleteOldFile : 判断文件是否存在，存在则在创建之前删除
+                    copyDir                   : 复制目录
+                    copyFile                  : 复制文件
+                    moveDir                   : 移动目录
+                    moveFile                  : 移动文件
+                    deleteDir                 : 删除目录
+                    deleteFile                : 删除文件
+                    deleteAllInDir            : 删除目录下所有东西
+                    deleteFilesInDir          : 删除目录下所有文件
+                    deleteFilesInDirWithFilter: 删除目录下所有过滤的文件
+                    listFilesInDir            : 获取目录下所有文件
+                    listFilesInDirWithFilter  : 获取目录下所有过滤的文件
+                    getFileLastModified       : 获取文件最后修改的毫秒时间戳
+                    getFileCharsetSimple      : 简单获取文件编码格式
+                    getFileLines              : 获取文件行数
+                    getDirSize                : 获取目录大小
+                    getFileSize               : 获取文件大小
+                    getDirLength              : 获取目录长度
+                    getFileLength             : 获取文件长度
+                    getFileMD5                : 获取文件的 MD5 校验码
+                    getFileMD5ToString        : 获取文件的 MD5 校验码
+                    getDirName                : 根据全路径获取最长目录
+                    getFileName               : 根据全路径获取文件名
+                    getFileNameNoExtension    : 根据全路径获取文件名不带拓展名
+                    getFileExtension          : 根据全路径获取文件拓展名
+
+
+
+                    Fragment 相关 -> FragmentUtils.java -> Demo
+                    add                   : 新增 fragment
+                    show                  : 显示 fragment
+                    hide                  : 隐藏 fragment
+                    showHide              : 先显示后隐藏 fragment
+                    replace               : 替换 fragment
+                    pop                   : 出栈 fragment
+                    popTo                 : 出栈到指定 fragment
+                    popAll                : 出栈所有 fragment
+                    remove                : 移除 fragment
+                    removeTo              : 移除到指定 fragment
+                    removeAll             : 移除所有 fragment
+                    getTop                : 获取顶部 fragment
+                    getTopInStack         : 获取栈中顶部 fragment
+                    getTopShow            : 获取顶部可见 fragment
+                    getTopShowInStack     : 获取栈中顶部可见 fragment
+                    getFragments          : 获取同级别的 fragment
+                    getFragmentsInStack   : 获取同级别栈中的 fragment
+                    getAllFragments       : 获取所有 fragment
+                    getAllFragmentsInStack: 获取栈中所有 fragment
+                    findFragment          : 查找 fragment
+                    dispatchBackPress     : 处理 fragment 回退键
+                    setBackgroundColor    : 设置背景色
+                    setBackgroundResource : 设置背景资源
+                    setBackground         : 设置背景
+
+
+
+                    图片相关 -> ImageUtils.java -> Demo
+                    bitmap2Bytes, bytes2Bitmap      : bitmap 与 byteArr 互转
+                    drawable2Bitmap, bitmap2Drawable: drawable 与 bitmap 互转
+                    drawable2Bytes, bytes2Drawable  : drawable 与 byteArr 互转
+                    view2Bitmap                     : view 转 bitmap
+                    getBitmap                       : 获取 bitmap
+                    scale                           : 缩放图片
+                    clip                            : 裁剪图片
+                    skew                            : 倾斜图片
+                    rotate                          : 旋转图片
+                    getRotateDegree                 : 获取图片旋转角度
+                    toRound                         : 转为圆形图片
+                    toRoundCorner                   : 转为圆角图片
+                    addCornerBorder                 : 添加圆角边框
+                    addCircleBorder                 : 添加圆形边框
+                    addReflection                   : 添加倒影
+                    addTextWatermark                : 添加文字水印
+                    addImageWatermark               : 添加图片水印
+                    toAlpha                         : 转为 alpha 位图
+                    toGray                          : 转为灰度图片
+                    fastBlur                        : 快速模糊
+                    renderScriptBlur                : renderScript 模糊图片
+                    stackBlur                       : stack 模糊图片
+                    save                            : 保存图片
+                    isImage                         : 根据文件名判断文件是否为图片
+                    getImageType                    : 获取图片类型
+                    compressByScale                 : 按缩放压缩
+                    compressByQuality               : 按质量压缩
+                    compressBySampleSize            : 按采样大小压缩
+
+
+
+                    意图相关 -> IntentUtils.java
+                    getInstallAppIntent        : 获取安装 App（支持 6.0）的意图
+                    getUninstallAppIntent      : 获取卸载 App 的意图
+                    getLaunchAppIntent         : 获取打开 App 的意图
+                    getAppDetailsSettingsIntent: 获取 App 具体设置的意图
+                    getShareTextIntent         : 获取分享文本的意图
+                    getShareImageIntent        : 获取分享图片的意图
+                    getComponentIntent         : 获取其他应用组件的意图
+                    getShutdownIntent          : 获取关机的意图
+                    getCaptureIntent           : 获取拍照的意图
+
+
+
+                    键盘相关 -> KeyboardUtils.java -> Demo
+                    showSoftInput                   : 动态显示软键盘
+                    hideSoftInput                   : 动态隐藏软键盘
+                    toggleSoftInput                 : 切换键盘显示与否状态
+                    isSoftInputVisible              : 判断软键盘是否可见
+                    registerSoftInputChangedListener: 注册软键盘改变监听器
+                    clickBlankArea2HideSoftInput    : 点击屏幕空白区域隐藏软键盘
+
+
+
+                    日志相关 -> LogUtils.java -> Demo
+                    getConfig               : 获取 log 配置
+                    Config.setLogSwitch     : 设置 log 总开关
+                    Config.setConsoleSwitch : 设置 log 控制台开关
+                    Config.setGlobalTag     : 设置 log 全局 tag
+                    Config.setLogHeadSwitch : 设置 log 头部信息开关
+                    Config.setLog2FileSwitch: 设置 log 文件开关
+                    Config.setDir           : 设置 log 文件存储目录
+                    Config.setFilePrefix    : 设置 log 文件前缀
+                    Config.setBorderSwitch  : 设置 log 边框开关
+                    Config.setConsoleFilter : 设置 log 控制台过滤器
+                    Config.setFileFilter    : 设置 log 文件过滤器
+                    Config.setStackDeep     : 设置 log 栈深度
+                    v                       : tag 为类名的 Verbose 日志
+                    vTag                    : 自定义 tag 的 Verbose 日志
+                    d                       : tag 为类名的 Debug 日志
+                    dTag                    : 自定义 tag 的 Debug 日志
+                    i                       : tag 为类名的 Info 日志
+                    iTag                    : 自定义 tag 的 Info 日志
+                    w                       : tag 为类名的 Warn 日志
+                    wTag                    : 自定义 tag 的 Warn 日志
+                    e                       : tag 为类名的 Error 日志
+                    eTag                    : 自定义 tag 的 Error 日志
+                    a                       : tag 为类名的 Assert 日志
+                    aTag                    : 自定义 tag 的 Assert 日志
+                    file                    : log 到文件
+                    json                    : log 字符串之 json
+                    xml                     : log 字符串之 xml
+
+
+
+                    网络相关 -> NetworkUtils.java -> Demo
+                    openWirelessSettings  : 打开网络设置界面
+                    isConnected           : 判断网络是否连接
+                    isAvailableByPing     : 判断网络是否可用
+                    getMobileDataEnabled  : 判断移动数据是否打开
+                    setMobileDataEnabled  : 打开或关闭移动数据
+                    isMobileData          : 判断网络是否是移动数据
+                    is4G                  : 判断网络是否是 4G
+                    getWifiEnabled        : 判断 wifi 是否打开
+                    setWifiEnabled        : 打开或关闭 wifi
+                    isWifiConnected       : 判断 wifi 是否连接状态
+                    isWifiAvailable       : 判断 wifi 数据是否可用
+                    getNetworkOperatorName: 获取移动网络运营商名称
+                    getNetworkType        : 获取当前网络类型
+                    getIPAddress          : 获取 IP 地址
+                    getDomainAddress      : 获取域名 ip 地址
+
+
+
+                    对象相关 -> ObjectUtils.java -> Test
+                    isEmpty   : 判断对象是否为空
+                    isNotEmpty: 判断对象是否非空
+                    equals    : 判断对象是否相等
+
+
+
+                    手机相关 -> PhoneUtils.java -> Demo
+                    isPhone            : 判断设备是否是手机
+                    getIMEI            : 获取 IMEI 码
+                    getIMSI            : 获取 IMSI 码
+                    getPhoneType       : 获取移动终端类型
+                    isSimCardReady     : 判断 sim 卡是否准备好
+                    getSimOperatorName : 获取 Sim 卡运营商名称
+                    getSimOperatorByMnc: 获取 Sim 卡运营商名称
+                    getPhoneStatus     : 获取手机状态信息
+                    dial               : 跳至拨号界面
+                    call               : 拨打 phoneNumber
+                    sendSms            : 跳至发送短信界面
+                    sendSmsSilent      : 发送短信
+                    getAllContactInfo  : 获取手机联系人
+                    getContactNum      : 打开手机联系人界面点击联系人后便获取该号码
+                    getAllSMS          : 获取手机短信并保存到 xml 中
+
+
+
+                    进程相关 -> ProcessUtils.java -> Demo
+                    getForegroundProcessName  : 获取前台线程包名
+                    killAllBackgroundProcesses: 杀死所有的后台服务进程
+                    killBackgroundProcesses   : 杀死后台服务进程
+
+
+
+                    正则相关 -> RegexUtils.java -> Test
+                    isMobileSimple : 验证手机号（简单）
+                    isMobileExact  : 验证手机号（精确）
+                    isTel          : 验证电话号码
+                    isIDCard15     : 验证身份证号码 15 位
+                    isIDCard18     : 验证身份证号码 18 位
+                    isEmail        : 验证邮箱
+                    isURL          : 验证 URL
+                    isZh           : 验证汉字
+                    isUsername     : 验证用户名
+                    isDate         : 验证 yyyy-MM-dd 格式的日期校验，已考虑平闰年
+                    isIP           : 验证 IP 地址
+                    isMatch        : 判断是否匹配正则
+                    getMatches     : 获取正则匹配的部分
+                    getSplits      : 获取正则匹配分组
+                    getReplaceFirst: 替换正则匹配的第一部分
+                    getReplaceAll  : 替换所有正则匹配的部分
+
+
+
+                    屏幕相关 -> ScreenUtils.java
+                    getScreenWidth     : 获取屏幕的宽度（单位：px）
+                    getScreenHeight    : 获取屏幕的高度（单位：px）
+                    getScreenDensity   : 获取屏幕密度
+                    getScreenDensityDpi: 获取屏幕密度 DPI
+                    setFullScreen      : 设置屏幕为全屏
+                    setLandscape       : 设置屏幕为横屏
+                    setPortrait        : 设置屏幕为竖屏
+                    isLandscape        : 判断是否横屏
+                    isPortrait         : 判断是否竖屏
+                    getScreenRotation  : 获取屏幕旋转角度
+                    screenShot         : 截屏
+                    isScreenLock       : 判断是否锁屏
+                    setSleepDuration   : 设置进入休眠时长
+                    getSleepDuration   : 获取进入休眠时长
+                    isTablet           : 判断是否是平板
+
+
+
+                    SD 卡相关 -> SDCardUtils.java -> Demo
+                    isSDCardEnable: 判断 SD 卡是否可用
+                    getSDCardPaths: 获取 SD 卡路径
+
+
+
+                    服务相关 -> ServiceUtils.java
+                    getAllRunningService: 获取所有运行的服务
+                    startService        : 启动服务
+                    stopService         : 停止服务
+                    bindService         : 绑定服务
+                    unbindService       : 解绑服务
+                    isServiceRunning    : 判断服务是否运行
+
+
+
+                    Shell 相关 -> ShellUtils.java
+                    execCmd: 是否是在 root 下执行命令
+
+
+
+                    尺寸相关 -> SizeUtils.java
+                    dp2px, px2dp     : dp 与 px 转换
+                    sp2px, px2sp     : sp 与 px 转换
+                    applyDimension   : 各种单位转换
+                    forceGetViewSize : 在 onCreate 中获取视图的尺寸
+                    measureView      : 测量视图尺寸
+                    getMeasuredWidth : 获取测量视图宽度
+                    getMeasuredHeight: 获取测量视图高度
+
+
+
+                    Snackbar 相关 -> SnackbarUtils.java -> Demo
+                    with           : 设置 snackbar 依赖 view
+                    setMessage     : 设置消息
+                    setMessageColor: 设置消息颜色
+                    setBgColor     : 设置背景色
+                    setBgResource  : 设置背景资源
+                    setDuration    : 设置显示时长
+                    setAction      : 设置行为
+                    setBottomMargin: 设置底边距
+                    show           : 显示 snackbar
+                    showSuccess    : 显示预设成功的 snackbar
+                    showWarning    : 显示预设警告的 snackbar
+                    showError      : 显示预设错误的 snackbar
+                    dismiss        : 消失 snackbar
+                    getView        : 获取 snackbar 视图
+                    addView        : 添加 snackbar 视图
+
+
+
+                    SpannableString 相关 -> SpanUtils.java -> Demo
+                    setFlag           : 设置标识
+                    setForegroundColor: 设置前景色
+                    setBackgroundColor: 设置背景色
+                    setLineHeight     : 设置行高
+                    setQuoteColor     : 设置引用线的颜色
+                    setLeadingMargin  : 设置缩进
+                    setBullet         : 设置列表标记
+                    setIconMargin     : 设置图标
+                    setFontSize       : 设置字体尺寸
+                    setFontProportion : 设置字体比例
+                    setFontXProportion: 设置字体横向比例
+                    setStrikethrough  : 设置删除线
+                    setUnderline      : 设置下划线
+                    setSuperscript    : 设置上标
+                    setSubscript      : 设置下标
+                    setBold           : 设置粗体
+                    setItalic         : 设置斜体
+                    setBoldItalic     : 设置粗斜体
+                    setFontFamily     : 设置字体系列
+                    setTypeface       : 设置字体
+                    setAlign          : 设置对齐
+                    setClickSpan      : 设置点击事件
+                    setUrl            : 设置超链接
+                    setBlur           : 设置模糊
+                    setShader         : 设置着色器
+                    setShadow         : 设置阴影
+                    setSpans          : 设置样式
+                    append            : 追加样式字符串
+                    appendLine        : 追加一行样式字符串
+                    appendImage       : 追加图片
+                    appendSpace       : 追加空白
+                    create            : 创建样式字符串
+
+
+
+                    SP 相关 -> SPUtils.java -> Test
+                    getInstance: 获取 SP 实例
+                    put        : SP 中写入数据
+                    getString  : SP 中读取 String
+                    getInt     : SP 中读取 int
+                    getLong    : SP 中读取 long
+                    getFloat   : SP 中读取 float
+                    getBoolean : SP 中读取 boolean
+                    getAll     : SP 中获取所有键值对
+                    contains   : SP 中是否存在该 key
+                    remove     : SP 中移除该 key
+                    clear      : SP 中清除所有数据
+
+
+
+                    字符串相关 -> StringUtils.java -> Test
+                    isEmpty         : 判断字符串是否为 null 或长度为 0
+                    isTrimEmpty     : 判断字符串是否为 null 或全为空格
+                    isSpace         : 判断字符串是否为 null 或全为空白字符
+                    equals          : 判断两字符串是否相等
+                    equalsIgnoreCase: 判断两字符串忽略大小写是否相等
+                    null2Length0    : null 转为长度为 0 的字符串
+                    length          : 返回字符串长度
+                    upperFirstLetter: 首字母大写
+                    lowerFirstLetter: 首字母小写
+                    reverse         : 反转字符串
+                    toDBC           : 转化为半角字符
+                    toSBC           : 转化为全角字符
+
+
+
+                    时间相关 -> TimeUtils.java -> Test
+                    millis2String           : 将时间戳转为时间字符串
+                    string2Millis           : 将时间字符串转为时间戳
+                    string2Date             : 将时间字符串转为 Date 类型
+                    date2String             : 将 Date 类型转为时间字符串
+                    date2Millis             : 将 Date 类型转为时间戳
+                    millis2Date             : 将时间戳转为 Date 类型
+                    getTimeSpan             : 获取两个时间差（单位：unit）
+                    getFitTimeSpan          : 获取合适型两个时间差
+                    getNowMills             : 获取当前毫秒时间戳
+                    getNowString            : 获取当前时间字符串
+                    getNowDate              : 获取当前 Date
+                    getTimeSpanByNow        : 获取与当前时间的差（单位：unit）
+                    getFitTimeSpanByNow     : 获取合适型与当前时间的差
+                    getFriendlyTimeSpanByNow: 获取友好型与当前时间的差
+                    getMillis               : 获取与给定时间等于时间差的时间戳
+                    getString               : 获取与给定时间等于时间差的时间字符串
+                    getDate                 : 获取与给定时间等于时间差的 Date
+                    getMillisByNow          : 获取与当前时间等于时间差的时间戳
+                    getStringByNow          : 获取与当前时间等于时间差的时间字符串
+                    getDateByNow            : 获取与当前时间等于时间差的 Date
+                    isToday                 : 判断是否今天
+                    isLeapYear              : 判断是否闰年
+                    getChineseWeek          : 获取中式星期
+                    getUSWeek               : 获取美式式星期
+                    getWeekIndex            : 获取星期索引
+                    getWeekOfMonth          : 获取月份中的第几周
+                    getWeekOfYear           : 获取年份中的第几周
+                    getChineseZodiac        : 获取生肖
+                    getZodiac               : 获取星座
+
+
+
+                    吐司相关 -> ToastUtils.java -> Demo
+                    setGravity     : 设置吐司位置
+                    setBgColor     : 设置背景颜色
+                    setBgResource  : 设置背景资源
+                    setMessageColor: 设置消息颜色
+                    showShort      : 显示短时吐司
+                    showLong       : 显示长时吐司
+                    showCustomShort: 显示短时自定义吐司
+                    showCustomLong : 显示长时自定义吐司
+                    cancel         : 取消吐司显示
+
+
+
+                    压缩相关 -> ZipUtils.java -> Test
+                    zipFile           : 压缩文件
+                    unzipFile         : 解压文件
+                    unzipFileByKeyword: 解压带有关键字的文件
+                    getFilesPath      : 获取压缩文件中的文件路径链表
+                    getComments       : 获取压缩文件中的注释链表
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 *
+                 */
 
 
     }

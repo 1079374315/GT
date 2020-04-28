@@ -1,4 +1,4 @@
-package com.gsls.gtlibrary.util
+package com.gsls.gt
 
 /**
  * kotlin GT 扩展类

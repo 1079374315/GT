@@ -1,19 +1,22 @@
-package com.gsls.gtlibrary.entity;
+package com.gsls.gtlibrary.bean;
 
-import java.io.Serializable;
+import com.gsls.gtlibrary.util.GT;
 
-public class LoginBean{
+@GT.Hibernate.GT_Bean
+public class User {
 
     private String userName;
     private String passWord;
+    private int age;
 
-    public LoginBean() {
+    public User() {
         super();
     }
 
-    public LoginBean(String userName, String passWord) {
+    public User(String userName, String passWord, int age) {
         this.userName = userName;
         this.passWord = passWord;
+        this.age = age;
     }
 
     public String getUserName() {
@@ -32,12 +35,20 @@ public class LoginBean{
         this.passWord = passWord;
     }
 
-    @Override
-    public String toString() {
-        return "LoginBean{" +
-                "userName='" + userName + '\'' +
-                ", passWord='" + passWord + '\'' +
-                '}';
+    public int getAge() {
+        return age;
     }
 
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userName='" + userName + '\'' +
+                ", passWord='" + passWord + '\'' +
+                ", age=" + age +
+                '}';
+    }
 }
