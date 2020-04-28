@@ -165,8 +165,6 @@ import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -213,7 +211,7 @@ import okhttp3.RequestBody;
  * <p>
  * <p>
  * <p>
- * * 更新时间:2020.4.28（大爆料：更新 Hibernate 数据库）
+ * * 更新时间:2020.4.28（大爆料：更新 GT_SQL 数据库）
  * * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
  * * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * * 更新内容：（1.1.6 版本）
@@ -224,7 +222,7 @@ import okhttp3.RequestBody;
  * * 2.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
  * * 3.AnnotationActivity、BaseActivity 类中增加 initFragment() 操作方法
  * * 4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
- * * 5.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
+ * * 5.更新 GT_SQL 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
  * <p>
  * <p>
  * <p>
@@ -1776,14 +1774,14 @@ public class GT {
     }
 
     /**
-     * @Hibernate SQL 暂时没有更新好，待更新。。。
+     * @GT_SQL SQL
      */
-    public static class Hibernate {
+    public static class GT_SQL {
 
-        //=============================== 实例化 Hibernate 对象 ====================================
+        //=============================== 实例化 GT_SQL 对象 ====================================
         private Context context;
 
-        public Hibernate() {
+        public GT_SQL() {
             Context context = getGT().getCONTEXT();
             if (context != null) {
                 this.context = context;
@@ -1792,7 +1790,7 @@ public class GT {
             }
         }
 
-        public Hibernate(Context context) {
+        public GT_SQL(Context context) {
             this.context = context;
         }
 
@@ -1888,8 +1886,17 @@ public class GT {
         //修改表字段注解
         @Target({ElementType.FIELD})
         @Retention(RetentionPolicy.RUNTIME)
-        public @interface GT_UpdateValue {
-            String oldTableValue();
+        public @interface GT_DatabaseField {
+            String oldTableValue() default "";
+
+            String defaultValue() default "";
+        }
+
+        //不被持久化
+        @Target({ElementType.FIELD})
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface GT_OnNullValue {
+
         }
 
         //=============================== 数据库属性 ====================================
@@ -2005,7 +2012,7 @@ public class GT {
          *
          * @return
          */
-        public Hibernate close() {
+        public GT_SQL close() {
             if (sqLiteDatabase2 != null) {
                 sqLiteDatabase2.close();
             }
@@ -2014,7 +2021,7 @@ public class GT {
 
         /**
          * @param sqLiteDatabase2
-         * @设置Hibernate数据库的SQL管理对象
+         * @设置GT_SQL数据库的SQL管理对象
          */
         public void setSqLiteDatabase(SQLiteDatabase sqLiteDatabase2) {
             this.sqLiteDatabase2 = sqLiteDatabase2;
@@ -2189,7 +2196,7 @@ public class GT {
          * @return
          * @修改表名称
          */
-        public Hibernate updateTableName(String oldTableName, String NewTableName) {
+        public GT_SQL updateTableName(String oldTableName, String NewTableName) {
             String sql = "ALTER TABLE " + oldTableName + " RENAME TO " + NewTableName;
             sqLiteDatabase2.execSQL(sql);
             return this;
@@ -2222,7 +2229,7 @@ public class GT {
          * @return
          * @删除表
          */
-        public Hibernate deleteTable(String tableName) {
+        public GT_SQL deleteTable(String tableName) {
             String sql = "DROP TABLE " + tableName;
             sqLiteDatabase2.execSQL(sql);
             return this;
@@ -2263,7 +2270,7 @@ public class GT {
          * @return
          * @导入表的数据 (自动匹配相同表字段自动导入数据)
          */
-        public Hibernate inputTableData(String oldTable, String newTable) {
+        public GT_SQL inputTableData(String oldTable, String newTable) {
 
             List<String> tempSQLTableValue = getTableAllValue(oldTable);//获取上个版本表所有字段
             List<String> SQLTableValue = getTableAllValue(newTable);//获取当前最新版本数据库表所有字段
@@ -2296,7 +2303,7 @@ public class GT {
          * @return
          * @导入表的数据 (指定匹配相同表字段自动导入数据)
          */
-        public Hibernate inputTableData(String oldTable, List<String> oldTableList, String newTable, List<String> newTableList) {
+        public GT_SQL inputTableData(String oldTable, List<String> oldTableList, String newTable, List<String> newTableList) {
 
             if (isTable(oldTable) && isTable(newTable)) {//如果当前数据库存在该表
 
@@ -2354,7 +2361,7 @@ public class GT {
          * @return
          * @保存
          */
-        public Hibernate save(String tableName, ContentValues contentValues) {
+        public GT_SQL save(String tableName, ContentValues contentValues) {
             if (!isTable(tableName)) {
                 err(getLineInfo(2), "保存的表不存在，操作失败");
                 status = false;
@@ -2379,7 +2386,7 @@ public class GT {
          * @return
          * @修改
          */
-        public Hibernate update(String tableName, ContentValues contentValues, String condition, String[] valuesArray) {
+        public GT_SQL update(String tableName, ContentValues contentValues, String condition, String[] valuesArray) {
             if (!isTable(tableName)) {
                 err(getLineInfo(2), "修改的表不存在，操作失败");
                 status = false;
@@ -2397,13 +2404,13 @@ public class GT {
         }
 
         /**
-         * @删除
-         * @param tableName     表名
-         * @param condition     条件
-         * @param valuesArray   条件值
+         * @param tableName   表名
+         * @param condition   条件
+         * @param valuesArray 条件值
          * @return
+         * @删除
          */
-        public Hibernate delete(String tableName, String condition, String[] valuesArray){
+        public GT_SQL delete(String tableName, String condition, String[] valuesArray) {
             //进行删除
             if (!isTable(tableName)) {
                 err(getLineInfo(2), "删除的表不存在，操作失败");
@@ -2424,7 +2431,7 @@ public class GT {
          * @return
          * @删除所有表
          */
-        public Hibernate deleteAll(String tableName) {
+        public GT_SQL deleteAll(String tableName) {
 
             //判断这个表是否存在
             if (!isTable(tableName)) {
@@ -2444,13 +2451,13 @@ public class GT {
         }
 
         /**
-         * @查询
-         * @param tableName     表名
-         * @param condition     条件
-         * @param valuesArray   条件值
+         * @param tableName   表名
+         * @param condition   条件
+         * @param valuesArray 条件值
          * @return
+         * @查询
          */
-        public Cursor query(String tableName, String condition, String[] valuesArray){
+        public Cursor query(String tableName, String condition, String[] valuesArray) {
 
             //判断这个表是否存在
             if (!isTable(tableName)) {
@@ -2473,7 +2480,7 @@ public class GT {
          * @return
          * @保存数据
          */
-        public Hibernate save(Object bean) {
+        public GT_SQL save(Object bean) {
 
             if (bean == null) {
                 err(getLineInfo(2), "保存的对象为null，操作失败！");
@@ -2599,7 +2606,7 @@ public class GT {
          * @return
          * @更新表
          */
-        public Hibernate update(Class<?> tableClass, Object bean, Object conditions, Object values) {
+        public GT_SQL update(Class<?> tableClass, Object bean, Object conditions, Object values) {
 
             if (tableClass == null || bean == null || conditions == null || values == null) {
                 err(getLineInfo(2), "修改的数据为null，操作失败");
@@ -2744,7 +2751,7 @@ public class GT {
          * @return
          * @修改表
          */
-        public Hibernate update(Class<?> tableClass, Object bean, Object keyValue) {
+        public GT_SQL update(Class<?> tableClass, Object bean, Object keyValue) {
 
             //判空
             if (bean == null || keyValue == null || tableClass == null) {
@@ -2847,7 +2854,7 @@ public class GT {
          * @return
          * @更新这张表全部数据
          */
-        public Hibernate updateAll(Class<?> tableClass, ContentValues contentValues) {
+        public GT_SQL updateAll(Class<?> tableClass, ContentValues contentValues) {
 
             //判空
             if (contentValues == null || tableClass == null) {
@@ -2884,7 +2891,7 @@ public class GT {
          * @return
          * @删除表
          */
-        public Hibernate delete(Class<?> beanClass, Object conditions, Object values) {
+        public GT_SQL delete(Class<?> beanClass, Object conditions, Object values) {
 
             if (beanClass == null) {
                 err(getLineInfo(2), "删除的 beanClass 数据为null，操作失败");
@@ -2977,7 +2984,7 @@ public class GT {
          * @return
          * @更具ID删除
          */
-        public Hibernate delete(Class<?> beanClass, Object keyValue) {
+        public GT_SQL delete(Class<?> beanClass, Object keyValue) {
 
             if (beanClass == null) {
                 err(getLineInfo(2), "删除的 beanClass 数据为null，操作失败");
@@ -3025,7 +3032,7 @@ public class GT {
          * @return
          * @删除所有表
          */
-        public Hibernate deleteAll(Class<?> tableClass) {
+        public GT_SQL deleteAll(Class<?> tableClass) {
 
             //初始化与获取必要属性
             String simpleName = tableClass.getSimpleName();//获取表名
@@ -3053,17 +3060,17 @@ public class GT {
         private String orderByStr = "";//排序
         private String limitStr = "";//限量
 
-        public Hibernate flashback(String orderByStr) {
+        public GT_SQL flashback(String orderByStr) {
             this.orderByStr = orderByStr + " desc";
             return this;
         }
 
-        public Hibernate limit(int limitStr) {
+        public GT_SQL limit(int limitStr) {
             this.limitStr = limitStr + "";
             return this;
         }
 
-        public Hibernate limit(int limitStart, int limitEnd) {
+        public GT_SQL limit(int limitStart, int limitEnd) {
             this.limitStr = limitStart + "," + limitEnd;
             return this;
         }
@@ -4640,7 +4647,7 @@ public class GT {
          * @return
          * @初始化数据库名称
          */
-        public Hibernate init_1_SqlName(String sqlName) {
+        public GT_SQL init_1_SqlName(String sqlName) {
             if (sqlName != null) {
                 DATABASE_NAME = sqlName + ".db";
             }
@@ -4654,7 +4661,7 @@ public class GT {
          * @return
          * @初始化数据库版本号
          */
-        public Hibernate init_2_SqlVersion(int sqlVersion) {
+        public GT_SQL init_2_SqlVersion(int sqlVersion) {
             if (sqlVersion > 0) {
                 DATABASE_VERSION = sqlVersion;
             }
@@ -4672,7 +4679,7 @@ public class GT {
          * @2.实体类的class User.class
          * @3.实体类的 List/Set/Array ：List<Class<?>> 、 Set<Class<?>、 Class<?>[]
          */
-        public Hibernate init_3_SqlTable(Object scanTable) {
+        public GT_SQL init_3_SqlTable(Object scanTable) {
             isCreateTable = true;
             tableNameList.clear();
             creationTableNameList.clear();
@@ -4719,7 +4726,7 @@ public class GT {
             //检测扫描路径
             if (isReflect) {//如果需要反射就进行反射得到 class
                 if (!"".equals(EnityPackagePath)) {
-                    loadHibernateAnnotation(EnityPackagePath, context);
+                    loadGT_SQLAnnotation(EnityPackagePath, context);
                 } else {
                     errs("当前扫描数据库实体类的路径有错误！请检查该路径。EnityPackagePath = " + EnityPackagePath);
                     isCreateTable = false;
@@ -4750,7 +4757,7 @@ public class GT {
         private String sqlChar = "";//添加要创建表字段
 
         //解析 主键 与 字段 自动生成 SQL 语句
-        private Hibernate analysisClassData() {
+        private GT_SQL analysisClassData() {
 
             boolean isKey = false;//是否存在多个主键
 
@@ -4771,6 +4778,12 @@ public class GT {
                 //遍历所有成员变量
                 for (Field field : aClass.getDeclaredFields()) {
                     Class<?> type = field.getType();//获取当前字段类型
+
+                    //跳过标注不被持久化的字段
+                    if (field.getAnnotation(GT_OnNullValue.class) != null) {
+                        continue;
+                    }
+
                     //解析主键
                     GT_Key initView = field.getAnnotation(GT_Key.class);
                     if (initView != null) {
@@ -4891,7 +4904,7 @@ public class GT {
             String newStr = "";//存储新字段
             for (Field field : fields) {
                 String newTableName = field.getName();//获取新字段名
-                GT_UpdateValue initView = field.getAnnotation(GT_UpdateValue.class);
+                GT_DatabaseField initView = field.getAnnotation(GT_DatabaseField.class);
                 if (initView != null) {
                     String oldTableName = initView.oldTableValue();//获取注解值
                     if (oldTableName != null && !"".equals(oldTableName)) {
@@ -4910,8 +4923,7 @@ public class GT {
         //====================================== 第四步：创建数据库对象 ======================================
         public static boolean isCreateTable = true;//是否创建数据库
 
-        public Hibernate init_4_Sql() {
-            log("是否执行数据库:" + isCreateTable);
+        public GT_SQL init_4_Sql() {
             if (isCreateTable) {//是否执行创建数据库代码
                 DatabaseHelper databaseHelper = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
                 try {
@@ -4924,7 +4936,7 @@ public class GT {
         }
 
         //====================================== 加载 包名扫描 SQL 注解 ======================================
-        private void loadHibernateAnnotation(String EnityPackagePath, Context context) {
+        private void loadGT_SQLAnnotation(String EnityPackagePath, Context context) {
             DexFile dexFile = null;
             try {
                 dexFile = new DexFile(context.getPackageCodePath());
@@ -8012,7 +8024,7 @@ public class GT {
                                 conn.disconnect();
                             }
                         } catch (Exception e) {
-                            if (LOG.isLogTf()) {
+                            if (LOG.isGtLogTf()) {
                                 err(getLineInfo(1), "网络下载文件报错： " + e);
                             }
                         }
@@ -8251,7 +8263,7 @@ public class GT {
                                 conn.disconnect();
                             }
                         } catch (Exception e) {
-                            if (LOG.isLogTf()) {
+                            if (LOG.isGtLogTf()) {
                                 GT.log(getLineInfo(1), "网络下载app报错： " + e);
                             }
                         }
@@ -8259,7 +8271,7 @@ public class GT {
                             ApplicationUtils.unzipFile(savePath,
                                     RepairAPP.getRepairAppDirectory(context), true);
                         } catch (IOException e) {
-                            if (LOG.isLogTf()) {
+                            if (LOG.isGtLogTf()) {
                                 log(getLineInfo(1), "解压失败： " + e);
                             }
                             e.printStackTrace();
@@ -8403,7 +8415,7 @@ public class GT {
                     interiorDataPool.put(idKey, data);//存储数据
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "App内部存储池，保存数据失败！当前数据池中存在该值");
                     }
                     return false;
@@ -8422,7 +8434,7 @@ public class GT {
                     interiorDataPool.remove(idKey);//删除数据
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "App内部存储池，删除数据失败！当前数据池中不存在该值");
                     }
                     return false;
@@ -8440,7 +8452,7 @@ public class GT {
                 if (interiorDataPool.containsKey(idKey)) {
                     return interiorDataPool.get(idKey);//获取数据
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "App内部存储池，查询数据失败！当前数据池中不存在该值");
                     }
                     return null;
@@ -8459,7 +8471,7 @@ public class GT {
                     interiorDataPool.put(idKey, toData);//修改数据
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "App内部存储池，修改数据失败！当前数据池中不存在该值");
                     }
                     return false;
@@ -8509,10 +8521,12 @@ public class GT {
             private static Map<Object, Object> externalDataPool = null;    //当前App所有数据的容器
             private static Object passWord = null;             //当前文件的密码
             private static GT_File gt_file = null;             //GT_File 工具包
-            private static String fileSaveDataPath = null;     //文件保存数据的路径
+            private static final String fileSaveDataPath = "/Android/data/com.gsls.gtlibrary/AppDataPool/";//GT APP 公共池数据源
+            private static String appPackage = null;
             private static String fileName = null;             //保存数据的文件名
             private static String filePath = null;             //当前文件的全部路径
             private static Gson gson = null;
+            private Activity activity;
 
             /**
              * @param activity
@@ -8520,35 +8534,13 @@ public class GT {
              * @初始化
              */
             public static void init(Activity activity, Object passWord) {
-                AppAuthorityManagement.readWritePermission(activity);//申请文件读写的6.0以上权限
-                External.passWord = Encryption.MD5.encryptMD5(AppUtils.getAppPackageName() + passWord);//将 密码 进行 MD5 加密
                 gt_file = new GT_File();//创建 File 对象
                 gson = new Gson();
-
-                fileSaveDataPath = "/Android/data/com.gsls.gtlibrary/AppDataPool/";//GT APP 公共池数据源
-                fileName = ApplicationUtils.getAppName(activity) + ".GT";//文件名与扩展名
-
-                //                log("读取数据池的路径:" + ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
-                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
-
-                if (!file.exists()) {//如果当前文件不存在
-                    //                    log("当前文件不存在 创建 Map");
-                    externalDataPool = new HashMap<>();//创建 Map
-                } else {
-                    //                    log("当前文件存在");
-                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
-                    if (filesAllName != null && filesAllName.size() > 0) {
-                        String fileName = filesAllName.get(0);
-                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
-                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
-                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
-                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
-                    }
-
-                }
-
+                appPackage = AppUtils.getAppPackageName();
+                AppAuthorityManagement.readWritePermission(activity);//申请文件读写的6.0以上权限
+                External.passWord = Encryption.MD5.encryptMD5(appPackage + passWord);//将 密码 进行 MD5 加密
+                fileName = getAppName(AppUtils.getAppPackageName());
             }
-
 
             /**
              * @param packName
@@ -8558,17 +8550,15 @@ public class GT {
              * @保存数据(保存只能保存自己app池下的数据)
              */
             public static boolean saveDataPool(Object key, Object data) {
-
-                if (externalDataPool != null && !externalDataPool.containsKey(key)) {
+                Map<Object, Object> externalDataPool = getExternalDataPool(appPackage, passWord.toString(), getAppName(appPackage));
+                if (!externalDataPool.containsKey(key)) {
                     //保存操作
                     externalDataPool.put(key, data);//将数据保存到map中
                     String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
-                    //                    log("存入的数据:" + encryptData);
-                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
-                    //                    log("保存成功");
+                    gt_file.save(encryptData, fileSaveDataPath + appPackage, getAppName(appPackage));
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "当前保存 外部数据池出错，数据池 中已存在该 Key 保存失败");
                     }
                     return false;
@@ -8585,35 +8575,9 @@ public class GT {
              * @查询数据(查询自己app池下的数据)
              */
             public static Object queryDataPool(Object key) {
-
-                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName() + "/" + fileName);
-
-                if (!file.exists()) {//如果当前文件不存在
-                    //                    log("当前文件不存在 创建 Map");
-                    externalDataPool = new HashMap<>();//创建 Map
-                } else {
-                    //                    log("当前文件存在");
-                    List<String> filesAllName = ApplicationUtils.getFilesAllName(ApplicationUtils.getAppDirectory() + fileSaveDataPath + AppUtils.getAppPackageName());
-                    if (filesAllName != null && filesAllName.size() > 0) {
-                        String fileName = filesAllName.get(0);
-                        fileName = fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
-                        String queryData = gt_file.query(fileSaveDataPath + AppUtils.getAppPackageName(), fileName);//读取文件内的数据
-                        String encryptData = Encryption.DES.decryptPassword(queryData, External.passWord);//将加密的数据解密
-                        externalDataPool = gson.fromJson(encryptData, HashMap.class);
-                        if (externalDataPool != null && externalDataPool.containsKey(key)) {
-                            return externalDataPool.get(key);//获取数据
-                        } else {
-                            if (LOG.isLogTf()) {
-                                log(getLineInfo(1), "当前查询 内部数据池出错，数据池 中已存在该 Key 查询失败");
-                            }
-                            return null;
-                        }
-                    }
-
-                }
-                return null;
+                Map<Object, Object> externalDataPool = getExternalDataPool(appPackage, passWord.toString(), getAppName(appPackage));
+                return externalDataPool.get(key);
             }
-
 
             /**
              * @param packName
@@ -8622,36 +8586,39 @@ public class GT {
              * @return 返回为 true 则表示 保存成功
              * @查询数据(查询需要输入指定查询App的包名)
              */
-            public static Object queryDataPool(Object packageName, Object passWord, Object key) {
-
-                File file = new File(ApplicationUtils.getAppDirectory() + fileSaveDataPath + packageName + "/" + fileName);
+            public static Object queryDataPool(Object appPackage, Object passWord, Object key) {
+                String pathStr = ApplicationUtils.getAppDirectory() + fileSaveDataPath + appPackage + "/";
+                fileName = getAppName(appPackage);
+                pathStr += fileName;
+                File file = new File(pathStr);
                 if (file.exists()) {   //如果当前文件不存在
-                    //                    log("当前文件存在");
-                    String queryData = gt_file.query(fileSaveDataPath + packageName, fileName);//读取文件内的数据
-                    //                    log("读取出来加密的数据:" + queryData);
-                    passWord = Encryption.MD5.encryptMD5(packageName.toString() + passWord);//将 密码 进行 MD5 加密
+                    String queryData = gt_file.query(fileSaveDataPath + appPackage, fileName);//读取文件内的数据
+                    passWord = Encryption.MD5.encryptMD5(appPackage.toString() + passWord);//将 密码 进行 MD5 加密
                     String encryptData = Encryption.DES.decryptPassword(queryData, passWord);//将加密的数据解密
-                    //                    log("解密出来的数据:" + encryptData);
-                    Map<Object, Object> map = new HashMap<>();
-                    map = gson.fromJson(encryptData, HashMap.class);
-                    //                    log("初始化时 读取出来的map:" + map);
-                    if (map.containsKey(key)) {
-                        return map.get(key);
+                    Map<Object, Object> map = gson.fromJson(encryptData, HashMap.class);
+                    if (map != null) {
+                        if (map.containsKey(key)) {
+                            return map.get(key);
+                        } else {
+                            if (LOG.isGtLogTf()) {
+                                log(getLineInfo(1), "当前查询 外部数据池出错，数据池 中不存在该 Key 查询失败");
+                            }
+                            return null;
+                        }
                     } else {
-                        if (LOG.isLogTf()) {
-                            log(getLineInfo(1), "当前查询 外部数据池出错，数据池 中不存在该 Key 查询失败");
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前查询 外部数据池出错，数据池数据被破坏，请检查该数据池");
                         }
                         return null;
                     }
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "当前查询 外部数据池出错，数据池 中不存在该 app包名 的数据池 查询失败");
                     }
                     return null;
                 }
 
             }
-
 
             /**
              * @param packageName
@@ -8663,23 +8630,81 @@ public class GT {
              */
             public static boolean updateDataPool(Object key, Object toData) {
 
-                if (externalDataPool != null && externalDataPool.containsKey(key)) {
-                    //保存操作
-                    externalDataPool.put(key, toData);//将数据保存到map中
-                    String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
-                    //                    log("修改存入的数据:" + encryptData);
-                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
-                    //                    log("修改成功");
-                    return true;
+                Map<Object, Object> externalDataPool = getExternalDataPool(appPackage, passWord.toString(), fileName);
+                if (externalDataPool != null) {
+                    if (externalDataPool.containsKey(key)) {
+                        //保存操作
+                        externalDataPool.put(key, toData);//将数据保存到map中
+                        String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
+                        gt_file.save(encryptData, fileSaveDataPath + appPackage, fileName);
+                        return true;
+                    } else {
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
+                        }
+                        return false;
+                    }
                 } else {
-                    if (LOG.isLogTf()) {
-                        log(getLineInfo(1), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
+                    if (LOG.isGtLogTf()) {
+                        log(getLineInfo(1), "当前修改 外部数据池出错，数据池不存在 修改失败");
                     }
                     return false;
                 }
 
+
             }
 
+            /**
+             * @param appPackage 包名
+             * @param passWord   密码
+             * @param key        key
+             * @param toData     修改值
+             * @return
+             * @修改外部APP数据池的数据
+             */
+            public static boolean updateDataPool(Object appPackage, Object passWord, Object key, Object toData) {
+
+                String pathStr = ApplicationUtils.getAppDirectory() + fileSaveDataPath + appPackage + "/";
+                pathStr += getAppName(appPackage.toString());
+                File file = new File(pathStr);
+                if (file.exists()) {   //如果当前文件不存在
+                    String queryData = gt_file.query(fileSaveDataPath + appPackage, getAppName(appPackage.toString()));//读取文件内的数据
+                    passWord = Encryption.MD5.encryptMD5(appPackage.toString() + passWord);//将 密码 进行 MD5 加密
+                    String encryptData = Encryption.DES.decryptPassword(queryData, passWord);//将加密的数据解密
+                    Map<Object, Object> map = null;
+                    try {
+                        map = gson.fromJson(encryptData, HashMap.class);
+                    } catch (Exception e) {
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前修改 外部数据池出错，数据池出现问题 修改失败");
+                        }
+                        return false;
+                    }
+                    if (map != null) {
+                        if (map.containsKey(key)) {
+                            map.put(key, toData);
+                            String encryptDataStr = Encryption.DES.encryptPassword(map, passWord);
+                            gt_file.save(encryptDataStr, fileSaveDataPath + appPackage, getAppName(appPackage));
+                            return true;
+                        } else {
+                            if (LOG.isGtLogTf()) {
+                                log(getLineInfo(1), "当前修改 外部数据池出错，数据池 中不已存在该 Key 修改失败");
+                            }
+                            return false;
+                        }
+                    } else {
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前修改 外部数据池出错，数据池数据被破坏，请检查该数据池");
+                        }
+                        return false;
+                    }
+                } else {
+                    if (LOG.isGtLogTf()) {
+                        log(getLineInfo(1), "当前修改 外部数据池出错，数据池 中不存在该 app包名 的数据池 修改失败");
+                    }
+                    return false;
+                }
+            }
 
             /**
              * @param packageName
@@ -8690,23 +8715,72 @@ public class GT {
              * @删除数据(删除只能删除自己app池下的数据)
              */
             public static boolean deleteDataPool(Object key) {
-
+                //获取当前所有路径
+                Map<Object, Object> externalDataPool = getExternalDataPool(appPackage, passWord, getAppName(appPackage));
                 if (externalDataPool != null && externalDataPool.containsKey(key)) {
                     //保存操作
                     externalDataPool.remove(key);//将数据删除到map中
                     String encryptData = Encryption.DES.encryptPassword(externalDataPool, passWord);
-                    //                    log("删除存入的数据:" + encryptData);
-                    gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
-                    //                    log("删除成功");
+                    gt_file.save(encryptData, fileSaveDataPath + appPackage, getAppName(appPackage));
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "当前删除 外部数据池出错，数据池 中不已存在该 Key 删除失败");
                     }
                     return false;
                 }
             }
 
+            /**
+             * @param appPackage App包名
+             * @param passWord   密码
+             * @param key        key
+             * @return
+             * @删除App外部数据池的数据
+             */
+            public static boolean deleteDataPool(Object appPackage, Object passWord, Object key) {
+
+                String pathStr = ApplicationUtils.getAppDirectory() + fileSaveDataPath + appPackage + "/";
+                pathStr += getAppName(appPackage.toString());
+                File file = new File(pathStr);
+                if (file.exists()) {   //如果当前文件不存在
+                    String queryData = gt_file.query(fileSaveDataPath + appPackage, getAppName(appPackage.toString()));//读取文件内的数据
+                    passWord = Encryption.MD5.encryptMD5(appPackage.toString() + passWord);//将 密码 进行 MD5 加密
+                    String encryptData = Encryption.DES.decryptPassword(queryData, passWord);//将加密的数据解密
+                    Map<Object, Object> map = null;
+                    try {
+                        map = gson.fromJson(encryptData, HashMap.class);
+                    } catch (Exception e) {
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前删除 外部数据池出错，数据池出现问题 删除失败");
+                        }
+                        return false;
+                    }
+                    if (map != null) {
+                        if (map.containsKey(key)) {
+                            map.clear();
+                            String encryptDataStr = Encryption.DES.encryptPassword(map, passWord);
+                            gt_file.save(encryptDataStr, fileSaveDataPath + appPackage, getAppName(appPackage));
+                            return true;
+                        } else {
+                            if (LOG.isGtLogTf()) {
+                                log(getLineInfo(1), "当前删除 外部数据池出错，数据池 中不已存在该 Key 删除失败");
+                            }
+                            return false;
+                        }
+                    } else {
+                        if (LOG.isGtLogTf()) {
+                            log(getLineInfo(1), "当前删除 外部数据池出错，数据池数据被破坏，请检查该数据池");
+                        }
+                        return false;
+                    }
+                } else {
+                    if (LOG.isGtLogTf()) {
+                        log(getLineInfo(1), "当前删除 外部数据池出错，数据池 中不存在该 app包名 的数据池 删除失败");
+                    }
+                    return false;
+                }
+            }
 
             /**
              * @param packName
@@ -8723,7 +8797,7 @@ public class GT {
                     gt_file.save(encryptData, fileSaveDataPath + AppUtils.getAppPackageName(), fileName);
                     return true;
                 } else {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         log(getLineInfo(1), "当前清空 外部数据池出错，数据池 中不已存在该 Key 清空失败");
                     }
                     return false;
@@ -8731,6 +8805,37 @@ public class GT {
 
             }
 
+
+            /**
+             * @return
+             * @获取当前App名称
+             */
+            private static String getAppName(Object appPackage) {
+                //获取当前所有路径
+                String path = ApplicationUtils.getAppDirectory() + fileSaveDataPath + appPackage + "/";
+                List<String> filesAllName = ApplicationUtils.getFilesAllName(path);
+                if (filesAllName.size() > 0) {
+                    path = filesAllName.get(0);
+                    //获取文件名
+                    fileName = path.substring(path.lastIndexOf("/") + 1, path.length());
+                } else {
+                    fileName = null;
+                }
+                return fileName;
+            }
+
+            /**
+             * @param appPackage
+             * @param encryptionPassWord
+             * @param fileName
+             * @获取数据池中的 Map
+             */
+            public static Map<Object, Object> getExternalDataPool(Object appPackage, Object encryptionPassWord, String fileName) {
+                String queryData = gt_file.query(fileSaveDataPath + appPackage, fileName);//读取文件内的数据
+                String encryptData = Encryption.DES.decryptPassword(queryData, encryptionPassWord);//将加密的数据解密
+                externalDataPool = gson.fromJson(encryptData, HashMap.class);
+                return externalDataPool;
+            }
 
         }
 
@@ -8879,14 +8984,14 @@ public class GT {
                 int permission = ActivityCompat.checkSelfPermission(activity,
                         "android.permission.WRITE_EXTERNAL_STORAGE");
                 if (permission != PackageManager.PERMISSION_GRANTED) {
-                    if (LOG.isLogTf()) {
+                    if (LOG.isGtLogTf()) {
                         err(getLineInfo(1), "读写获取权限失败");
                     }
                     // 没有写的权限，去申请写的权限，会弹出对话框
                     ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
                 }
             } catch (Exception e) {
-                if (LOG.isLogTf()) {
+                if (LOG.isGtLogTf()) {
                     err(getLineInfo(1), "读写获取权限报错");
                 }
                 e.printStackTrace();
@@ -11278,8 +11383,8 @@ public class GT {
          * @param sqlVersions 数据库版本
          * @初始化 SQL
          */
-        protected Hibernate initSQL(String SQLName, Class<?> tableClass, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, Class<?> tableClass, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)            //设置SQL名称
                     .init_2_SqlVersion(sqlVersions)     //设置数据库版本
                     .init_3_SqlTable(tableClass)        //设置创建或更新升级的数据库表
@@ -11292,8 +11397,8 @@ public class GT {
          * @return
          * @用户自定义SQLCode
          */
-        protected Hibernate initSQL(String SQLName, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)            //设置SQL名称
                     .init_2_SqlVersion(sqlVersions)     //设置数据库版本
                     .init_3_SqlTable(ApplicationUtils.getPackageName(this))        //设置创建或更新升级的数据库表
@@ -11306,8 +11411,8 @@ public class GT {
          * @param sqlVersions 数据库版本
          * @初始化 SQL
          */
-        protected Hibernate initSQL(String SQLName, String tablePath, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, String tablePath, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)
                     .init_2_SqlVersion(sqlVersions)
                     .init_3_SqlTable(tablePath)
@@ -11320,8 +11425,8 @@ public class GT {
          * @param sqlVersions 数据库版本
          * @初始化 SQL
          */
-        protected Hibernate initSQL(String SQLName, List<Class<?>> tableList, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, List<Class<?>> tableList, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)
                     .init_2_SqlVersion(sqlVersions)
                     .init_3_SqlTable(tableList)
@@ -11334,8 +11439,8 @@ public class GT {
          * @param sqlVersions 数据库版本
          * @初始化 SQL
          */
-        protected Hibernate initSQL(String SQLName, Set<Class<?>> tableSet, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, Set<Class<?>> tableSet, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)
                     .init_2_SqlVersion(sqlVersions)
                     .init_3_SqlTable(tableSet)
@@ -11349,8 +11454,8 @@ public class GT {
          * @param sqlVersions 数据库版本
          * @初始化 SQL
          */
-        protected Hibernate initSQL(String SQLName, Class<?>[] tableArray, int sqlVersions) {
-            return new Hibernate()
+        protected GT_SQL initSQL(String SQLName, Class<?>[] tableArray, int sqlVersions) {
+            return new GT_SQL()
                     .init_1_SqlName(SQLName)
                     .init_2_SqlVersion(sqlVersions)
                     .init_3_SqlTable(tableArray)
@@ -11455,7 +11560,7 @@ public class GT {
                 Window.Close_virtualButton(activity);//关闭虚拟按钮
                 Window.hideActionBar((AppCompatActivity) activity);//隐藏 ActionBar
             } catch (Exception e) {
-                if (LOG.isLogTf())
+                if (LOG.isGtLogTf())
                     GT.err(getLineInfo(1), "请去掉调用该方法前面所有关于 沉浸式 关闭虚拟按钮 隐藏 ActionBar 等类似的代码");
             }
         }
@@ -13458,19 +13563,19 @@ public class GT {
                 Object classObject = null;//最终注入的值
 
                 //获取识别注解
-                Hibernate.Build initView_Hibernate = field.getAnnotation(Hibernate.Build.class);
-                Hibernate.GT_Entitys initView_Entitys = field.getAnnotation(Hibernate.GT_Entitys.class);
-                Hibernate.GT_Beans initView_Beans = field.getAnnotation(Hibernate.GT_Beans.class);
+                GT_SQL.Build initView_GT_SQL = field.getAnnotation(GT_SQL.Build.class);
+                GT_SQL.GT_Entitys initView_Entitys = field.getAnnotation(GT_SQL.GT_Entitys.class);
+                GT_SQL.GT_Beans initView_Beans = field.getAnnotation(GT_SQL.GT_Beans.class);
 
                 //初始化GT数据库
-                if (initView_Hibernate != null) {
-                    String sqlName = initView_Hibernate.sqlName();
-                    int sqlVersion = initView_Hibernate.sqlVersion();
+                if (initView_GT_SQL != null) {
+                    String sqlName = initView_GT_SQL.sqlName();
+                    int sqlVersion = initView_GT_SQL.sqlVersion();
                     if (getGT().getCONTEXT() == null) {
                         err(getLineInfo(2), "注入数据库失败！请在 Activity 中绑定GT注解");
                         return;
                     }
-                    classObject = new Hibernate()
+                    classObject = new GT_SQL()
                             .init_1_SqlName(sqlName)            //设置SQL名称
                             .init_2_SqlVersion(sqlVersion)     //设置数据库版本
                             .init_3_SqlTable(ApplicationUtils.getPackageName(getGT().getCONTEXT()))        //设置创建或更新升级的数据库表
@@ -13507,8 +13612,8 @@ public class GT {
 
                     /*List<Class<?>> classList = new ArrayList<>();//存储筛选过后的注解值
                     for(Class cla : classes){
-                        Annotation subAnnotation_GT_Bean = cla.getAnnotation(Hibernate.GT_Bean.class);	//获取被 GT_Bean 注解过的类
-                        Annotation subAnnotation_GT_Entity = cla.getAnnotation(Hibernate.GT_Entity.class);	//获取被 GT_Entity 注解过的类
+                        Annotation subAnnotation_GT_Bean = cla.getAnnotation(GT_SQL.GT_Bean.class);	//获取被 GT_Bean 注解过的类
+                        Annotation subAnnotation_GT_Entity = cla.getAnnotation(GT_SQL.GT_Entity.class);	//获取被 GT_Entity 注解过的类
 
                         //当前注解值的类是否被 SQL 注解标识过，如果被标识过就存储到集合中
                         if(subAnnotation_GT_Bean != null || subAnnotation_GT_Entity != null){
@@ -14406,7 +14511,7 @@ public class GT {
                             field.setAccessible(true);
                             method.invoke(object, valueList.get(index));
                         } catch (Exception e) {
-                            if (LOG.isLogTf()) {
+                            if (LOG.isGtLogTf()) {
                                 GT.err(getLineInfo(1), "注解注入失败 ！");
                             }
                             //                            e.printStackTrace();
@@ -14436,7 +14541,7 @@ public class GT {
                         method = aClass.getMethod(functionName, byte.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 byte 类型数据 报错");
                         }
                     }
@@ -14446,7 +14551,7 @@ public class GT {
                         method = aClass.getMethod(functionName, short.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Short 类型数据 报错");
                         }
                     }
@@ -14456,7 +14561,7 @@ public class GT {
                         method = aClass.getMethod(functionName, int.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 int 类型数据 报错");
                         }
                     }
@@ -14466,7 +14571,7 @@ public class GT {
                         method = aClass.getMethod(functionName, long.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Long 类型数据 报错");
                         }
                     }
@@ -14476,7 +14581,7 @@ public class GT {
                         method = aClass.getMethod(functionName, float.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Float 类型数据 报错");
                         }
                     }
@@ -14486,7 +14591,7 @@ public class GT {
                         method = aClass.getMethod(functionName, double.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Double 类型数据 报错");
                         }
                     }
@@ -14496,7 +14601,7 @@ public class GT {
                         method = aClass.getMethod(functionName, boolean.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Boolean 类型数据 报错");
                         }
                     }
@@ -14506,7 +14611,7 @@ public class GT {
                         method = aClass.getMethod(functionName, char.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 Character 类型数据 报错");
                         }
                     }
@@ -14516,7 +14621,7 @@ public class GT {
                         method = aClass.getMethod(functionName, String.class);
                     } catch (NoSuchMethodException e) {
                         //                    e.printStackTrace();
-                        if (LOG.isLogTf()) {
+                        if (LOG.isGtLogTf()) {
                             GT.err(getLineInfo(1), "注解 赋值 String 类型数据 报错");
                         }
                     }
