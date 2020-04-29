@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.novoda.bintray-release'
 
 android {
     compileSdkVersion 29
@@ -38,6 +39,19 @@ android {
     makeJar.dependsOn(build)
 
 }
+
+
+
+publish {
+    //发布网址教程：https://blog.csdn.net/xmxkf/article/details/80674232
+    userOrg = 'GSLS' //bintray账户下某个组织id
+    groupId = 'com.gsls.gt' //maven仓库下库的包名，一般为模块包名
+    artifactId = 'GT' //项目名称
+    publishVersion = '1.1.6' //版本号
+    desc = 'Chasing a line of code' //项目介绍，可以不写
+    website = 'https://blog.csdn.net/qq_39799899' //项目主页，可以不写
+}
+
 
 
 dependencies {
