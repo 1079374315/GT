@@ -224,6 +224,7 @@ import okhttp3.RequestBody;
  * * 4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
  * * 5.更新 GT_SQL 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
  * * 6.优化的数据池的外部数据池代码
+ * * 7.优化一下代码，默认不开启Util工具包
  * <p>
  * <p>
  * <p>
@@ -238,7 +239,7 @@ public class GT {
 
     //================================== 所有属于 GT 类的属性 =======================================
     private static GT gtAndroid = null;          //定义 GT 对象
-    private static boolean isGTUtil = true;      //默认加载注解
+    private static boolean isGTUtil = false;      //默认加载 Util 类
     private static Toast toast;                  //吐司缓冲
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
     //================================== 提供访问 GT 属性的接口======================================
@@ -7644,7 +7645,7 @@ public class GT {
          * @param title
          * @param content
          */
-        public void senText(Activity activity, String title, String content) {
+        public static void senText(Activity activity, String title, String content) {
             Intent shareIntent = new Intent();
             shareIntent.setAction(Intent.ACTION_SEND);
             shareIntent.setType("text/plain");
@@ -7659,7 +7660,7 @@ public class GT {
          * @param filePath
          * @分享文件
          */
-        public void shareFile(Activity activity, String sharTitle, String filePath) {
+        public static void shareFile(Activity activity, String sharTitle, String filePath) {
             Intent intent = new Intent(Intent.ACTION_SEND);// 发送多个文件
             intent.setType("*/*");
             intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filePath)));
@@ -7736,8 +7737,16 @@ public class GT {
          * @return
          * @获取App名字
          */
-        public static String getAppName(Activity activity) {
-            return activity.getResources().getString(R.string.app_name);
+        public static String getAppName(Context context) {
+            try {
+                PackageManager packageManager = context.getPackageManager();
+                PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
+                int labelRes = packageInfo.applicationInfo.labelRes;
+                return context.getResources().getString(labelRes);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
         }
 
         /**
@@ -8861,8 +8870,7 @@ public class GT {
             /**
              * MD5加密
              *
-             * @param origin      字符
-             * @param charsetname 编码
+             * @param origin 字符
              * @return
              */
             public static String encryptMD5(String origin) {
@@ -10401,8 +10409,10 @@ public class GT {
              *
              * @return
              */
-            protected boolean isShow() {
-                return false;
+            private boolean isShowBackground = false;
+
+            protected void setShowBackground(boolean tf) {
+                isShowBackground = tf;
             }
 
             /**
@@ -10420,6 +10430,10 @@ public class GT {
                 dismiss();
             }
 
+            /**
+             * @param dialogFragment
+             * @跳转其他的 DialogFragment
+             */
             public void startDialogFragment(DialogFragment dialogFragment) {
                 dialogFragment.show(getFragmentManager(), dialogFragment.getClass().toString());//弹出退出提示
             }
@@ -10435,7 +10449,7 @@ public class GT {
             @Override
             public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
                 super.onViewCreated(view, savedInstanceState);
-                if (isShow())
+                if (isShowBackground)
                     getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 initView(view, savedInstanceState);//主要方法
                 function();
@@ -15179,7 +15193,7 @@ public class GT {
 
         /**
          * 实例化 随机类 类
-         *//**/
+         */
         public GT_Random() {
             random = new Random();
         }

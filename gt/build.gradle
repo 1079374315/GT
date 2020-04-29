@@ -21,7 +21,7 @@ android {
         }
     }
 
-    // jar 生成的路径在 ：build/aar_main_jar/ 复制粘贴改名就行
+    // jar 生成的路径在 ：build/intermediates/aar_main_jar/ 复制粘贴改名就行 在 Terminal 中输入 gradlew makeJar 打包
     task makeJar(type: Copy) {
         //删除存在的
         delete 'build/libs/gt.jar'
