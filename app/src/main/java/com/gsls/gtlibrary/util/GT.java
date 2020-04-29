@@ -211,7 +211,7 @@ import okhttp3.RequestBody;
  * <p>
  * <p>
  * <p>
- * * 更新时间:2020.4.28（大爆料：更新 GT_SQL 数据库）
+ * * 更新时间:2020.4.29（大爆料：更新 GT_SQL 数据库）
  * * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
  * * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * * 更新内容：（1.1.6 版本）
@@ -223,6 +223,7 @@ import okhttp3.RequestBody;
  * * 3.AnnotationActivity、BaseActivity 类中增加 initFragment() 操作方法
  * * 4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
  * * 5.更新 GT_SQL 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
+ * * 6.优化的数据池的外部数据池代码
  * <p>
  * <p>
  * <p>
