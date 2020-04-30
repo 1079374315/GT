@@ -34,7 +34,7 @@
 #### （当前章节有问题的或发现有bug的请各位在当前章节下的评论指出来，楼主会及时的进行修复与给予当事人答复。）
 
 
-[GT 待更新章节： 正在更新的 GT 库 ：](https://blog.csdn.net/qq_39799899/article/details/98891256#GT%20%E7%AC%AC%E4%BA%8C%E5%8D%81%E4%BA%8C%E7%AB%A0%EF%BC%9A%20%E6%AD%A3%E5%9C%A8%E6%9B%B4%E6%96%B0%E7%9A%84%20GT%20%E5%BA%93)
+[GT库官方教程：](https://blog.csdn.net/qq_39799899/category_9956339.html)
 
 
 # 如何使用
