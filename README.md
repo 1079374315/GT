@@ -24,13 +24,13 @@
  7.优化一下代码，默认不开启Util工具包
 ````
 
-##[GT库迁移至GSLS_Tool](https://github.com/1079374315/GSLS_Tool)
+## [GT库迁移至GSLS_Tool](https://github.com/1079374315/GSLS_Tool)
 
 
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
 
-###[GT库官方教程：](https://blog.csdn.net/qq_39799899/category_9956339.html)
+### [GT库官方教程：](https://blog.csdn.net/qq_39799899/category_9956339.html)
 
 
 
