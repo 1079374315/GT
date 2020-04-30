@@ -91,9 +91,6 @@ dependencies {
 -keep public class * extends com.***.fragment.BaseFragment { *; }
 
 ````
-
-## [当前 GT 最新版本 查看地址](https://jitpack.io/#1079374315/GT/v1.1.6)
-
 ## LICENSE
 ````
 Copyright 2019 GSLS
