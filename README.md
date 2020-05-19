@@ -17,7 +17,7 @@
  3.AnnotationActivity、BaseActivity 类中增加 initFragment() 操作方法
  4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
  5.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。
- 6.优化的数据池的外部数据池代码
+ 6.优化数据池中外部数据池的代码
  7.优化一下代码，默认不开启Util工具包
  
 ````
