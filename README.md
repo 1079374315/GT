@@ -1,34 +1,29 @@
 [![CSDN](https://img.shields.io/badge/Android%20Arsenal-Fragmentation-brightgreen.svg?style=flat)](https://blog.csdn.net/qq_39799899)
 [![Github](https://travis-ci.org/YoKeyword/Fragmentation.svg?branch=master)](https://github.com/1079374315)
-[![](https://jitpack.io/v/1079374315/GT.svg)](https://jitpack.io/#1079374315/GT)
-[切换到CSDN](https://blog.csdn.net/qq_39799899/article/details/102490617)
+[![](https://jitpack.io/v/1079374315/GSLS_Tool.svg)](https://jitpack.io/#1079374315/GSLS_Tool)
 
-# 最新版本: 1.1.6
-发布时间：2020.4.30
+
+# 最新版本: 1.1.7
+发布时间：2019年5月7日 
 
 ## 此次版本更新： 
 ````
- 更新时间:2020.4.30（大爆料：更新 Hibernate 数据库）
- 更新内容：（1.1.6 版本）
+更新时间:2020.5.7（大爆料：更新 Hibernate 数据库）
+ 更新内容：（1.1.7 版本）
  1.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志。(最终效果 以最新教程为主)
- (1)可使用 setLogTAG 方法用于自定义 日志的 TAG 值
- (2)新增两种打印   本地普通打印：logs("****");   本地错误打印：errs("****");
- （默认不开启本地打印，若需要开启请参考官网教程）
+   (1)可使用 setLogTAG 方法用于自定义 日志的 TAG 值
+   (2)新增两种打印   本地普通打印：logs("****");   本地错误打印：errs("****");
  2.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
  3.AnnotationActivity、BaseActivity 类中增加 initFragment() 操作方法
  4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
- 5.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
+ 5.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。
  6.优化的数据池的外部数据池代码
  7.优化一下代码，默认不开启Util工具包
+ 
 ````
 
-## [GT库迁移至GSLS_Tool](https://github.com/1079374315/GSLS_Tool)
-
-
-
 ## 为了更好的使用该库，推荐阅读下面的文章:
-
-### [GT库官方教程：](https://blog.csdn.net/qq_39799899/category_9956339.html)
+### [GT库官方教程入口](https://blog.csdn.net/qq_39799899/category_9956339.html)
 
 #### [第一章：GT库依赖篇](https://blog.csdn.net/qq_39799899/article/details/105819914)
 #### [第二章：日志(log)篇](https://blog.csdn.net/qq_39799899/article/details/105820384) (常用推荐)
@@ -78,7 +73,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.1.6'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.1.7'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
@@ -91,41 +86,17 @@ dependencies {
 }
 ````
 
-````
-
-#混淆时，GT需要添加的
-
-#不混淆GT包
--dontwarn com.gsls.gt.**
-#不混淆GT类
--keep public class com.gsls.gt.GT { *; }
-#不混淆GT类的子类
--keep public class * extends com.gsls.gt.GT { *; }
-#不混淆某个类的内部类
--keep class com.gsls.gt.GT$* {*;}
-#还有些混淆需要注意的是，最好将使用注解的类均不进行混淆。
 
 
-
-
-
-#比如 BaseFragment 类使用了注解 那就需要添加以下不混淆
-
-#不混淆 BaseFragment 类
--keep public class com.***.fragment.BaseFragment { *; }
-#不混淆 所有继承 BaseFragment 类
--keep public class * extends com.***.fragment.BaseFragment { *; }
-
-````
 ## LICENSE
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.1.6 (the "License");
+Licensed under the Apache License, Version 1.1.7 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   https://github.com/1079374315/GT/tree/master
+   https://github.com/1079374315/GSLS_Tool/tree/master
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
