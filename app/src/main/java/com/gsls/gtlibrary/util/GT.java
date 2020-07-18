@@ -59,13 +59,16 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.AttributeSet;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -90,6 +93,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -104,6 +108,7 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -114,7 +119,6 @@ import com.google.gson.Gson;
 import com.gsls.gtlibrary.R;
 import com.lzy.okgo.callback.StringCallback;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -197,33 +201,16 @@ import okhttp3.RequestBody;
  * 工具类说明：
  * GSLS_Tool
  * <p>
- * //GT全部功能 需要添加的包
- * //GT基础功能
- * implementation 'com.github.1079374315:GT:v1.1.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
- * //GT全部功能 需要添加的包
- * implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
- * implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
- * implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
- * implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
- * implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
- * implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
- * implementation 'org.jetbrains.kotlin:kotlin-reflect:1.3.50'//Kotlin 反射依赖
  * <p>
  * <p>
  * <p>
- 更新时间:2020.4.30（大爆料：更新 Hibernate 数据库）
- <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
- <p> CSDN 博客:https://blog.csdn.net/qq_39799899
- 更新内容：（1.1.6 版本）
- 1.新增 LOG 日志类 分 Logcat 与 本地打印 用于打更加详细的日志。(最终效果 以最新教程为主)
- (1)可使用 setLogTAG 方法用于自定义 日志的 TAG 值
- (2)新增两种打印   本地普通打印：logs("****");   本地错误打印：errs("****");  （默认不开启本地打印，若需要开启请参考官网教程）
- 2.新增 TOAST 吐司类 用于专门管理 吐司变量,将自定义吐司的类移至 TOAST 类中。
- 3.AnnotationActivity、BaseActivity 类中增加 initFragment() 操作方法
- 4.权限类(AppAuthorityManagement)中添加上申请白名单权限。
- 5.更新 Hibernate 数据库类，依照 J2EE 的模式，根据实体类 映射出 数据库与字段，实现无SQL代码实现SQL逻辑的效果。（具体使用教程，请参考官网教程）
- 6.优化的数据池的外部数据池代码
- 7.优化一下代码，默认不开启Util工具包
+ * 更新时间:2020.7.18
+ * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
+ * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
+ * 更新内容：（1.1.9 版本 GT_Fragment 重构代码 增加启动模式 与 切换方式）
+ * 1.更新了 HttpUtil (网络请求)类
+ * 2.更新了 GT_Fragment 类 增加了页面数据恢复 与 BaseFragments 的优化（BaseFragment 增加了 onBackPressed 方法）
+ * 3.增加了 logAll 与 errAll 增加打印所有日志方法
  * <p>
  * <p>
  * <p>
@@ -241,6 +228,7 @@ public class GT {
     private static boolean isGTUtil = false;      //默认加载 Util 类
     private static Toast toast;                  //吐司缓冲
     private Context CONTEXT;                     //设置 当前动态的 上下文对象
+    private static int logMaxLength = 3900;      //日志打印最大长度 默认是 3900 可修改
     //================================== 提供访问 GT 属性的接口======================================
 
     private GT() {
@@ -272,6 +260,8 @@ public class GT {
     }
 
     /**
+     * 绑定 Activity
+     *
      * @param CONTEXT
      * @Activity 为外部提供访问 GT Context 接口
      */
@@ -281,6 +271,8 @@ public class GT {
     }
 
     /**
+     * 绑定 Fragment
+     *
      * @param object
      * @param view
      * @Fragment 为外部提供访问 GT Context 接口
@@ -298,6 +290,14 @@ public class GT {
     public void build(Context context, Object object, View view) {
         this.CONTEXT = context;
         initGTUtilFragment(object, view);//初始化 GT 必要的工具
+    }
+
+    public int getLogMaxLength() {
+        return logMaxLength;
+    }
+
+    public void setLogMaxLength(int logMaxLength) {
+        this.logMaxLength = logMaxLength;
     }
 
     //============================================= 加载 GT 必要的工具 =============================
@@ -572,7 +572,7 @@ public class GT {
      */
     public static void log(Object msg) {
         if (LOG.LOG_TF) {
-            Log.i(LOG.LOG_TAG.toString() + "i", "------- " + msg);
+            Log.i(LOG.LOG_TAG + "i", "------- " + msg);
         }
     }
 
@@ -595,13 +595,39 @@ public class GT {
     }
 
     /**
+     * 打印所有提示消息 Log
+     *
+     * @param msg object 类型的消息
+     */
+    public static void logAll(Object msg) {
+        if (LOG.LOG_TF) {
+
+            String strMsg = msg.toString();
+
+            if (strMsg.length() > logMaxLength) {
+                while (true) {
+                    String substring = strMsg.substring(0, logMaxLength);
+                    Log.i(LOG.LOG_TAG + "i", "------- " + substring);
+                    strMsg = strMsg.substring(logMaxLength);
+                    if (strMsg.length() <= logMaxLength) {
+                        Log.i(LOG.LOG_TAG + "i", strMsg);
+                        break;
+                    }
+                }
+            } else {
+                Log.i(LOG.LOG_TAG + "i", "------- " + msg);
+            }
+        }
+    }
+
+    /**
      * 提示消息 Log
      *
      * @param msg object 类型的消息
      */
     public static void err(Object msg) {
         if (LOG.LOG_TF) {
-            Log.e(LOG.LOG_TAG.toString() + "e", "------- " + msg);
+            Log.e(LOG.LOG_TAG + "e", "------- " + msg);
         }
     }
 
@@ -623,6 +649,31 @@ public class GT {
         }
     }
 
+
+    /**
+     * 打印所有提示消息 Log
+     *
+     * @param msg object 类型的消息
+     */
+    public static void errAll(Object msg) {
+        if (LOG.LOG_TF) {
+            String strMsg = msg.toString();
+            if (strMsg.length() > logMaxLength) {
+                while (true) {
+                    String substring = strMsg.substring(0, logMaxLength);
+                    Log.e(LOG.LOG_TAG + "i", "------- " + substring);
+                    strMsg = strMsg.substring(logMaxLength);
+                    if (strMsg.length() <= logMaxLength) {
+                        Log.e(LOG.LOG_TAG + "i", strMsg);
+                        break;
+                    }
+                }
+            } else {
+                Log.e(LOG.LOG_TAG + "i", "------- " + msg);
+            }
+        }
+    }
+
     /**
      * 提示消息 Log
      *
@@ -631,7 +682,7 @@ public class GT {
      */
     public static void log(Object title, Object msg) {
         if (LOG.LOG_TF) {
-            Log.i(LOG.LOG_TAG.toString() + "i",
+            Log.i(LOG.LOG_TAG + "i",
                     "------- Run" +
                             "\n\n---------------------" + title + "------------------------\n" +
                             "                   " + msg + "\n" +
@@ -643,6 +694,35 @@ public class GT {
     }
 
     /**
+     * 打印所有提示消息 Log
+     *
+     * @param msg object 类型的消息
+     */
+    public static void logAll(Object title, Object msg) {
+        if (LOG.LOG_TF) {
+
+            Log.i(LOG.LOG_TAG + "i", "Run --------- " + title + " ---------");
+            String strMsg = msg.toString();
+            if (strMsg.length() > logMaxLength) {
+                while (true) {
+                    String substring = strMsg.substring(0, logMaxLength);
+                    Log.i(LOG.LOG_TAG + "i", "------- " + substring);
+                    strMsg = strMsg.substring(logMaxLength);
+                    if (strMsg.length() <= logMaxLength) {
+                        Log.i(LOG.LOG_TAG + "i", strMsg);
+                        break;
+                    }
+                }
+            } else {
+                Log.i(LOG.LOG_TAG + "i", "------- " + msg);
+            }
+
+            Log.i(LOG.LOG_TAG + "i", "--------- " + title + " --------- Close");
+
+        }
+    }
+
+    /**
      * 提示消息 Log
      *
      * @param title 日志标题
@@ -650,7 +730,7 @@ public class GT {
      */
     public static void err(Object title, Object msg) {
         if (LOG.LOG_TF) {
-            Log.e(LOG.LOG_TAG.toString() + "e",
+            Log.e(LOG.LOG_TAG + "e",
                     "------- Run" +
                             "\n\n---------------------" + title + "------------------------\n" +
                             "                   " + msg + "\n" +
@@ -659,6 +739,36 @@ public class GT {
             );
         }
 
+    }
+
+
+    /**
+     * 打印所有提示消息 Log
+     *
+     * @param msg object 类型的消息
+     */
+    public static void errAll(Object title, Object msg) {
+        if (LOG.LOG_TF) {
+
+            Log.e(LOG.LOG_TAG + "i", "Run --------- " + title + " ---------");
+            String strMsg = msg.toString();
+            if (strMsg.length() > logMaxLength) {
+                while (true) {
+                    String substring = strMsg.substring(0, logMaxLength);
+                    Log.e(LOG.LOG_TAG + "i", "------- " + substring);
+                    strMsg = strMsg.substring(logMaxLength);
+                    if (strMsg.length() <= logMaxLength) {
+                        Log.e(LOG.LOG_TAG + "i", strMsg);
+                        break;
+                    }
+                }
+            } else {
+                Log.e(LOG.LOG_TAG + "i", "------- " + msg);
+            }
+
+            Log.e(LOG.LOG_TAG + "i", "--------- " + title + " --------- Close");
+
+        }
     }
 
     /**
@@ -1396,10 +1506,25 @@ public class GT {
          * @param permissions 存储可读取的权限
          * @param commit      是否自动提交
          */
-        public GT_SharedPreferences(Context context, String SPName, int permissions, boolean commit) {
+        public GT_SharedPreferences(Context context, String sPName, int permissions, boolean commit) {
             this.context = context;
             this.commit = commit;
-            sp = context.getSharedPreferences(SPName, permissions);//打开 或 创建 SharedPreferences
+            sp = context.getSharedPreferences(sPName, permissions);//打开 或 创建 SharedPreferences
+            sp_e = sp.edit();//让userData处于编辑状态
+        }
+
+        /**
+         * 初始化 SP
+         *
+         * @param context     上下文
+         * @param SPName      存储的名字
+         * @param permissions 存储可读取的权限
+         * @param commit      是否自动提交
+         */
+        public GT_SharedPreferences(Context context, String sPName, boolean commit) {
+            this.context = context;
+            this.commit = commit;
+            sp = context.getSharedPreferences(sPName, PRIVATE);//打开 或 创建 SharedPreferences
             sp_e = sp.edit();//让userData处于编辑状态
         }
 
@@ -4882,7 +5007,6 @@ public class GT {
 
                 }
 
-                // TODO 是否有 主键 没有主键就打开
                 if (!isKey) {
                     //自行为该表添加一个主键
                     tableSqlCode += "GT_ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL";
@@ -5025,7 +5149,7 @@ public class GT {
         }
 
         /**
-         清除本应用内部缓存(/data/data/com.xxx.xxx/cache) * *
+         * 清除本应用内部缓存(/data/data/com.xxx.xxx/cache) * *
          *
          * @param context
          */
@@ -5034,7 +5158,7 @@ public class GT {
         }
 
         /**
-         清除本应用所有数据库(/data/data/com.xxx.xxx/databases) * *
+         * 清除本应用所有数据库(/data/data/com.xxx.xxx/databases) * *
          *
          * @param context
          */
@@ -5044,7 +5168,7 @@ public class GT {
         }
 
         /**
-         清除本应用SharedPreference(/data/data/com.xxx.xxx/shared_prefs) *
+         * 清除本应用SharedPreference(/data/data/com.xxx.xxx/shared_prefs) *
          *
          * @param context
          */
@@ -5054,7 +5178,7 @@ public class GT {
         }
 
         /**
-         按名字清除本应用数据库 * *
+         * 按名字清除本应用数据库 * *
          *
          * @param context
          * @param dbName
@@ -5064,7 +5188,7 @@ public class GT {
         }
 
         /**
-         清除/data/data/com.xxx.xxx/files下的内容 * *
+         * 清除/data/data/com.xxx.xxx/files下的内容 * *
          *
          * @param context
          */
@@ -5073,7 +5197,7 @@ public class GT {
         }
 
         /**
-         清除外部cache下的内容(/mnt/sdcard/android/data/com.xxx.xxx/cache)
+         * 清除外部cache下的内容(/mnt/sdcard/android/data/com.xxx.xxx/cache)
          *
          * @param context
          */
@@ -5085,7 +5209,7 @@ public class GT {
         }
 
         /**
-         清除自定义路径下的文件，使用需小心，请不要误删。而且只支持目录下的文件删除 * *
+         * 清除自定义路径下的文件，使用需小心，请不要误删。而且只支持目录下的文件删除 * *
          *
          * @param filePath
          */
@@ -5094,7 +5218,7 @@ public class GT {
         }
 
         /**
-         清除本应用所有的数据 * *
+         * 清除本应用所有的数据 * *
          *
          * @param context
          * @param filepath
@@ -5114,7 +5238,7 @@ public class GT {
         }
 
         /**
-         删除方法 这里只会删除某个文件夹下的文件，如果传入的directory是个文件，将不做处理 * *
+         * 删除方法 这里只会删除某个文件夹下的文件，如果传入的directory是个文件，将不做处理 * *
          *
          * @param directory
          */
@@ -5409,25 +5533,29 @@ public class GT {
      */
     public static class JSON {
 
-        private String string;
+        private static JSONObject jsonObject;
 
-        /**
-         * 初始化 json 数据
-         *
-         * @param string 服务器请求下来的 String 数据
-         */
-        public JSON(String string) {
-            this.string = string;
-            try {
-                JSONObject jsonObject = new JSONObject(string);
-            } catch (JSONException e) {
-                if (LOG.GT_LOG_TF)
-                    log("当前 JSON 数据中有些节点并不存在,请谨慎使用!  【" + getLineInfo(1) + "】");
-                //                e.printStackTrace();
-            }
+        public JSONObject getJsonObject() {
+            return jsonObject;
         }
 
-        public JSON() {
+        private JSON() {
+        }
+
+        /**
+         * @param JsonData
+         * @return
+         * @初始化JSON数据
+         */
+        public JSON initJsonData(String JsonData) {
+            if (JsonData != null) {
+                try {
+                    jsonObject = new JSONObject(JsonData);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+            return this;
         }
 
         /*********************************  根据 Bean 获取数据*************************************/
@@ -5437,8 +5565,8 @@ public class GT {
          * @param aClass 指定 解析后的 bean 可续
          * @return 返回 实体类
          */
-        public Object getBean(Class<?> aClass) {
-            Object o = null;
+        public <T> T getBean(Class<T> aClass, String string) {
+            T o = null;
             try {
                 o = new Gson().fromJson(string, aClass);
             } catch (Exception exception) {
@@ -5446,163 +5574,6 @@ public class GT {
             }
             return o;
         }
-
-
-        /*********************************  没有 Bean 获取数据*************************************/
-        /**
-         * 用法:
-         * 第一步：将请求的数据放入   GT.JSON json = new GT.JSON(“请求的数据”);
-         * 第二步：初始化 JSON 数据  json.initBeanData(json.getData());
-         * 第三步：获取 list 集合    JSONArray list = json.getJSONArray("list");     //获取 list 节点
-         * 第四步：获取 list 内数据  Object author = json.getJSONObject(list, “节点名”, “集合list的索引”);
-         * <p>
-         * 注意:
-         * 如果请求的数据是 "data":{}  就用 get()方法 获取 data 再就进行初始化后 获取里面的值
-         * 如果请求的数据是 "list": [] 就用 getJSONObject() 获取 List<?>
-         */
-        private JSONObject jsonObject;
-        private JSONArray jsonArray;
-
-        /**
-         * 初始化 实体类数据
-         *
-         * @param data
-         * @return 返回JSON 操作对象
-         */
-        public JSON initBeanData(String data) {
-            try {
-                jsonObject = new JSONObject(data);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return this;
-        } //初始化 JSON 数据
-
-        /**
-         * 获取普通的值 返回数据前会进行 忽略掉转义符
-         *
-         * @param key
-         * @return
-         */
-        public Object get(String key) {
-            Object o = null;
-            if (jsonObject != null) {
-                try {
-                    o = jsonObject.get(key);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            } else {
-                err(getLineInfo(1), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
-            }
-
-            //            GT.err("在转 data 数据之前:" + data);
-            o = rplStr(o.toString(), "\\", "");//忽略掉转义符
-            //            GT.err("转 data 数据之后:" + data);
-
-            return o;
-        }   //获取普通的值 返回数据前会进行 忽略掉转义符
-
-        /**
-         * 去掉转义符
-         *
-         * @param str1
-         * @param str2
-         * @param str3
-         * @return
-         */
-        public String rplStr(String str1, String str2, String str3) {
-            String strtmp = "";
-            int i = 0, f;
-            for (i = 0; ; i += str2.length()) {
-                f = str1.indexOf(str2, i);
-                if (f == -1) {
-                    strtmp += str1.substring(i);
-                    break;
-                } else {
-                    strtmp += str1.substring(i, f);
-                    strtmp += str3;
-                    i = f;
-                }
-            }
-            return strtmp;
-        }//去掉转义符
-
-        /**
-         * 获取 对象数组
-         *
-         * @param string
-         * @return
-         */
-        public JSONArray getJSONArray(String string) {
-            try {
-                jsonArray = new JSONArray(string);
-            } catch (JSONException e) {
-                err(getLineInfo(1), "没有初始化 JSON 数据，无法进行 无 bean 数据解析");
-            }
-
-            return jsonArray;
-        }   //获取 对象数组
-
-        /**
-         * 获取 JSON 对象
-         *
-         * @param list
-         * @param key
-         * @param index
-         * @return
-         */
-        public Object getJSONObject(JSONArray list, String key, int index) {
-            JSONObject jsonObject = null;
-            Object o = null;
-            try {
-                jsonObject = (JSONObject) list.get(index);  //获取当前索引下
-                o = jsonObject.get(key);        //key 值 的对象
-            } catch (JSONException e) {
-                err(getLineInfo(1), "JSON 数据解析异常，无法通过 没有初始化的 JSON 数据进行解析节点");
-            }
-            return o;
-        }   //获取 JSON 对象
-
-        /**
-         * 添加新的 json 数据
-         *
-         * @param jsonArray
-         * @param new_jsonArray
-         * @return
-         */
-        public static JSONArray addJSONArray(JSONArray jsonArray, JSONArray new_jsonArray) {
-
-            for (int i = 0; i < new_jsonArray.length(); i++) {
-                try {
-                    Object o = jsonArray.get(i);
-                    jsonArray.put(o);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-            return jsonArray;
-        }//添加新的 json 数据
-
-        /**
-         * 清除所有的 key
-         *
-         * @param jsonArray
-         * @return
-         */
-        public static JSONArray clear(JSONArray jsonArray) {
-            for (int i = 0, len = jsonArray.length(); i < len; i++) {
-                JSONObject obj = null;
-                try {
-                    obj = jsonArray.getJSONObject(i);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                obj.remove("key");
-            }
-            return jsonArray;
-        }
-
 
     }
 
@@ -5761,73 +5732,67 @@ public class GT {
      */
     public static class HttpUtil {
 
-        static final String ENCODE = "utf-8";
-        static final String GET = "GET";
-        static final String POST = "POST";
-
+        private static final String UTF_8 = "utf-8";
+        private static final String GET = "GET";
+        private static final String POST = "POST";
 
         /**
          * get请求封装
          */
-        public static void getRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
-            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
-                @Override
-                public void run() {
-                    StringBuffer sb = new StringBuffer(url);
-                    sb.append("?");
-                    if (params != null && !params.isEmpty()) {
-                        for (Map.Entry<String, String> entry : params.entrySet()) {    //增强for遍历循环添加拼接请求内容
-                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
-                        }
-                        sb.deleteCharAt(sb.length() - 1);
-                        if (listener != null) {
-                            try {
-                                URL path = new URL(sb.toString());
-                                HttpURLConnection con = (HttpURLConnection) path.openConnection();
-                                con.setRequestMethod(GET);    //设置请求方式
-                                con.setConnectTimeout(3000);    //链接超时3秒
-                                con.setDoOutput(true);
-                                con.setDoInput(true);
-                                OutputStream os = con.getOutputStream();
-                                os.write(sb.toString().getBytes(encode));
-                                os.close();
-                                if (con.getResponseCode() == 200) {    //应答码200表示请求成功
-                                    onSuccess(encode, listener, con);
-                                }
-                            } catch (Exception error) {
-                                error.printStackTrace();
-                                onError(listener, error);
-                            }
-                        }
-                    }
+        public static void getRequest(final String url, final Map<String, Object> params, final GT.HttpUtil.OnLoadData listener) {
+            if (url == null || listener == null) {
+                return;
+            }
+            /**
+             * 将 Map 中的参数解析成想要的 get 参数
+             * https://apis.map.qq.com/ws/geocoder/v1/?location=22.5948,114.3069163&get_poi=1&key=J6HBZ-N3K33-D2B3V-YH7I4-37AVE-NJFMT
+             */
+            StringBuffer stringBuffer = new StringBuffer();
+            if (params != null && params.size() > 0) {
+                stringBuffer.append("?");//url 与 请求参数的分隔符
+                for (Map.Entry<String, Object> entry : params.entrySet()) {
+                    stringBuffer.append(entry.getKey());
+                    stringBuffer.append("=");
+                    stringBuffer.append(entry.getValue());
+                    stringBuffer.append("&");
                 }
-            });
+                stringBuffer.deleteCharAt(stringBuffer.length() - 1);//去掉最后一个 & 字符
+            }
+
+            //将解析好的参数直接调用 getRequest 进行get请求参数
+            getRequest(url + stringBuffer.toString(), listener);
         }
 
         /**
          * get请求封装
          */
-        public static void getRequest(final String url, final OnLoadData listener) {
-            Thread.runJava(new Runnable() { //为请求网络数据开启子线程
+        public static void getRequest(final String url, final GT.HttpUtil.OnLoadData listener) {
+            if (url == null || listener == null) {
+                return;
+            }
+            GT.Thread.runJava(new Runnable() { //为请求网络数据开启子线程
                 @Override
                 public void run() {
-                    if (listener != null) {
-                        try {
-                            URL path = new URL(url);
-                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
-                            con.setRequestMethod(GET);    //设置请求方式
-                            con.setConnectTimeout(3000);    //链接超时3秒
-                            con.setDoOutput(true);
-                            con.setDoInput(true);
-                            OutputStream os = con.getOutputStream();
-                            os.write(url.getBytes(ENCODE));
-                            os.close();
-                            if (con.getResponseCode() == 200) {    //应答码200表示请求成功
-                                onSuccess(ENCODE, listener, con);
+                    try {
+                        URL path = new URL(url);//获取 Url
+                        HttpURLConnection conn = (HttpURLConnection) path.openConnection();//打开连接
+                        conn.setRequestMethod(GET);    //设置请求方式
+                        int code = conn.getResponseCode();
+                        if (code == 200) {//应答码200表示请求成功
+                            try{
+                                onSuccess(listener, conn);//请求成功
+                            }catch (Exception e1){
+                                err("e:" + e1);
                             }
-                        } catch (Exception error) {
-                            error.printStackTrace();
-                            onError(listener, error);
+                        } else {
+                            GT.err("向服务器get请求返回的code:" + code);
+                        }
+                    } catch (Exception error) {
+                        try{
+                            onError(listener, error);//请求失败
+                        }catch (Exception e1){
+                            err("e1:" + error);
+                            err("e2:" + e1);
                         }
                     }
                 }
@@ -5837,66 +5802,75 @@ public class GT {
         /**
          * POST请求
          */
-        public static void postRequest(final String url, final Map<String, String> params, final String encode, final OnLoadData listener) {
-            Thread.runJava(new Runnable() {// 为网络请求开启子线程
-                @Override
-                public void run() {
-                    StringBuffer sb = new StringBuffer();
-                    if (params != null && !params.isEmpty()) {
-                        for (Map.Entry<String, String> entry : params.entrySet()) {
-                            sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
-                        }
-                        sb.deleteCharAt(sb.length() - 1);
-                    }
-                    if (listener != null) {
-                        try {
-                            URL path = new URL(url);
-                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
-                            con.setRequestMethod(POST);   //设置请求方法POST
-                            con.setConnectTimeout(3000);
-                            con.setDoOutput(true);
-                            con.setDoInput(true);
-                            byte[] bytes = sb.toString().getBytes();
-                            OutputStream outputStream = con.getOutputStream();
-                            outputStream.write(bytes);
-                            outputStream.close();
-                            if (con.getResponseCode() == 200) {
-                                onSuccess(encode, listener, con);
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            onError(listener, e);
-                        }
-                    }
-                }
-            });
+        public static void postRequest(final String url, final String params, final GT.HttpUtil.OnLoadData listener) {
+
+            /**
+             * 将 Map 中的参数解析成想要的 post 参数
+             * https://apis.map.qq.com/ws/geocoder/v1/?location=22.5948,114.3069163&get_poi=1&key=J6HBZ-N3K33-D2B3V-YH7I4-37AVE-NJFMT
+             */
+
+            postRequest(url + "?" + params, listener);
         }
+
+        private static String value = "";
+        private static String url = "";
 
         /**
          * POST请求
          */
-        public static void postRequest(final String url, final OnLoadData listener) {
-            Thread.runJava(new Runnable() {// 为网络请求开启子线程
+        public static void postRequest(final String url, final GT.HttpUtil.OnLoadData listener) {
+
+            if (url == null || !url.contains("?") || listener == null) {
+                return;
+            }
+
+            value = "";//初始化
+            HttpUtil.url = "";//初始化
+
+            String[] arrayUrl = url.split("\\?");
+            if (arrayUrl.length >= 2) {
+                HttpUtil.url = arrayUrl[0];
+                for (int i = 1; i < arrayUrl.length; i++) {
+                    value += arrayUrl[i];
+                }
+            } else {
+                return;
+            }
+
+            GT.Thread.runJava(new Runnable() {// 为网络请求开启子线程
                 @Override
                 public void run() {
-                    if (listener != null) {
-                        try {
-                            URL path = new URL(url);
-                            HttpURLConnection con = (HttpURLConnection) path.openConnection();
-                            con.setRequestMethod(POST);   //设置请求方法POST
-                            con.setConnectTimeout(3000);
-                            con.setDoOutput(true);
-                            con.setDoInput(true);
-                            byte[] bytes = url.getBytes();
-                            OutputStream outputStream = con.getOutputStream();
-                            outputStream.write(bytes);
-                            outputStream.close();
-                            if (con.getResponseCode() == 200) {
-                                onSuccess(ENCODE, listener, con);
+                    try {
+                        //打开连接
+                        URL path = new URL(HttpUtil.url);//1. 生成URL
+                        HttpURLConnection conn = (HttpURLConnection) path.openConnection();//2. HttpURLConnection 打开连接
+                        conn.setRequestMethod(POST);//3. 设置为 POST 请求
+                        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");//4. Content-Type,这里是固定写法，发送内容的类型
+
+                        //向服务器提交请求数据
+                        conn.setDoOutput(true);//5. output，这里要记得开启输出流，将自己要添加的参数用这个输出流写进去，传给服务端，这是socket的基本结构
+                        OutputStream os = conn.getOutputStream();// 获取输出流
+                        os.write(value.getBytes(UTF_8));//一定要记得将自己的参数转换为字节，编码格式是utf-8
+                        os.flush();//关闭输出流
+
+                        int code = conn.getResponseCode();
+                        if (code == 200) {//应答码200表示请求成功
+                            try{
+                                onSuccess(listener, conn);//请求成功
+                            }catch (Exception e1){
+                                err("e:" + e1);
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
+
+                        } else {
+                            GT.err("向服务器post请求返回的code:" + code);
+                        }
+
+                    } catch (Exception e) {
+                        try{
                             onError(listener, e);
+                        }catch (Exception e1){
+                            err("e1:" + e);
+                            err("e2:" + e1);
                         }
                     }
                 }
@@ -5904,16 +5878,11 @@ public class GT {
 
         }
 
-        private static void onError(final OnLoadData listener, final Exception onError) {
-            Thread.runAndroid(new Runnable() {//为 请求失败 开启 UI 线程
-                @Override
-                public void run() {
-                    listener.onError(onError.toString());
-                }
-            });
+        private static void onError(final GT.HttpUtil.OnLoadData listener, final Exception onError) {
+            listener.onError(onError.toString());
         }
 
-        private static void onSuccess(String encode, final OnLoadData listener, HttpURLConnection con) throws IOException {
+        private static void onSuccess(final GT.HttpUtil.OnLoadData listener, HttpURLConnection con) throws IOException {
             InputStream inputStream = con.getInputStream();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();//创建内存输出流
             int len;
@@ -5922,8 +5891,8 @@ public class GT {
                 while ((len = inputStream.read(bytes)) != -1) {
                     baos.write(bytes, 0, len);
                 }
-                final String str = new String(baos.toByteArray(), encode);
-                Thread.runAndroid(new Runnable() {//为 请求成功 开启 UI 线程
+                final String str = new String(baos.toByteArray(), UTF_8);
+                GT.Thread.runAndroid(new Runnable() {//为 请求成功 开启 UI 线程
                     @Override
                     public void run() {
                         listener.onSuccess(str);
@@ -7707,15 +7676,21 @@ public class GT {
          * @param fileName 文件名
          * @保存图片
          */
-        public static void saveImage(Context context, View view, String fileName) {
+        public static void saveImage(Activity activity, View view, String savePath, String fileName) {
+
+            // 保存图片
             Bitmap bm = Bitmap.createBitmap(view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bm);
             view.draw(canvas);
-            String sd = "sdcard/";
-            String fliename = sd + fileName + ".png";
-            File file = new File(fliename);
+
+            // 更新图库
+            File file = new File(savePath);
+            if (!file.exists()) {
+                file.mkdirs();// 创建整个目录
+            }
+
             try {
-                FileOutputStream out = new FileOutputStream(fliename);
+                FileOutputStream out = new FileOutputStream(savePath + fileName);
                 bm.compress(Bitmap.CompressFormat.PNG, 90, out);
                 out.flush();
                 out.close();
@@ -7724,11 +7699,18 @@ public class GT {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             // 通知系统更新图库
-            Intent intent = new Intent();
-            intent.setAction(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            intent.setData(Uri.fromFile(file));
-            context.sendBroadcast(intent);
+            if (file.exists()) {
+                try {
+                    MediaStore.Images.Media.insertImage(activity.getContentResolver(), savePath + fileName, fileName, null);// 把文件插入到系统图库
+                    activity.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(savePath + fileName))));// 发送广播通知系统
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+
+            }
+
         }
 
         /**
@@ -10145,37 +10127,1065 @@ public class GT {
 
     }
 
-
     /**
      * 封装 Fragment 管理器
      */
     public static class GT_Fragment {
 
-        //用于注解获取 GT_Fragment 实例对象
+        //===================================================== 用于注解获取 GT_Fragment 实例对象 ====================================
+
         @Target(ElementType.FIELD)
         @Retention(RetentionPolicy.RUNTIME)
         public @interface Build {
+
         }
 
         private GT_Fragment() {
-        }//单例
+            //单例
+        }
 
-        private static GT_Fragment gt_fragment;
+        //===================================================== GT_Fragment 成员变量 ====================================
 
-        //实例化 GT_Fragment
-        public static GT_Fragment getGT_fragment() {
-            synchronized (GT_Fragment.class) {
-                if (gt_fragment == null) {
-                    gt_fragment = new GT_Fragment();
+        private static GT_Fragment gt_fragment = new GT_Fragment();
+        ; //GT_Fragment 实例化
+        private static FragmentManager fragmentManager; //Fragment 管理器
+        private static int homeFragmentId = 0;//Home首页页面FragmentID
+        private static int mainFragmentId = 0;//Main主页面FragmentID
+        private final static int FRAGMENT_ID = 0x1079;//设置静态Fragment 初始 ID
+        private static String topFragmentName = "";//始终指向最顶端的 Fragment
+        private static List<FragmentBean> fragmentBeanList;//存储 Fragment 栈中的 Fragment 信息
+        private static List<String> fragmentNames;//存储 Fragment 栈中所有 Fragment 名字
+        private String saveStackData = "[]";//保存当前栈中 Fragment 数据
+        private Activity activity;//活动引用
+        private static FragmentManager.OnBackStackChangedListener listener;//Fragment 栈中监听器
+
+        //===================================================== GT_Fragment 成员变量GetSet方法 ====================================
+
+        /**
+         * 采取紧急措施，获取初始化的 Activity
+         * 建议在 单 Activity 对 多 Fragment 的时候可以使用
+         *
+         * @return
+         */
+        public Activity getActivity() {
+
+            //如果没有主动在 Fragment 初始化的时候初始化 Activity 那么就会导致这里为 null
+            if (activity == null) {
+                //采取第1号紧急措施，遍历整个 Fragment栈中还存在的 Fragment ，挨个去取一个不为 null 的 Activity ，有那就直接返回该 Activity
+                for (String fragmentName : getFragmentNames()) {//遍历栈中的所有 Fragment
+                    Fragment fragment = fragmentManager.findFragmentByTag(fragmentName);//通过设置的标识获取 Fragment
+                    if (fragment != null) {
+                        activity = fragment.getActivity();//获取 Activity
+                        if (activity != null) {
+                            return activity;
+                        }
+                    }
                 }
+
+                //采取第2号紧急措施，如果有绑定 Activity 那就直接使用绑定的 Activity
+                if (activity == null) {
+                    activity = (Activity) getGT().CONTEXT;
+                }
+
+                //如果还是没有 Activity 那就没法了...
+
+            }
+
+            return activity;
+        }
+
+        /**
+         * 获取 Fragment 管理器
+         *
+         * @return
+         */
+        public FragmentManager getFragmentManager() {
+            return fragmentManager;
+        }
+
+        /**
+         * 获取事务
+         *
+         * @return
+         */
+        public FragmentTransaction getTransaction() {
+            if (fragmentManager != null) {
+                return fragmentManager.beginTransaction();//获取事务
+            }
+            return null;
+        }
+
+        //设置与获取 Home页面的 fragment 容器ID
+        public void setHomeFragmentId(int homeFragmentId) {
+            this.homeFragmentId = homeFragmentId;
+        }
+
+        public int getHomeFragmentId() {
+            return homeFragmentId;
+        }
+
+        //设置与获取 主页面的 Fragment 容器ID
+        public static int getMainFragmentId() {
+            return mainFragmentId;
+        }
+
+        public static void setMainFragmentId(int mainFragmentId) {
+            GT_Fragment.mainFragmentId = mainFragmentId;
+        }
+
+        public List<FragmentBean> getFragmentStack() {
+            return getFragmentList();
+        }
+
+        public List<String> getFragmentFragments() {
+            return getFragmentNames();
+        }
+
+        //===================================================== 切换 Fragment 方式 ====================================
+
+        /**
+         * Fragment 启动方式说明
+         * 注意事项： Fragment 的切换方式只要一次设置 就可以持久有效与启动模式相反
+         * 注意事项： Fragment 切换方式中的 Activity 切换方式没有 HOME 启动模式。
+         * 注意事项：不推荐将 Activity 与 Fragment 进行混用，不然无法保存原页面数据
+         */
+
+        /**
+         * ACTIVITY:    Activity 切换方式   模仿 Activity 启动方式    切换 Fragment 使用 add 的方式
+         */
+        public final static int ACTIVITY = 0;
+
+        /**
+         * ACTIVITY:    Activity 启动方式   模仿 Activity 启动方式    切换 Fragment 使用 replace 的方式
+         */
+        public final static int FRAGMENT = 1;
+
+        /**
+         * 切换方式 默认使用  Activity
+         */
+        public static int SWITCHING_MODE = ACTIVITY;//默认使用 Activity
+
+        /**
+         * 设置 Fragment 启动模式
+         *
+         * @param switchingMode 启动模式
+         * @return
+         */
+        public GT_Fragment switchingMode(int switchingMode) {
+            //如果启动模式不在正常的值内那就默认为 默认模式
+            SWITCHING_MODE = switchingMode;
+            return this;
+        }
+
+        /**
+         * Fragment切换方式管理 （仅供内部调用）
+         * <p>
+         * 在这里可以调用动画
+         * transaction.setCustomAnimations(
+         * R.anim.card_flip_right_in,
+         * R.anim.card_flip_left_out,
+         * R.anim.card_flip_left_in,
+         * R.anim.card_flip_right_out
+         * );
+         *
+         * @param fragmentId
+         * @param transaction
+         * @param fragment
+         * @param name
+         */
+        @SuppressLint("WrongConstant")
+        private void fragmentSwitchingModeManagement(int fragmentId, FragmentTransaction transaction, Fragment fragment, String name) {
+
+            switch (SWITCHING_MODE) {
+                case ACTIVITY:// Activity 切换方式
+                {
+                    /**
+                     * TRANSIT_FRAGMENT_OPEN : TRANSIT_FRAGMENT_CLOSE : TRANSIT_FRAGMENT_FADE 标准打开关闭动画
+                     * TRANSIT_FRAGMENT_FADE 淡入淡出
+                     *
+                     */
+
+                    err("切换方式：Activity");
+//                    transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);//当前默认使用这一个动画 淡入淡出
+                    transaction.add(fragmentId, fragment, name);
+                    transaction.commit();
+                    break;
+                }
+
+                case FRAGMENT:// Fragment 切换方式
+                {
+                    err("切换方式：Fragment");
+//                    transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);//当前默认使用这一个动画 淡入淡出
+                    transaction.replace(fragmentId, fragment, name);
+                    transaction.commit();
+                    break;
+                }
+
+                default:    //如果是非法参数 那就默认使用 Activity 的启动方式
+                {
+                    err("切换方式：Fragment");
+//                    transaction.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);//当前默认使用这一个动画 淡入淡出
+                    transaction.add(fragmentId, fragment, name);
+                    transaction.commit();
+                }
+
+            }
+
+
+        }
+
+
+        //===================================================== 启动 Fragment 模式 ====================================
+
+        /**
+         * Fragment 启动模式说明
+         * 注意事项： Fragment 的启动模式在设置启动模式之后，只要启动后就会初始化到默认的启动模式，与Fragment切换方式相反
+         * STANDARD:       默认模式     该启动模式为Android默认启动模式，每当启动一个 fragment 就会在任务栈中创建一个
+         * HOME:           主界面模式   该启动模式不将 Fragment 加入退回栈,一般用于APP首页
+         * SINGLE_TOP:     栈顶模式     该启动模式是在查看任务栈顶和你将要启动的 fragment 是否是同一个 fragment，是一个就直接复用，否则就新创一个实例
+         * SINGLE_TASK:    栈内复用模式 该启动模式是在任务栈中看是否有和你一样的 fragment，有则直接把该 fragment 之上的 fragment 全部弹出使之置于栈顶,如果当前即最顶端那就复用。
+         * ENTRANCE:       入口模式     如果当前新启动的Fragment处于栈底，那就弹出除栈底外所有 Fragment 如果当前栈中不存在，那就直接创建一个新的实例。常用于一个程序的入口处
+         */
+
+        /**
+         * 默认模式
+         */
+        public final static int STANDARD = 0;
+        /**
+         * 主界面模式
+         */
+        public final static int HOME = 1;
+        /**
+         * 栈顶模式
+         */
+        public final static int SINGLE_TOP = 2;
+        /**
+         * 栈内复用模式
+         */
+        public final static int SINGLE_TASK = 3;
+        /**
+         * 入口模式
+         */
+        public final static int ENTRANCE = 4;
+        /**
+         * 启动模式
+         */
+        public static int START_MODE = STANDARD; //默认模式
+
+        /**
+         * 设置 Fragment 启动模式
+         *
+         * @param startMode 启动模式
+         * @return
+         */
+        public GT_Fragment startMode(int startMode) {
+            //如果启动模式不在正常的值内那就默认为 默认模式
+            START_MODE = startMode;
+            return this;
+        }
+
+        /**
+         * 启动模式管理 （仅供内部调用）
+         *
+         * @param transaction 事件
+         * @param fragment    当前启动的 Fragment
+         * @return
+         */
+        private boolean modeManagement(FragmentTransaction transaction, Fragment fragment) {
+            String name = fragment.getClass().getName();
+            switch (START_MODE) {
+                case STANDARD: //默认模式     该启动模式为Android默认启动模式，每当启动一个 fragment 就会在任务栈中创建一个
+                {
+                    err("默认模式");
+                    START_MODE = STANDARD;//恢复默认模式
+                    transaction.addToBackStack(name);//加入到回退栈
+                    topFragmentName = "";//清空指向顶端的 Fragment
+                    return true;
+                }
+
+                case HOME:  //主界面模式   该启动模式不将 Fragment 加入退回栈,一般用于APP首页
+                {
+                    err("主界面菜单 模式");
+                    START_MODE = STANDARD;//恢复默认模式
+
+                    if (!isStackTop(fragment.getClass())) {
+                        return false;
+                    }
+
+                    if (SWITCHING_MODE == ACTIVITY) {//如果当前切换的方法是 Activity 那就需要加入回退栈，不给与Activity切换模式 Home 启动模式
+//                        transaction.addToBackStack(name);//加入到回退栈 是否需要加入回退栈，待定
+                    }
+
+                    topFragmentName = name;//指向最顶端 Fragment
+                    return true;
+                }
+
+                case SINGLE_TOP: //栈顶模式     该启动模式是在查看任务栈顶和你将要启动的 fragment 是否是同一个 fragment，是一个就直接复用，否则就新创一个实例
+                {
+                    err("栈顶模式");
+                    START_MODE = STANDARD;//恢复默认模式
+
+                    //当前栈中存在 Fragment 且 当前栈顶 Fragment 是当前要打开的 Fragment 就用直接复用
+                    if (!isStackTop(fragment.getClass())) {
+                        return false;
+                    }
+
+                    transaction.addToBackStack(name);//加入到回退栈
+                    topFragmentName = "";//清空指向顶端的 Fragment
+                    return true;
+                }
+
+                case SINGLE_TASK: //栈内复用模式 该启动模式是在任务栈中看是否有和你一样的 fragment，有则直接把该 fragment 之上的 fragment 全部弹出使之置于栈顶,如果当前即最顶端那就复用。
+                {
+                    err("栈内复用模式");
+                    START_MODE = STANDARD;//恢复默认模式
+
+                    //当前栈中存在 Fragment 且 当前栈顶 Fragment 是当前要打开的 Fragment 就用直接复用
+                    if (!isStackTop(fragment.getClass())) {
+                        return false;
+                    }
+
+                    List<String> fragmentNames = getFragmentNames();
+                    int lastIndex = fragmentNames.lastIndexOf(name);//查找当前集合中最后一个 Fragment 索引
+                    if (lastIndex == -1) {
+                        //如果回退栈中没找到新打开的 Fragment 就直接打开新的 Fragment
+                        transaction.addToBackStack(name);//加入到回退栈
+                        topFragmentName = "";//清空指向顶端的 Fragment
+                        return true;
+                    } else {
+                        finish(name, false);//关闭到想要打开的 Fragment
+                        return false;
+                    }
+
+                }
+
+                case ENTRANCE: {//  入口模式     弹出除栈底外所有 Fragment 再创建一个新的实例。常用于一个程序的入口处
+
+                    err("入口模式");
+                    START_MODE = STANDARD;//恢复默认模式
+
+                    //弹出所有栈
+                    for (int i = 0; i < getFragmentNames().size(); i++) {
+                        finish();
+                    }
+                    topFragmentName = "";//清空指向顶端的 Fragment
+                    return true;
+
+
+                }
+
+                default://非正常的值
+
+                    err("非正常模式");
+                    START_MODE = STANDARD;//恢复默认模式
+
+                    err(getLineInfo(3) + "：在启动 Fragment 模式中，你输入了非正常的值,不给与启动操作。");
+                    break;
+
+            }
+
+
+            return false;
+        }
+
+        /**
+         * 判断当前 fragment 是否处于最顶端显示
+         *
+         * @param fragmentClass 当前需要判断的 FragmentClass
+         * @return
+         */
+        public <T> boolean isStackTop(Class<T> fragmentClass) {
+
+            //当前栈中存在 Fragment 且 当前栈顶 Fragment 是当前要打开的 Fragment 就用直接复用
+            String name = fragmentClass.getName();
+            List<String> stringList = getFragmentFragments();
+
+            if (stringList.size() > 0) {
+                String stackTop = stringList.get(stringList.size() - 1);//获取栈顶 Fragment
+
+                if (stackTop.equals(name)) {//如果回退栈栈顶是新打开的 Fragment
+                    return false;
+                } else if (name.equals(topFragmentName)) {//判断不加入回退栈的逻辑
+                    return false;
+                }
+            } else if (name.equals(topFragmentName)) {//判断不加入回退栈的逻辑
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * 获取当前 Fragment 栈中的信息
+         *
+         * @return
+         */
+        public List<FragmentBean> getFragmentList() {
+
+            if (fragmentBeanList == null) {
+                fragmentBeanList = new ArrayList<>();
+            }
+
+            fragmentBeanList.clear();//清空数据
+
+            for (int i = 0; i < fragmentManager.getBackStackEntryCount(); i++) {
+                String[] fragmentData = fragmentManager.getBackStackEntryAt(i).toString().split(" ");
+                try {
+                    String hashCode = fragmentData[0].substring(fragmentData[0].indexOf("{") + 1);//唯一标示
+                    String stackIndex = fragmentData[1].substring(1);//栈索引
+                    String fragmentName = fragmentData[2].substring(0, fragmentData[2].length() - 1);//fragment名称
+                    fragmentBeanList.add(new FragmentBean(Integer.parseInt(stackIndex), hashCode, fragmentName));
+                } catch (Exception e) {
+                    exception(getLineInfo() + "报错:" + e);
+                }
+            }
+
+            return fragmentBeanList;
+        }
+
+        /**
+         * 获取当前 Fragment 栈中 Fragment 所有名称
+         *
+         * @return
+         */
+        public List<String> getFragmentNames() {
+
+            if (fragmentNames == null) {
+                fragmentNames = new ArrayList<>();
+            }
+            fragmentNames.clear();//清空数据
+
+            for (int i = 0; i < fragmentManager.getBackStackEntryCount(); i++) {
+                String[] fragmentDataArray = fragmentManager.getBackStackEntryAt(i).toString().split(" ");
+                try {
+                    String fragmentName = fragmentDataArray[2].substring(0, fragmentDataArray[2].length() - 1);//fragment名称
+                    fragmentNames.add(fragmentName);
+                } catch (Exception e) {
+                    exception(getLineInfo() + "报错:" + e);
+                }
+            }
+
+            //判断当前栈中的 Fragment 数量是否有变化，如果有变化就清空 指向栈顶的值 用于监听用户按下返回键 去掉 Home Fragment 但栈顶名称还是没变
+            if (!saveStackData.equals(fragmentNames.toString())) {
+//                topFragmentName = "";
+                saveStackData = fragmentNames.toString();//保存本次栈信息
+            }
+
+            return fragmentNames;
+        }
+
+        /**
+         * 获取当前 Fragment 栈中 Fragment 所有名称
+         *
+         * @return
+         */
+        public List<String> getFragmentSimpleNames() {
+            List<String> fragmentNames = new ArrayList<>();
+
+            String name = "";
+            for (int i = 0; i < fragmentManager.getBackStackEntryCount(); i++) {
+                String[] fragmentDataArray = fragmentManager.getBackStackEntryAt(i).toString().split(" ");
+                try {
+                    String fragmentName = fragmentDataArray[2].substring(0, fragmentDataArray[2].length() - 1);//fragment名称
+                    int lastIndex = fragmentName.lastIndexOf(".");
+                    if (lastIndex != -1) {
+                        name = fragmentName.substring(lastIndex + 1);
+                    } else {
+                        name = "[null]";
+                    }
+                    fragmentNames.add(name);
+
+                } catch (Exception e) {
+                    exception(getLineInfo() + "报错:" + e);
+                }
+            }
+            return fragmentNames;
+        }
+
+        /**
+         * Fragment 属性实体类
+         */
+        private class FragmentBean {
+
+            private int stackIndex;
+            private String hashCode;
+            private String fragmentName;
+
+            public FragmentBean() {
+            }
+
+            public FragmentBean(int stackIndex, String hashCode, String fragmentName) {
+                this.stackIndex = stackIndex;
+                this.hashCode = hashCode;
+                this.fragmentName = fragmentName;
+            }
+
+            public int getStackIndex() {
+                return stackIndex;
+            }
+
+            public void setStackIndex(int stackIndex) {
+                this.stackIndex = stackIndex;
+            }
+
+            public String getHashCode() {
+                return hashCode;
+            }
+
+            public void setHashCode(String hashCode) {
+                this.hashCode = hashCode;
+            }
+
+            public String getFragmentName() {
+                return fragmentName;
+            }
+
+            public void setFragmentName(String fragmentName) {
+                this.fragmentName = fragmentName;
+            }
+
+            @Override
+            public String toString() {
+                return "FragmentBean{" +
+                        "stackIndex=" + stackIndex +
+                        ", hashCode='" + hashCode + '\'' +
+                        ", fragmentName='" + fragmentName + '\'' +
+                        '}';
+            }
+        }
+
+        //===================================================== 构建 GT_Fragment 对象 ====================================
+
+        /**
+         * 初始化 Activity (不推荐)
+         *
+         * @param fragmentActivity
+         * @return
+         */
+        public GT_Fragment BuildActivity(FragmentActivity fragmentActivity) {
+            activity = fragmentActivity;
+            return gt_fragment;
+        }
+
+        /**
+         * 初始化 GT_Fragment 不指定 首页的容器
+         *
+         * @param fragmentActivity Activity 活动
+         * @return
+         */
+        public static GT_Fragment Build(FragmentActivity fragmentActivity, Bundle bundle) {
+            log("bundle:" + bundle);
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
             }
             return gt_fragment;
         }
 
         /**
+         * 初始化 GT_Fragment 不指定 首页的容器
+         *
+         * @param fragmentActivity 活动
+         * @param fragmentClass    启动 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public static <T> GT_Fragment Build(FragmentActivity fragmentActivity, Class<T> fragmentClass, Bundle bundle) {
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
+
+                //启动一个指定为首页的 Fragment
+                gt_fragment.switchingMode(FRAGMENT);
+                gt_fragment.startMode(GT_Fragment.HOME).startFragment(fragmentClass);
+                gt_fragment.switchingMode(ACTIVITY);
+            }
+            return gt_fragment;
+        }
+
+        /**
+         * 初始化 GT_Fragment 不指定 首页的容器
+         *
+         * @param fragmentActivity 活动
+         * @param fragment         启动 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public static <T> GT_Fragment Build(FragmentActivity fragmentActivity, Fragment fragment, Bundle bundle) {
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
+
+                //启动一个指定为首页的 Fragment
+                gt_fragment.switchingMode(FRAGMENT);
+                gt_fragment.startMode(GT_Fragment.HOME).startFragment(fragment);
+                gt_fragment.switchingMode(ACTIVITY);
+            }
+            return gt_fragment;
+        }
+
+        /**
+         * 初始化 GT_Fragment 指定首页 容器
+         *
+         * @param fragmentActivity Activity 活动
+         * @param homeFragmentId   指定指定的 Fragment容器 Id
+         * @return
+         */
+        public static GT_Fragment Build(FragmentActivity fragmentActivity, int homeFragmentId, Bundle bundle) {
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.homeFragmentId = homeFragmentId;
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
+            }
+            return gt_fragment;
+        }
+
+        /**
+         * 初始化 GT_Fragment 指定首页 容器
+         *
+         * @param fragmentActivity 活动
+         * @param fragmentClass    启动 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public static <T> GT_Fragment Build(FragmentActivity fragmentActivity, int homeFragmentId, Class<T> fragmentClass, Bundle bundle) {
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.homeFragmentId = homeFragmentId;
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
+
+                //启动一个指定为首页的 Fragment
+                gt_fragment.switchingMode(FRAGMENT);
+                gt_fragment.startMode(GT_Fragment.HOME).startFragment(fragmentClass);
+                gt_fragment.switchingMode(ACTIVITY);
+            }
+            return gt_fragment;
+        }
+
+        /**
+         * 初始化 GT_Fragment 指定首页 容器
+         *
+         * @param fragmentActivity 活动
+         * @param fragment         启动 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public static <T> GT_Fragment Build(FragmentActivity fragmentActivity, int homeFragmentId, Fragment fragment, Bundle bundle) {
+            if (bundle == null) {
+                topFragmentName = "";//置空
+                GT_Fragment.homeFragmentId = homeFragmentId;
+                GT_Fragment.fragmentManager = fragmentActivity.getSupportFragmentManager();
+                initFragment(fragmentActivity);
+
+                //启动一个指定为首页的 Fragment
+                gt_fragment.switchingMode(FRAGMENT);
+                gt_fragment.startMode(GT_Fragment.HOME).startFragment(fragment);
+                gt_fragment.switchingMode(ACTIVITY);
+            }
+            return gt_fragment;
+        }
+
+        /**
+         * 给予 GT 内部使用的初始化 方法
+         * 构建 GT_Fragment 对象的时候构建 Main 容器
+         *
+         * @param activity
+         */
+        private static void initFragment(Activity activity) {
+
+            //实例化一个 Fragment 容器
+            FrameLayout frameLayout = new FrameLayout(activity);
+
+            //为 Fragment 容器设置 ID值
+            frameLayout.setId(FRAGMENT_ID);
+
+            //初始化 Fragment 容器 ID
+            mainFragmentId = frameLayout.getId();
+
+            //如果没有指定 首页 Fragment 容器Id 那就模式使用 Main 容器
+            if (homeFragmentId == 0) {
+                homeFragmentId = mainFragmentId;
+            }
+
+            //将 Fragment 容器设置屏幕大小
+            DisplayMetrics outMetrics = new DisplayMetrics();
+            activity.getWindowManager().getDefaultDisplay().getMetrics(outMetrics);
+
+            //将Fragment 容器添加到 视图中
+            activity.addContentView(frameLayout, new ViewGroup.LayoutParams(outMetrics.widthPixels, outMetrics.heightPixels));
+
+            //监听回退栈 增加 fragment 与 减少 Fragment 都会进行触发 就算外部使用了监听覆盖了这里的监听，也不会对启动模式有影响
+            listener = new FragmentManager.OnBackStackChangedListener() {
+                @Override
+                public void onBackStackChanged() {
+                    log("添加 ：" + gt_fragment.getFragmentSimpleNames());
+                    topFragmentName = "";//清空指向顶端的 Fragment
+                }
+            };
+
+            //注册监听
+            fragmentManager.addOnBackStackChangedListener(listener);
+
+        }
+
+        //=========================================== 启动新的 Fragment ====================================
+
+        /**
+         * 启动新的 Fragment
+         *
+         * @param fragmentClass 新 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment startFragment(Class<T> fragmentClass) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragmentClass == null) return this;
+
+            T fragment = null;
+            try {
+                fragment = fragmentClass.newInstance();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+
+            if (fragment != null) {
+                //启动 Fragment
+                String name = fragment.getClass().getName();
+                FragmentTransaction transaction = getTransaction();
+                if (modeManagement(transaction, (Fragment) fragment)) {
+                    fragmentSwitchingModeManagement(mainFragmentId, transaction, (Fragment) fragment, name);
+                }
+            }
+
+            return this;
+        }
+
+        /**
+         * 启动新的 Fragment
+         *
+         * @param resLayout     指定打开 Fragment 的容器
+         * @param fragmentClass 启动新的 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment startFragment(int resLayout, Class<T> fragmentClass) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragmentClass == null) return this;
+
+            T fragment = null;
+            try {
+                fragment = fragmentClass.newInstance();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+
+            if (fragment != null) {
+                //启动 Fragment
+                String name = fragment.getClass().getName();
+                FragmentTransaction transaction = getTransaction();
+                if (modeManagement(transaction, (Fragment) fragment)) {
+                    fragmentSwitchingModeManagement(resLayout, transaction, (Fragment) fragment, name);
+                }
+            }
+
+            return this;
+        }
+
+
+        /**
+         * 启动新的 Fragment
+         *
+         * @param fragment 启动新的 Fragment
+         * @return
+         */
+        public GT_Fragment startFragment(Fragment fragment) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragment == null) return this;
+            String name = fragment.getClass().getName();
+
+            //启动 Fragment
+            FragmentTransaction transaction = getTransaction();
+            if (modeManagement(transaction, fragment)) {
+                fragmentSwitchingModeManagement(mainFragmentId, transaction, (Fragment) fragment, name);
+            }
+            return this;
+        }
+
+        /**
+         * 启动新的 Fragment
+         *
+         * @param resLayout 指定打开 Fragment 的容器
+         * @param fragment  启动新的 Fragment
+         * @return
+         */
+        public GT_Fragment startFragment(int resLayout, Fragment fragment) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragment == null) return this;
+            String name = fragment.getClass().getName();
+
+            //启动 Fragment
+            FragmentTransaction transaction = getTransaction();
+            if (modeManagement(transaction, fragment)) {
+                fragmentSwitchingModeManagement(resLayout, transaction, (Fragment) fragment, name);
+            }
+            return this;
+        }
+
+
+        /**
+         * 启动新的 Fragment 使用 Home 容器
+         *
+         * @param fragmentClass 新 Fragment 的 class
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment startFragmentHome(Class<T> fragmentClass) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragmentClass == null) return this;
+
+            T fragment = null;
+            try {
+                fragment = fragmentClass.newInstance();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            }
+
+            if (fragment != null) {
+                //启动 Fragment
+                String name = fragment.getClass().getName();
+                FragmentTransaction transaction = getTransaction();
+                if (modeManagement(transaction, (Fragment) fragment)) {
+                    fragmentSwitchingModeManagement(homeFragmentId, transaction, (Fragment) fragment, name);
+                }
+            }
+
+            return this;
+        }
+
+        /**
+         * 启动新的 Fragment 使用 Home 容器
+         *
+         * @param fragment 启动新的 Fragment
+         * @return
+         */
+        public GT_Fragment startFragmentHome(Fragment fragment) {
+
+            //判null 与 判断当前显示的Fragment是否为需要打开的Fragment
+            if (fragment == null) return this;
+            String name = fragment.getClass().getName();
+
+            //启动 Fragment
+            FragmentTransaction transaction = getTransaction();
+            if (modeManagement(transaction, fragment)) {
+                fragmentSwitchingModeManagement(homeFragmentId, transaction, (Fragment) fragment, name);
+            }
+            return this;
+        }
+
+
+        //=========================================== GT_Fragment 功能性方法 ====================================
+
+        /**
+         * 为基类Fragment初始化必要的属性（推荐使用）
+         *
+         * @param view
+         */
+        public static void initBaseFragment(View view) {
+            if (view == null) return;
+
+            try {
+                Drawable drawable = view.getBackground();//获取 Fragment 背景
+                if (!(drawable instanceof BitmapDrawable)) { //如果背景没有设置背景图片
+                    ColorDrawable colorDrawable = (ColorDrawable) view.getBackground();//获取 View 背景颜色
+                    if (colorDrawable == null) {//如果背景颜色没有设置
+                        view.setBackgroundColor(Color.WHITE);// 设置为 默认的 白色
+                    }
+                }
+            } catch (Exception e) {
+                err("Fragment BG Exception :" + e);
+            }
+
+
+            //解决 Fragment 点击事件穿透问题
+            view.setOnTouchListener(new View.OnTouchListener() {
+                @SuppressLint("ClickableViewAccessibility")
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    return true;
+                }
+            });
+        }
+
+        /**
+         * 监听 Fragment 返回键
+         *
+         * @param view          Fragment 的 View
+         * @param onKeyListener new  一个内部类
+         *                      注意使用正确实例：
+         *                      <p>
+         *                      private long exitTime = 0;
+         *                      //按两下返回键 弹出退出提示
+         *                      private void onKeyDown(){
+         *                      gt_fragment.onKeyDown(getView(), new View.OnKeyListener() {
+         * @Override public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
+         * if(keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN){
+         * if((System.currentTimeMillis()-exitTime) > 2000){
+         * exitTime = System.currentTimeMillis();
+         * }else{
+         * GT.toast_s("退出");
+         * }
+         * return true;//只将 返回按键进行监听
+         * }
+         * return false;//其余的如 音量小 音量大什么的，交给 Activity 管理
+         * }
+         * });
+         * }
+         */
+        public static void onKeyDown(View view, View.OnKeyListener onKeyListener) {
+
+            if (view == null || onKeyListener == null) {
+                return;
+            }
+
+            /**
+             * 判断用例：如   if(keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN)
+             *  返回键：
+             *  【keyCode:4，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
+             *  【keyCode:4，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
+             *
+             *  音量小：
+             *  【keyCode:25，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
+             *  【keyCode:25，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
+             *
+             *  音量大：
+             *  【keyCode:24，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
+             *  【keyCode:24，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
+             */
+
+            view.setFocusableInTouchMode(true);
+            view.requestFocus();
+            view.setOnKeyListener(onKeyListener);
+        }
+
+        /**
+         * 关闭最顶端的 Fragment (将栈顶的 Fragment 退出去)
+         *
+         * @return
+         */
+        public GT_Fragment finish() {
+            if (fragmentManager != null) {
+                fragmentManager.popBackStack();//将加入退回栈的最顶层 Fragment 进行退栈操作
+            }
+            return this;
+        }
+
+        /**
+         * 指定 关闭 Fragment
+         *
+         * @param fragmentClass
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment finish(Class<T> fragmentClass) {
+            if (fragmentManager != null) {
+                fragmentManager.popBackStackImmediate(fragmentClass.getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
+            }
+            return this;
+        }
+
+        /**
+         * 指定 关闭 Fragment
+         *
+         * @param fragmentName
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment finish(String fragmentName) {
+            if (fragmentManager != null) {
+                fragmentManager.popBackStackImmediate(fragmentName, FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
+            }
+            return this;
+        }
+
+        /**
+         * 指定 关闭 Fragment
+         *
+         * @param fragmentClass  想要关闭的 FragmentClass
+         * @param isCloseOneself 是否关闭自己
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment finish(Class<T> fragmentClass, boolean isCloseOneself) {
+            if (fragmentManager != null) {
+                if (isCloseOneself) {
+                    fragmentManager.popBackStackImmediate(fragmentClass.getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
+                } else {
+                    fragmentManager.popBackStackImmediate(fragmentClass.getName(), 0);//将加入退回栈的最顶层 Fragment 进行退栈操作
+                }
+            }
+            return this;
+        }
+
+        /**
+         * 指定 关闭 Fragment
+         *
+         * @param fragmentName   想要关闭的 Fragment 名称
+         * @param isCloseOneself 是否关闭自己
+         * @param <T>
+         * @return
+         */
+        public <T> GT_Fragment finish(String fragmentName, boolean isCloseOneself) {
+            if (fragmentManager != null) {
+                if (isCloseOneself) {
+                    fragmentManager.popBackStackImmediate(fragmentName, FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作 将自己也关闭
+                } else {
+                    fragmentManager.popBackStackImmediate(fragmentName, 0);//将加入退回栈的最顶层 Fragment 进行退栈操作 只关闭自己以上所有的 Fragment
+                }
+            }
+            return this;
+        }
+
+        /**
+         * 查找栈中 已经存在的 fragment
+         *
+         * @param fragmentClass
+         * @param <T>
+         * @return
+         */
+        public <T> Fragment findFragmentByClass(Class<T> fragmentClass) {
+            return fragmentManager.findFragmentByTag(fragmentClass.getName());
+        }
+
+
+        //=========================================== GT_Fragment 基类 ====================================
+
+        /**
          * 用于辅助 Fragment
          */
         public abstract static class BaseFragments extends Fragment {
+
+            //是否恢复Fragment数据
+            private View view;//用于存储 Fragment
+
+            protected boolean isRecoverBundle() {
+                return false;
+            }
 
             //定义 Activity
             protected Activity activity;
@@ -10184,7 +11194,6 @@ public class GT {
             public GT getGT() {
                 return getGT();
             }
-
 
             //如果重写该方法了的话就需要自己写 接收 Activity
             @Override
@@ -10213,22 +11222,13 @@ public class GT {
              *
              * @param view
              */
-            public void createView(View view) {
-            }
-
-            /**
-             * 获取一个 Fragment 管理器实例
-             *
-             * @return
-             */
-            public GT_Fragment getGT_Fragment() {
-                return gt_fragment;
+            protected void createView(View view) {
             }
 
             /**
              * 退出当前 Fragment
              */
-            public void finish() {
+            protected void finish() {
                 if (gt_fragment != null) {
                     gt_fragment.finish();
                 }
@@ -10239,43 +11239,85 @@ public class GT {
              *
              * @param newFragment
              */
-            public void startFragment(Fragment newFragment) {
+            protected void startFragment(Fragment newFragment) {
                 if (gt_fragment != null) {
                     gt_fragment.startFragment(newFragment);
                 }
             }
 
             /**
-             * 初始化 当前 Fragment 必要的属性
+             * 开启新的 Fragment
              *
-             * @param view
+             * @param newFragment
              */
-            public void initBaseFragment(View view) {
-                if (getGT_fragment() != null) {
-                    getGT_fragment().initBaseFragment(view);
+            protected <T> void startFragment(Class<T> fragmentClass) {
+                if (gt_fragment != null) {
+                    gt_fragment.startFragment(fragmentClass);
                 }
             }
+
+            protected GT_Fragment gt_fragment;
 
             @Nullable
             @Override
             public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-                View view = inflater.inflate(loadLayout(), container, false);
+                //是否恢复数据
+                if (isRecoverBundle()) {
+                    if (view == null) {//如果数据为 null 就创建
+                        view = inflater.inflate(loadLayout(), container, false);
+                    }
+                } else {
+                    view = inflater.inflate(loadLayout(), container, false);
+                }
+
+                this.gt_fragment = GT_Fragment.gt_fragment;
+
+                initBaseFragment(view);//解决 在 add 的情况下 透明背景与点击穿透的问题
                 createView(view);
                 return view;
             }
 
+            //===================================== 懒加载 开始 =====================================
+
+            /* 该页面，是否已经准备完毕 */
+            private boolean isPrepared;
+            /* 该Fragment,是否已经执行过懒加载 */
+            private boolean isLazyLoaded;
+
             /**
              * 主要实现的功能
+             * 当页面可见的时候，才加载当前页面数据。
+             * 没有打开的页面，就不会预加载
              */
-            protected void function() {
+            protected void loadData() {
             }
+
+            @Override
+            public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+                super.onActivityCreated(savedInstanceState);
+                isPrepared = true;
+                lazyLoad();
+            }
+
+            @Override
+            public void setUserVisibleHint(boolean isVisibleToUser) {
+                super.setUserVisibleHint(isVisibleToUser);
+                lazyLoad();
+            }
+
+            private void lazyLoad() {
+                if (getUserVisibleHint() && isPrepared && !isLazyLoaded) {
+                    loadData();
+                    isLazyLoaded = true;
+                }
+            }
+
+            //===================================== 懒加载 结束 =====================================
 
             @Override
             public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
                 super.onViewCreated(view, savedInstanceState);
-                initBaseFragment(view);
                 initView(view, savedInstanceState);//主要方法
-                function();
             }
 
             /**
@@ -10298,6 +11340,33 @@ public class GT {
             }
 
             /**
+             * 解决 Fragment 按下物理返回按钮监听
+             */
+            @Override
+            public void onResume() {
+                super.onResume();
+                View view = getView();
+                if (view != null) {
+                    GT.GT_Fragment.onKeyDown(view, new View.OnKeyListener() {
+                        @Override
+                        public boolean onKey(View v, int keyCode, KeyEvent event) {
+                            if (event.getAction() == KeyEvent.ACTION_UP && keyCode == KeyEvent.KEYCODE_BACK) {
+                                return onBackPressed();//回调按下返回键
+                            }
+                            return false;
+                        }
+                    });
+
+                }
+            }
+
+            protected boolean onBackPressed() {
+                return false;
+            }
+
+            //================================================================= GT 内部方法
+
+            /**
              * 普通日志
              *
              * @param object
@@ -10317,11 +11386,30 @@ public class GT {
             }
 
             /**
+             * 普通日志
+             *
+             * @param object
+             */
+            protected void logAll(Object object) {
+                GT.log(object);
+            }
+
+            /**
+             * 带 TAG 的普通日志
+             *
+             * @param tag
+             * @param object
+             */
+            protected void logAll(Object tag, Object object) {
+                GT.log(tag, object);
+            }
+
+            /**
              * 错误日志
              *
              * @param object
              */
-            protected void err(Object object) {
+            protected void errAll(Object object) {
                 GT.err(object);
             }
 
@@ -10331,7 +11419,7 @@ public class GT {
              * @param tag
              * @param object
              */
-            protected void err(Object tag, Object object) {
+            protected void errAll(Object tag, Object object) {
                 GT.err(tag, object);
             }
 
@@ -10379,7 +11467,6 @@ public class GT {
         /**
          * 用于辅助 DialogFragment
          */
-
         public abstract static class BaseDialogFragments extends DialogFragment {
 
             /**
@@ -10551,572 +11638,35 @@ public class GT {
 
         }
 
+        //=========================================== GT_Fragment 释放资源方法 ====================================
 
         /**
-         *  事务的方法
-         * add(Fragment fragment, String tag) //  调用add(int, Fragment, String),填入为0的containerViewId.
-         * add(int containerViewId, Fragment fragment) // 调用add(int, Fragment, String),填入为null的tag.
-         * add(int containerViewId, Fragment fragment, String tag) // 向Activity中添加一个Fragment.
-         * addSharedElement(View sharedElement, String name) // 添加共享元素
-         * addToBackStack(String name) // 将事务添加到回退栈
-         * attach(Fragment fragment) // 重新关联Fragment（当Fragment被detach时）
-         * commit() // 提交事务
-         * commitAllowingStateLoss() // 类似commit()，但允许在Activity状态保存之后提交（即允许状态丢失）。
-         * commitNow() // 同步提交事务
-         * commitNowAllowingStateLoss() // 类似commitNow()，但允许在Activity状态保存之后提交（即允许状态丢失）。
-         * detach(Fragment fragment) // 将fragment保存的界面从UI中移除
-         * disallowAddToBackStack() // 不允许调用addToBackStack(String)操作
-         * hide(Fragment fragment) // 隐藏已存在的Fragment
-         * isAddToBackStackAllowed() // 是否允许添加到回退栈
-         * isEmpty() // 事务是否未包含的任何操作
-         * remove(Fragment fragment) // 移除一个已存在的Fragment
-         * replace(int containerViewId, Fragment fragment) // 调用replace(int, Fragment, String)填入为null的tag.
-         * replace(int containerViewId, Fragment fragment, String tag) // 替换已存在的Fragment
-         * setBreadCrumbShortTitle(int res) // 为事务设置一个BreadCrumb短标题
-         * setBreadCrumbShortTitle(CharSequence text) // 为事务设置一个BreadCrumb短标题，将会被FragmentBreadCrumbs使用
-         * setBreadCrumbTitle(int res) // 为事务设置一个BreadCrumb全标题，将会被FragmentBreadCrumbs使用
-         * setBreadCrumbTitle(CharSequence text) // 为事务设置一个BreadCrumb全标题
-         * setCustomAnimations(int enter, int exit, int popEnter, int popExit) // 自定义事务进入/退出以及入栈/出栈的动画效果
-         * setCustomAnimations(int enter, int exit) // 自定义事务进入/退出的动画效果
-         * setTransition(int transit) // 为事务设置一个标准动画
-         * setTransitionStyle(int styleRes) // 为事务标准动画设置自定义样式
-         * show(Fragment fragment) // 显示一个被隐藏的Fragment
-         *
+         * 释放资源
          */
+       /* public void close() {
 
-        /**
-         * 注意事项：
-         * 1.初始化与构造方法 建议只调用一次
-         * 2.在初始化与添加新Fragment的时候，传入的 map key 中请不要有相同的如下：
-         * <p>
-         * 错误的实例：
-         * map.put("f1",new Fragment_1());
-         * map.put("f1",new Fragment_2());
-         * <p>
-         * 正确的实例：
-         * map.put("f1",new Fragment_1());
-         * map.put("f2",new Fragment_2());
-         */
-
-        //属性
-        private Activity activity;                      //获取 Activity
-        private FragmentManager fm;                     //Fragment 管理器
-        private FragmentTransaction transaction;        //Fragment 事务
-        private int fragmentLayoutId;                   //Fragment 显示的容器 id
-        private Object topFragment;                     //记录当前未加入退回栈的最顶层
-        private List<String> topList;                   //记录当前 加入回退栈最顶层的 Fragment
-        private Bundle savedInstanceState;              //用于鉴别当前 Activity 是否为初次创建
-        private static Map<String, Object> mapSQL;      //用于存储 Fragment 之间数据传递的 Map
-
-        /**
-         * 提供给外部的访问接口
-         *
-         * @return
-         */
-        public FragmentManager getFm() {
-            return fm;
-        }
-
-        /**
-         * 获取当前最顶层 Fragment
-         *
-         * @return
-         */
-        public Object getTopFragment() {
-            return topFragment;
-        }
-
-        /**
-         * 获取 Activity
-         *
-         * @return
-         */
-        public Activity getActivity() {
-            return activity;
-        }
-
-        /**
-         * 构造方法 初始化 Activity、Bundle、fragmentMap 对象
-         *
-         * @param savedInstanceState Activity 的 savedInstanceState
-         * @param activity           Activity 上下文
-         * @param fm                 输入 get 第一个提示参数就是的了
-         */
-        public GT_Fragment initFragment(Bundle savedInstanceState, Activity activity, FragmentManager fm) {
-            if (activity != null && fm != null) {
-                this.activity = activity;
-                this.fm = fm;
-                this.savedInstanceState = savedInstanceState;
-                mapSQL = new HashMap<>();
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "实例化 GT_Fragment 时， activity 或 FragmentManager 为 null");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * @param savedInstanceState     当前活动数据
-         * @param activity               活动
-         * @param supportFragmentManager Fragment管理器
-         * @param res_fragmentId         Fragment ID 容器
-         * @param list                   需要加载的Fragment
-         * @param indexLoadFragment      首个加载的 Fragment 类 第一个为 0
-         * @初始化 Fragment                  Map 版
-         */
-        public void initFragment(Bundle savedInstanceState, Activity activity, FragmentManager supportFragmentManager, int res_fragmentId, List<Fragment> list, int indexLoadFragment) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment()
-                        .initFragment(savedInstanceState, activity, supportFragmentManager)
-                        .loadFragment(res_fragmentId, list, indexLoadFragment);
-            }
-        }
-
-        /**
-         * 添加多个 Fragment   初始化
-         *
-         * @param fragmentLayoutId      帧布局的 id
-         * @param map                   存储 Fragment 的 map
-         * @param initFragmentLayoutKey 默认加载首页的页面 指定首页的 key 值
-         * @return
-         */
-        public GT_Fragment loadFragment(int fragmentLayoutId, Map<Object, Fragment> map, Object initFragmentLayoutKey) {
-
-            if (savedInstanceState == null) {     //如果当前 Activity 是第一次创建
-                if (map != null && map.size() >= 1) {     //判断 map 非空 且 有新的 Fragment 数据
-                    transaction = getTransaction();//开启事务
-                    for (Object key : map.keySet()) { //遍历 所有 Fragment
-                        transaction.add(fragmentLayoutId, map.get(key), key.toString());//添加 新的 Fragment
-                        if (!key.equals(initFragmentLayoutKey)) { //判断当前循环的 Fragment 是否为 要显示的最顶层 Fragment 如果不是就 隐藏
-                            transaction.hide(map.get(key));//隐藏 当前添加的 Fragment
-                        }
-                    }
-                    transaction.commit();//提交事务
-                    topFragment = initFragmentLayoutKey;//记录为 显示层 Fragment
-                    this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
-                    }
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 初始化 单个 Fragment
-         *
-         * @param fragmentLayoutId 帧布局的 id
-         * @param fragment         存储 Fragment
-         * @return
-         */
-        public GT_Fragment loadFragment(int fragmentLayoutId, Fragment fragment) {
-
-            if (savedInstanceState == null) {     //如果当前 Activity 是第一次创建
-                //判断 map 非空 且 有新的 Fragment 数据、且当前指定的首页不能大于 List 索引最大值
-                if (fragment != null && fragmentLayoutId != 0) {
-                    transaction = getTransaction();//开启事务
-                    String key = null;//定义 key
-                    key = fragment.getClass().toString();   //解析 Fragment 唯一标识
-                    transaction.add(fragmentLayoutId, fragment, key);//添加 新的 Fragment
-                    transaction.commit();//提交事务
-                    topFragment = key;//记录为 显示层 Fragment
-                    this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "初始化 GT_Fragment 时， fragment 为 null 或 fragmentLayoutId = 0");
-                    }
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 添加多个 Fragment   初始化
-         *
-         * @param fragmentLayoutId      帧布局的 id
-         * @param list                  存储 Fragment 的 list
-         * @param initFragmentLayoutKey 默认加载首页的页面 一般设置为 0 就如 list.get(0);
-         * @return
-         */
-        public GT_Fragment loadFragment(int fragmentLayoutId, List<Fragment> list, int initFragmentLayoutKey) {
-
-            if (savedInstanceState == null) {     //如果当前 Activity 是第一次创建
-                //判断 map 非空 且 有新的 Fragment 数据、且当前指定的首页不能大于 List 索引最大值
-                if (list != null && list.size() >= 1 && initFragmentLayoutKey <= (list.size() - 1)) {
-                    transaction = getTransaction();//开启事务
-                    String key = null;//定义 key
-                    for (int i = 0; i < list.size(); i++) {       //遍历 List
-                        Fragment fragment = list.get(i);        //获取 Fragment
-                        key = fragment.getClass().toString();   //解析 Fragment 唯一标识
-                        transaction.add(fragmentLayoutId, fragment, key);//添加 新的 Fragment
-                        if (i == initFragmentLayoutKey) continue;//默认设置 第一号元素为 首页
-                        transaction.hide(fragment);//隐藏 除第一号元素以外添加的 Fragment
-                    }
-                    transaction.commit();//提交事务
-                    topFragment = key;//记录为 显示层 Fragment
-                    this.fragmentLayoutId = fragmentLayoutId;//初始化 Fragment 显示的容器 id
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "初始化 GT_Fragment 时， map 或 FragmentManager 为 null 或 map.size < 1");
-                    }
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 单个的添加 长期的 Fragment
-         *
-         * @param key         指定当前 Fragment 的 key 值
-         * @param newFragment 开启一个新的 Fragment
-         * @return
-         */
-        public GT_Fragment addFragment(Object key, Fragment newFragment) {
-            if (key != null && newFragment != null) {    //当前 key值、newFragment值 不为空
-                if (fm.findFragmentByTag(key.toString()) == null) {    //如果当前新添加的 Fragment 的 key 在容器中为重复 就进行添加
-                    transaction = getTransaction();//开启事务
-                    transaction.add(fragmentLayoutId, newFragment, key.toString());//将新的 Fragment 添加到 FragmentMap 中
-                    transaction.hide(newFragment);//隐藏新添加的 Fragment
-                    transaction.commit();//提交事务
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
-                    }
-                }
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 单个的添加 长期的 Fragment
-         *
-         * @param newFragment 添加新的 Fragment key值设置为默认的
-         * @return
-         */
-        public GT_Fragment addFragment(Fragment newFragment) {
-            if (newFragment != null) {    //当前 newFragment值 不为空
-                if (fm.findFragmentByTag(newFragment.getClass().toString()) == null) {    //如果当前新添加的 Fragment 的 key 在容器中为重复 就进行添加
-                    transaction = getTransaction();//开启事务
-                    transaction.add(fragmentLayoutId, newFragment, newFragment.getClass().toString());//将新的 Fragment 添加到 FragmentMap 中
-                    transaction.hide(newFragment);//隐藏新添加的 Fragment
-                    transaction.commit();//提交事务
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "添加 addFragment 时， key 在 fragmentMap 中存在相同的 Key");
-                    }
-                }
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "添加 addFragment 时， key 或 FragmentManager 或 NewFragment 为 null");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 跳转 Fragment
-         *
-         * @param key 跳转的 key 值
-         * @return
-         */
-        public GT_Fragment startFragment(Object key) {
-            if (!key.equals(topFragment)) {//判断 当前 要显示的 Fragment 是否为最顶层的 Fragment
-                if (fm.findFragmentByTag(key.toString()) != null) {    //如果当前要切换的 Fragment 存在 Fragment 容器中
-                    transaction = getTransaction();//开启事务
-                    transaction.hide(fm.findFragmentByTag(topFragment.toString()));//隐藏最顶层的 Fragment
-                    transaction.show(fm.findFragmentByTag(key.toString()));//显示当前指定的 fragment
-                    topFragment = key;  //切换当前最顶层 Fragment
-                    transaction.commit();//提交事务
-                } else {
-                    if (LOG.GT_LOG_TF) {
-                        GT.log(getLineInfo(1), "切换 Fragment 时， 当前要切换的 Fragment:【" + key + "】 不在容器中。");
-                    }
-                }
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "切换 Fragment 时， fm 为 null 获取 当前切换的 Fragment 已在最顶层无需切换");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 开启一个短期的 Fragment
-         *
-         * @param newFragment 直接创建一个新的 Fragment 并跳转当此 Fragment 页面
-         * @return
-         */
-        public GT_Fragment startFragment(Fragment newFragment) {
-
-            //实例化 记录 加入回退栈的 最顶层 Fragment
-            if (topList == null) {
-                topList = new ArrayList<>();
-            }
-            if (newFragment != null && fm != null) {
-                transaction = getTransaction(); //获取事务
-                String HXM = newFragment.toString();//获取 哈希码
-                transaction.add(fragmentLayoutId, newFragment, HXM);//添加当前最顶层的 Fragment 且将该 Fragment 的哈希码 作为区别 Fragment 的唯一标识
-                transaction.addToBackStack(HXM);//将当前的加入到退回栈
-                transaction.commit();//提交事务
-                topList.add(HXM);//添加当退回栈记录中
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "切换新的 Fragment 时 NewFragment 为 null");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 销毁当前退回栈中最顶层的 Fragment
-         *
-         * @return 执行手机的物理返回按键 ：
-         * .onBackPressed();
-         */
-        public GT_Fragment finish() {
-
-            //自动触发系统返回键：onBackPressed();
-
-            if (fm != null && topList != null && topList.size() >= 1) {
-                String HXM = topList.get(topList.size() - 1);
-                fm.popBackStack(HXM, FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
-                topList.remove(HXM);//移除当前已经退出栈 Fragment 的 哈希码
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "退回栈bug：fm、topList为 null 或 topListSize == 0");
-                }
-            }
-            return this;
-        }
-
-        /**
-         * 获取事务
-         *
-         * @return
-         */
-        public FragmentTransaction getTransaction() {
-            if (fm != null) {
-                transaction = fm.beginTransaction();
-            } else {
-                if (LOG.GT_LOG_TF) {
-                    GT.log(getLineInfo(1), "fm 管理器为 null");
-                }
-            }
-            return transaction;
-        }
-
-        /**
-         * 为基类Fragment初始化必要的属性（推荐使用）
-         *
-         * @param view
-         */
-        @SuppressLint("NewApi")
-        public void initBaseFragment(View view) {
-
-            ColorDrawable colorDrawable = (ColorDrawable) view.getBackground();//获取 View 背景颜色
-
-            if (colorDrawable != null) {
-                view.setBackground(colorDrawable);//设置 用户指定的颜色
-            } else {
-                view.setBackgroundColor(Color.WHITE);// 设置为 默认的 白色
-            }
-
-            //解决 Fragment 点击事件穿透问题
-            view.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    return true;
-                }
-            });
-
-
-        }
-
-        /**
-         * 监听 Fragment 返回键
-         *
-         * @param view          Fragment 的 View
-         * @param onKeyListener new  一个内部类
-         *                      注意使用正确实例：
-         *                      <p>
-         *                      private long exitTime = 0;
-         *                      //按两下返回键 弹出退出提示
-         *                      private void onKeyDown(){
-         *                      gt_fragment.onKeyDown(getView(), new View.OnKeyListener() {
-         * @Override public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-         * if(keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN){
-         * if((System.currentTimeMillis()-exitTime) > 2000){
-         * exitTime = System.currentTimeMillis();
-         * }else{
-         * GT.toast_s("退出");
-         * }
-         * return true;//只将 返回按键进行监听
-         * }
-         * return false;//其余的如 音量小 音量大什么的，交给 Activity 管理
-         * }
-         * });
-         * }
-         */
-        public void onKeyDown(View view, View.OnKeyListener onKeyListener) {
-
-            /**
-             * 判断用例：如   if(keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN)
-             *  返回键：
-             *  【keyCode:4，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:4，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             *
-             *  音量小：
-             *  【keyCode:25，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:25，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             *
-             *  音量大：
-             *  【keyCode:24，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:24，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             */
-
-            view.setFocusableInTouchMode(true);
-            view.requestFocus();
-            view.setOnKeyListener(onKeyListener);
-        }
-
-
-        /**
-         * 屏蔽掉 Fragment 的 物理返回键
-         *
-         * @param view
-         */
-        public void shieldKey(View view) {
-
-            /**
-             * 判断用例： 如 if(keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN)
-             *  返回键：
-             *  【keyCode:4，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:4，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             *
-             *  音量小：
-             *  【keyCode:25，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:25，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             *
-             *  音量大：
-             *  【keyCode:24，KEYCODE_ENTER:66==getAction:0，ACTION_DOWN:0
-             *  【keyCode:24，KEYCODE_ENTER:66==getAction:1，ACTION_DOWN:0
-             */
-
-            view.setFocusableInTouchMode(true);
-            view.requestFocus();
-            view.setOnKeyListener(new View.OnKeyListener() {
-                @Override
-                public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
-                    if (keyCode == 4 && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                        return true;//只将 返回按键进行监听
-                    }
-                    return false;//其余的如 音量小 音量大什么的，交给 Activity 管理
-                }
-            });
-        }
-
-
-        /**
-         * 释放 Fragment 管理器的所有资源
-         */
-        public void close() {
-
-            //遍历将 栈中的 Fragment 给踢出
-            for (String HXM : topList) {
-                fm.popBackStack(HXM, FragmentManager.POP_BACK_STACK_INCLUSIVE);//将加入退回栈的最顶层 Fragment 进行退栈操作
-            }
-
-            if (topList != null) {
-                topList.clear();//清除 list 中树
-                topList = null;//置空
-            }
-
-            if (transaction != null) {
-                transaction = null;
-            }
-
-            if (fm != null) {
-                fm = null;
+            //移除 Fragment 栈中监听器
+            if (fragmentManager != null && listener != null) {
+                fragmentManager.removeOnBackStackChangedListener(listener);
             }
 
             if (activity != null) {
                 activity = null;
             }
 
-            if (mapSQL != null) {
-                mapSQL.clear();
-                mapSQL = null;
+            if (fragmentNames != null) {
+                fragmentNames.clear();
             }
 
-        }
-
-
-        /**
-         * 用作于 Fragment 之间传递数据的 中间存储的方法
-         * 好处可以将 Fragment 进一步解耦
-         */
-
-        //增加数据
-        public GT_Fragment setData(Object key, Object data) {
-            if (mapSQL != null) {
-                if (!mapSQL.containsKey(key.toString())) {
-                    mapSQL.put(key.toString(), data);
-                } else {
-                    err(getLineInfo(1), "FragmentSQL 报错：添加 数据时 已存在当前 key 建议调用 update 方法进行修改");
-                }
+            if (fragmentBeanList != null) {
+                fragmentBeanList.clear();
             }
-            return this;
-        }
 
-        //删除数据
-        public GT_Fragment deData(Object key) {
-            if (mapSQL != null) {
-                if (mapSQL.containsKey(key.toString())) {
-                    mapSQL.remove(key.toString());
-                } else {
-                    err(getLineInfo(1), "FragmentSQL 报错：删除 数据时 当前 key 不存在，无法进行删除");
-                }
+            if (gt_fragment != null) {
+                gt_fragment = null;
             }
-            return this;
-        }
 
-        //查询数据
-        public Object getData(Object key) {
-            if (mapSQL != null) {
-                if (mapSQL.containsKey(key.toString())) {
-                    return mapSQL.get(key.toString());
-                } else {
-                    err(getLineInfo(1), "FragmentSQL 报错：查询 数据时 当前 key 不存在，无法进行查询");
-                }
-            }
-            return null;
-        }
-
-        //修改数据
-        public GT_Fragment upData(Object key, Object data) {
-            if (mapSQL != null) {
-                if (mapSQL.containsKey(key.toString())) {
-                    mapSQL.put(key.toString(), data);
-                } else {
-                    err(getLineInfo(1), "FragmentSQL 报错：修改 数据时 当前 key 不存在，无法进行修改");
-                }
-            }
-            return this;
-        }
-
-        //清空数据
-        public GT_Fragment clearData() {
-            if (mapSQL != null) {
-                mapSQL.clear();
-            }
-            return this;
-        }
+        }*/
 
 
     }
@@ -11180,45 +11730,10 @@ public class GT {
          * @跳转 Fragment
          */
         protected void startFragment(Object toFragment) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment().startFragment(toFragment);
+            if (GT_Fragment.gt_fragment != null) {
+                startFragment(toFragment);
             }
         }
-
-        /**
-         * @param savedInstanceState     当前活动数据
-         * @param activity               活动
-         * @param supportFragmentManager Fragment管理器
-         * @param res_fragmentId         Fragment ID 容器
-         * @param map                    需要加载的Fragment
-         * @param classs                 首个加载的 Fragment 类
-         * @初始化 Fragment                  Map 版
-         */
-        protected void initFragment(Bundle savedInstanceState, Activity activity, FragmentManager supportFragmentManager, int res_fragmentId, Map<Object, Fragment> map, Object classs) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment()
-                        .initFragment(savedInstanceState, activity, supportFragmentManager)
-                        .loadFragment(res_fragmentId, map, classs);
-            }
-        }
-
-        /**
-         * @param savedInstanceState     当前活动数据
-         * @param activity               活动
-         * @param supportFragmentManager Fragment管理器
-         * @param res_fragmentId         Fragment ID 容器
-         * @param list                   需要加载的Fragment
-         * @param indexLoadFragment      首个加载的 Fragment 类 第一个为 0
-         * @初始化 Fragment                  Map 版
-         */
-        protected void initFragment(Bundle savedInstanceState, Activity activity, FragmentManager supportFragmentManager, int res_fragmentId, List<Fragment> list, int indexLoadFragment) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment()
-                        .initFragment(savedInstanceState, activity, supportFragmentManager)
-                        .loadFragment(res_fragmentId, list, indexLoadFragment);
-            }
-        }
-
 
         /**
          * 普通日志
@@ -11304,6 +11819,8 @@ public class GT {
      */
     public abstract static class AnnotationActivity extends AppCompatActivity {
 
+        protected GT_Fragment gt_fragment;
+
         /**
          * 在绘制完 View 之前设置数据
          */
@@ -11318,15 +11835,17 @@ public class GT {
         /**
          * 功能方法
          */
-        protected void function() {
+        protected void loadData() {
         }
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            gt_fragment = GT_Fragment.gt_fragment;
             initDrawView();//设置绘制前的数据
             initView(savedInstanceState);//初始化 UI
-            function();//功能方法
+            loadData();//功能方法
+
         }
 
         /**
@@ -11335,7 +11854,7 @@ public class GT {
          * @param context
          */
         protected void build(Context context) {
-            GT.getGT().build(context);
+            getGT().build(context);
         }
 
         /**
@@ -11348,46 +11867,24 @@ public class GT {
         }
 
         /**
+         * 启动 Fragment
+         *
          * @param toFragment
-         * @跳转 Fragment
          */
-        protected void startFragment(Object toFragment) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment().startFragment(toFragment);
+        protected void startFragment(Fragment fragment) {
+            if (gt_fragment != null) {
+                gt_fragment.startFragment(fragment);
             }
         }
 
         /**
-         * @param savedInstanceState     当前活动数据
-         * @param activity               活动
-         * @param supportFragmentManager Fragment管理器
-         * @param res_fragmentId         Fragment ID 容器
-         * @param map                    需要加载的Fragment
-         * @param classs                 首个加载的 Fragment 类
-         * @初始化 Fragment                  Map 版
+         * 启动 Fragment
+         *
+         * @param toFragment
          */
-        protected void initFragment(Bundle savedInstanceState, Activity activity, FragmentManager supportFragmentManager, int res_fragmentId, Map<Object, Fragment> map, Object classs) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment()
-                        .initFragment(savedInstanceState, activity, supportFragmentManager)
-                        .loadFragment(res_fragmentId, map, classs);
-            }
-        }
-
-        /**
-         * @param savedInstanceState     当前活动数据
-         * @param activity               活动
-         * @param supportFragmentManager Fragment管理器
-         * @param res_fragmentId         Fragment ID 容器
-         * @param list                   需要加载的Fragment
-         * @param indexLoadFragment      首个加载的 Fragment 类 第一个为 0
-         * @初始化 Fragment                  Map 版
-         */
-        protected void initFragment(Bundle savedInstanceState, Activity activity, FragmentManager supportFragmentManager, int res_fragmentId, List<Fragment> list, int indexLoadFragment) {
-            if (GT_Fragment.getGT_fragment() != null) {
-                GT_Fragment.getGT_fragment()
-                        .initFragment(savedInstanceState, activity, supportFragmentManager)
-                        .loadFragment(res_fragmentId, list, indexLoadFragment);
+        protected <T> void startFragment(Class<T> fragmentClass) {
+            if (gt_fragment != null) {
+                gt_fragment.startFragment(fragmentClass);
             }
         }
 
@@ -11496,6 +11993,25 @@ public class GT {
         }
 
         /**
+         * 普通日志
+         *
+         * @param object
+         */
+        protected void logAll(Object object) {
+            GT.logAll(object);
+        }
+
+        /**
+         * 带 TAG 的普通日志
+         *
+         * @param tag
+         * @param object
+         */
+        protected void logAll(Object tag, Object object) {
+            GT.logAll(tag, object);
+        }
+
+        /**
          * 错误日志
          *
          * @param object
@@ -11512,6 +12028,25 @@ public class GT {
          */
         protected void err(Object tag, Object object) {
             GT.err(tag, object);
+        }
+
+        /**
+         * 错误日志
+         *
+         * @param object
+         */
+        protected void errAll(Object object) {
+            GT.errAll(object);
+        }
+
+        /**
+         * 带 TAG 的错误日志
+         *
+         * @param tag
+         * @param object
+         */
+        protected void errAll(Object tag, Object object) {
+            GT.errAll(tag, object);
         }
 
         /**
@@ -12486,23 +13021,23 @@ public class GT {
         //Spiritleve 屏幕旋转监听
         public abstract static class Spiritleve implements SensorEventListener {
             /**
-             用法如下：
-             //屏幕旋转监听 内部类
-                 class SV extends SpiritleveView{
+             * 用法如下：
+             * //屏幕旋转监听 内部类
+             * class SV extends SpiritleveView{
              * *
-                     public SV(Context context) {
-                         super(context);
-                     }
+             * public SV(Context context) {
+             * super(context);
+             * }
              * *
-                     @Override
-                     protected void getPosition(float xAngle, float yAngle) {
-                         super.getPosition(xAngle, yAngle);
-                         GT.log("X:" + (int)xAngle + "," + "Y:" + (int)yAngle);
-                     }
-                 }
+             *
+             * @Override protected void getPosition(float xAngle, float yAngle) {
+             * super.getPosition(xAngle, yAngle);
+             * GT.log("X:" + (int)xAngle + "," + "Y:" + (int)yAngle);
+             * }
+             * }
              * *
-                 最后再在方法中初始化
-                  new SV(activity);
+             * 最后再在方法中初始化
+             * new SV(activity);
              * *
              */
             float[] acceleromterValues = new float[3];//加速度传感器的值
@@ -14317,7 +14852,7 @@ public class GT {
                         err(getLineInfo(2), "注入数据库失败！请在 Activity 中绑定GT注解");
                         return;
                     }
-                    classObject = GT_Fragment.getGT_fragment();
+                    classObject = GT_Fragment.gt_fragment;
                     //实例注入
                     try {
                         field.setAccessible(true);
@@ -14919,7 +15454,23 @@ public class GT {
          * @param runnable
          */
         public static void runAndroid(Runnable runnable) {
+            Looper.prepare();
             new Handler().postDelayed(runnable, 0);
+            Looper.loop();
+        }
+
+        /**
+         * 更新 主线程 UI
+         *
+         * @param runnable
+         */
+        public static void runAndroidAct(Runnable runnable) {
+            if (getGT().getCONTEXT() != null) {
+                Activity activity = (Activity) getGT().getCONTEXT();
+                activity.runOnUiThread(runnable);
+            } else {
+                log(getLineInfo(), "当前未绑定 Activity 无法使用该方法创建 UI 线程");
+            }
         }
 
         /**
@@ -14928,7 +15479,9 @@ public class GT {
          * @主线程
          */
         public static void runAndroid(Runnable runnable, int sleepTime) {
+            Looper.prepare();
             new Handler().postDelayed(runnable, sleepTime);
+            Looper.loop();
         }
 
         /**
