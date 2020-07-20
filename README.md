@@ -44,8 +44,7 @@
 #### [第二十章：随机类篇](https://blog.csdn.net/qq_39799899/article/details/105851774)
 #### [第二十一章：BaseActivity 教程篇](https://blog.csdn.net/qq_39799899/article/details/105867114)
 #### [第二十二章：AnnotationActivity 教程篇](https://blog.csdn.net/qq_39799899/article/details/105927908) (常用推荐)
-#### [第二十三章：GT_Fragment 继承篇](https://blog.csdn.net/qq_39799899/article/details/105928081) (常用推荐)
-#### [第二十四章：GT_Fragment 使用篇](https://blog.csdn.net/qq_39799899/article/details/105929038) (常用推荐)
+#### [第二十四章：GT_Fragment 教程篇](https://blog.csdn.net/qq_39799899/category_10214456.html) (常用推荐)
 #### [第二十五章：Annotations 教程篇](https://blog.csdn.net/qq_39799899/article/details/105929131) (常用推荐)
 
 #### [总篇九章：GT Hibernate 数据库 教程篇](https://blog.csdn.net/qq_39799899/category_9975334.html) (常用推荐)
