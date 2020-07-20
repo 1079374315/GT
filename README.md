@@ -3,15 +3,15 @@
 [![](https://jitpack.io/v/1079374315/GSLS_Tool.svg)](https://jitpack.io/#1079374315/GSLS_Tool)
 
 
-# 最新版本: 1.2.0
-发布时间：2020年7月18日 
+# 最新版本: 1.2.1
+发布时间：2020年7月20日 
 
 ### 源码迁址：https://github.com/1079374315/GSLS_Tool
 
 ## 此次版本更新： 
 ````
-更新时间:2020.7.18（大爆料：更新 Fragment 框架、增加启动模式 与 切换模式）
- 更新内容：（1.2.0 版本）
+更新时间:2020.7.20（大爆料：更新 Fragment 框架、增加启动模式 与 切换模式）
+ 更新内容：（1.2.1 版本）
  1.更新了 HttpUtil (网络请求)类
  2.更新了 GT_Fragment 类 增加了页面数据恢复 与 BaseFragments 增加了 onBackPressed 方法
  3.增加了 logAll 与 errAll 增加打印所有日志方法
@@ -70,7 +70,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.2.0'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.2.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
@@ -89,7 +89,7 @@ dependencies {
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.2.0 (the "License");
+Licensed under the Apache License, Version 1.2.1 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
