@@ -3,19 +3,23 @@
 [![](https://jitpack.io/v/1079374315/GSLS_Tool.svg)](https://jitpack.io/#1079374315/GSLS_Tool)
 
 
-# 最新版本: 1.2.1
-发布时间：2020年7月20日 
+# 最新版本: 1.2.3
+发布时间：2020年8月1日 
 
 ### 源码迁址：https://github.com/1079374315/GSLS_Tool
 
 ## 此次版本更新： 
 ````
-更新时间:2020.7.20（大爆料：更新 Fragment 框架、增加启动模式 与 切换模式）
- 更新内容：（1.2.1 版本）
- 1.更新了 HttpUtil (网络请求)类
- 2.更新了 GT_Fragment 类 增加了页面数据恢复 与 BaseFragments 增加了 onBackPressed 方法
- 3.增加了 logAll 与 errAll 增加打印所有日志方法
- 具体使用教程请参考官网教程
+* 更新时间:2020.8.1
+ * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
+ * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
+ * 更新内容：（1.2.3 版本 GT_Fragment 重构代码 增加启动模式 与 切换方式）
+ * 1.更新了 HttpUtil (网络请求)类
+ * 2.更新了 GT_Fragment 类 增加了页面数据恢复 与 BaseFragments 的优化（BaseFragment 增加了 onBackPressed 方法）
+ * 3.增加了 logAll 与 errAll 增加打印所有日志方法
+ * 4.在 AnnotationActivity、BaseActivity、BaseFragments中增多了startFragment方法
+ * 5.优化了 BaseDialogFragments类 新增 onBackPressed(返回监听)、setFullScreen(设置充满全屏)、setHideBackground(设置隐藏背景)
+ * 6.在 AnnotationActivity、BaseActivity、BaseFragments中增多了log打印方法
  
 ````
 
@@ -69,7 +73,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.2.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.2.3'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
@@ -88,7 +92,7 @@ dependencies {
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.2.1 (the "License");
+Licensed under the Apache License, Version 1.2.3 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
