@@ -87,6 +87,28 @@ dependencies {
 ````
 
 
+````gradle
+## GT包混淆
+
+## GT：
+-keep class 包名.类名**{*;}
+
+## 继承GT包中的 GT_Fragment.BaseFragments 均不能混淆：
+-dontwarn (fragment包名).**
+-keep class (fragment包名).(基类)**{*;}
+-keep public class (fragment包名).(基类) { *; }
+-keep public class * extends (fragment包名).(基类) { *; }
+
+## gson
+-dontwarn com.google.gson.**
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.** { *; }
+-keep class com.google.gson.JsonObject { *; }
+-keep class com.google.gson.examples.android.model.** { *; }
+
+````
+
+
 
 ## LICENSE
 ````
