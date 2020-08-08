@@ -91,7 +91,7 @@ dependencies {
 ## GT包混淆
 
 ## GT：
--keep class 包名.类名**{*;}
+-keep class com.gsls.gt.GT**{*;}
 
 ## 继承GT包中的 GT_Fragment.BaseFragments 均不能混淆：
 -dontwarn (fragment包名).**
