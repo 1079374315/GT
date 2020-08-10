@@ -95,13 +95,13 @@ dependencies {
 -keep class com.gsls.gt.GT**{*;}
 
 ## 继承GT包中的 GT_Fragment.BaseFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
--dontwarn (fragment包名).**
--keep class (fragment包名).(基类)**{*;}
--keep public class (fragment包名).(基类) { *; }
--keep public class * extends (fragment包名).(基类) { *; }
+## Fragment                        
+-keep class com.gsls.gt.GT$GT_Fragment$BaseFragments**{*;}
+-keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseFragments { *; }
 
 ## 继承 GT包中的 GT.GT_Fragment.BaseDialogFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
--keep class (Dialog包名).(Dialog类)**{*;}
+-keep class com.gsls.gt.GT$GT_Fragment$BaseDialogFragments**{*;}
+-keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseDialogFragments { *; }
 
 ## gson（使用到 GT包中SP的，需要混淆）
 -dontwarn com.google.gson.**
