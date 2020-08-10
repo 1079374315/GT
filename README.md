@@ -87,8 +87,9 @@ dependencies {
 ````
 
 
+**2. GT包混淆：**
+
 ````gradle
-## GT包混淆
 
 ## GT：
 -keep class com.gsls.gt.GT**{*;}
