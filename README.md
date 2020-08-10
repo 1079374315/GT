@@ -99,6 +99,9 @@ dependencies {
 -keep public class (fragment包名).(基类) { *; }
 -keep public class * extends (fragment包名).(基类) { *; }
 
+## 继承 GT包中的 GT.GT_Fragment.BaseDialogFragments 均不能混淆：
+-keep class (Dialog包名).(Dialog类)**{*;}
+
 ## gson
 -dontwarn com.google.gson.**
 -keep class sun.misc.Unsafe { *; }
