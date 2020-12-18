@@ -82,7 +82,7 @@ dependencies {
  	implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
  	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
 	
-	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://www.cnblogs.com/inthecloud/p/12124136.html
+	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
 ````
