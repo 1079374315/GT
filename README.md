@@ -3,22 +3,30 @@
 [![](https://jitpack.io/v/1079374315/GSLS_Tool.svg)](https://jitpack.io/#1079374315/GSLS_Tool)
 
 
-# 最新版本: 1.2.9
-发布时间：2020年11月27日 
+# 最新版本: 1.3.0
+发布时间：2021年3月19日 
 
 ## 此次版本更新： 
 ````
- * 更新时间:2020.11.24
+* 更新时间:2021.3.19
  * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
- * 更新内容：（1.2.9 版本 数据传递 就是这么简单！）
- * 1.新增 SaveObject 类，采用序列化进行传递 Object(GT_Fragment|GT_Animation|Hibernate|GT_SharedPreferences|AppDataPool|均自动实现序列化)
- * 2.增加 APP 错误日志捕获方法：GT.LOG.initAppErrLogTry(this);(如果想打印到本地，请打开本地打印：GT.LOG.LOG_FILE_TF = true;)
- * 3.新增 GT_Fragment 构建注解，用法如下：（具体教程请参考官网教程）
- * 用法1：GT.GT_Fragment.Build;
- * 用法2：GT.GT_Fragment.Builds(R.id.frameLayout, Fragment_A.class); 参数一：指定一个Fragment 容器，参数二：指定预加载的Fragment页面，参数均可不填
- * 注意：使用注解时如果没有指定加载Fragment容器的话很容易报未找到视图的异常，但添加 gt_fragment.setHomeFragmentId(R.id.frameLayout); 即可
- * 4.GT_Fragment 新增 DIALOG 切换方式 如：gt_fragment.switchingMode(GT.GT_Fragment.DIALOG); 让切换的Fragment 进行 hide / show 操作
+ * 更新内容：（1.3.0 版本 史诗级加强！工具类,大更新）
+ * 1.重大更新内容：
+ * (1).新增 SaveObject 类，采用序列化进行传递 Object(GT_Fragment|GT_Animation|Hibernate|GT_SharedPreferences|AppDataPool|均自动实现序列化)
+ * (2).更新 JSON 类，史诗级增强，JSON 与 Bean 互转，还有许多其他功能方法待你探索（无需依赖gson库）
+ * (3).Hibernate 类 史诗级增强，支持较为复杂的关系映射(意味着可以在表里定义实体类)
+ * (4).GT_File 类 更名为 FileUtils 类, 史诗级增强, 增多许多实用性功能(轻轻松松自定义文件系统)
+ * (5).新增 WebViewUtils 工具类，新增 loadPCHtml(加载PC网页) 、 loadAppHtml(加载App网页) 功能 在加载网页时，实时监听进度
+ * (6).新增 ProgressDialogUtils 类 初始化简易的加载进度条。
+ *
+ * 2.小更新与优化:
+ * (1).增加 APP 错误日志捕获方法：GT.LOG.initAppErrLogTry(this);(如果想打印到本地，请打开本地打印：GT.LOG.LOG_FILE_TF = true;)
+ * (2).新增 GT_Fragment 构建注解（具体教程请参考官网教程）
+ * (3).GT_Fragment 新增 DIALOG 切换方式 如：gt_fragment.switchingMode(GT.GT_Fragment.DIALOG); 让切换的Fragment 进行 hide / show 操作
+ * (4).增加Activity 启动 Fragment 或 DialogFragment 销毁后反馈给Activity 数据的操作，增加 Fragment 启动 DialogFragment 销毁反馈给Fragment 数据的操作
+ * (5).UpdateApp App更新类优化,在下载时实时监听进度
+ * (6).startActivity 、 startFragment 新增 切换动画，有内置动画，也可自定义动画,设置后会一直有效无需二次设置
  
 ````
 
@@ -77,11 +85,7 @@ dependencies {
 	//GT全部功能 需要添加的包
  	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
  	implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
- 	implementation 'com.squareup.okhttp3:okhttp:3.12.0'//OkHttp 网络框架
- 	implementation 'com.github.bumptech.glide:glide:4.9.0'//加载图片的 glide
- 	implementation 'org.jsoup:jsoup:1.10.3'//Jsoup格式化html数据
- 	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
-	
+
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
@@ -103,13 +107,6 @@ dependencies {
 -keep class com.gsls.gt.GT$GT_Fragment$BaseDialogFragments**{*;}
 -keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseDialogFragments { *; }
 
-## gson（使用到 GT包中SP的，需要混淆）
--dontwarn com.google.gson.**
--keep class sun.misc.Unsafe { *; }
--keep class com.google.gson.** { *; }
--keep class com.google.gson.JsonObject { *; }
--keep class com.google.gson.examples.android.model.** { *; }
-
 ````
 
 
@@ -117,7 +114,7 @@ dependencies {
 ````
 Copyright 2019 GSLS
 
-Licensed under the Apache License, Version 1.2.6 (the "License");
+Licensed under the Apache License, Version 1.3.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
