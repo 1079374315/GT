@@ -87,7 +87,7 @@ dependencies {
 	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//GT全部功能 需要添加的包
- 	implementation 'com.google.code.gson:gson:2.8.5'  //JSON 数据解析
+    	implementation 'com.squareup.okhttp3:okhttp:3.12.0'//okHttp3
  	implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
 	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
 
