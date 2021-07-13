@@ -4,34 +4,63 @@
 
 # [GT库源码](https://github.com/1079374315/GSLS_Tool)
 
-# 最新版本: 1.3.0.1
-发布时间：2021年3月21日 
+# 最新版本: 1.3.0.5
+发布时间：2021.7.13
 
 ## 此次版本更新： 
 ````
-* 更新时间:2021.3.21
- * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/98891256
+* 更新时间:2021.7.13
+ * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
- * 更新内容：（1.3.0.1 版本 大更新，工具类史诗级加强！）
- * 1.重大更新内容：
- * (1).新增 SaveObject 类，采用序列化进行传递 Object(GT_Fragment|GT_Animation|Hibernate|GT_SharedPreferences|AppDataPool|均自动实现序列化)
- * (2).更新 JSON 类，史诗级增强，JSON 与 Bean 互转，还有许多其他功能方法待你探索（无需依赖gson库）
- * (3).Hibernate 类 史诗级增强，支持较为复杂的关系映射(意味着可以在表里定义实体类)
- * (4).GT_File 类 更名为 FileUtils 类, 史诗级增强, 增多许多实用性功能(轻轻松松自定义文件系统)
- * (5).新增 WebViewUtils 工具类，新增 loadPCHtml(加载PC网页) 、 loadAppHtml(加载App网页) 功能 在加载网页时，实时监听进度
- * (6).新增 ProgressDialogUtils 类 初始化简易的加载进度条。
+ * <p> GitHub https://github.com/1079374315/GT
+ * 更新内容：（1.3.0.5 版本）
+ * 超级重磅更新！！！
+ * 1.内容如下：
+ * (1).Hibernate 类的更新
+ * 1).Hibernate 数据库支持映射 “数组参数”、“多重继承关系”
+ * 2).新增初始化 Hibernate 的方式，可在Application中进行初始化操作：new GT.Hibernate().initialize(); 与 new GT.Hibernate().getHibernate(); （注意，这两个方法均是有创建的效果）
+ * 3).新增聚合函数：count(求次数)、sum(求总和)、max(求最大值)、min(求最小值)、average(求平均数)，后续待添加新的...
+ * 4).修改了增删查改的方式，优化增删查改的效率，增加了 saveAll() 保存数据方法，当前测试效率：存储10万条数据，09:07:53.199——09:07:59.646 耗时6秒多，具体详情还请参考方法说明
+ * 5).正式支持事务操作具体教程请参考官网:saveAll();保存全部方法默认使用事务
+ * 6).支持 分库映射 若您创建了两个或两个以上的数据库，那么可以在实体类的标识上指定映射的数据库名称，
+ * 实例：不指定的话，默认给所有的数据库映射表，指定单个数据库：@GT.Hibernate.GT_Entity(setSqlName = "MySQL") OR 指定多个数据库：@GT.Hibernate.GT_Entity(setSqlName = {"MySQL","DemoSQL"})
+ * 7).将表字段属性设置更名为 “GT_Property”,
+ * GT_Property目前支持以下功能：
+ * 1).修改字段名：setOldTableValue    释：修改字段名后，数据依旧在
+ * 2).设置不为空: setNotNull          释：如果操作数据为null就会操作失败
+ * 3).设置限定值：setCheckValues      释：sex = 男 or 女 or 其他
+ * 4).设置字段长度：setLength         释：userName varchar(100)
+ * 5).设置最大值：setMax              释：设置数字的最大值
+ * 6).设置最小值：setMin              释：设置数字的最小值
+ * 7).设置不被持久化：setNotInit       释：将不被持久化的字段当做普通的 Java字段
+ * 8).设置默认值：setDefaultValue     释：设置默认值，用法有两种，如果是多个默认值，数据库会随机选择一个默认值
+ * 第一种：setDefaultValue = "默认值",
+ * 第二种：setDefaultValue = {"默认值1"，"默认值2"，"默认值3"....}
+ * GT_Key,主键标识目前只支持：设置自增长、设置字段长度、设置限定值、设置最大值、设置最小值
+ * 8).优化了 数据库 创建时的性能，增加创建方式：可在线程中创建数据库
+ * 9).支持动态创建表的操作：createTable(DemoBean.class);
+ * 10).
+ * 11).
+ * 2.新增悬浮窗封装类 GT_FloatingWindow 用法与 GT_Fragment 类似，具体使用教程请参考官网,(新增 GT_Floating 工具类，还在优化中)
+ *
  * <p>
- * 2.小更新与优化:
- * (1).增加 APP 错误日志捕获方法：GT.LOG.initAppErrLogTry(this);(如果想打印到本地，请打开本地打印：GT.LOG.LOG_FILE_TF = true;)
- * (2).新增 GT_Fragment 构建注解（具体教程请参考官网教程）
- * (3).GT_Fragment 新增 DIALOG 切换方式 如：gt_fragment.switchingMode(GT.GT_Fragment.DIALOG); 让切换的Fragment 进行 hide / show 操作
- * (4).增加Activity 启动 Fragment 或 DialogFragment 销毁后反馈给Activity 数据的操作，增加 Fragment 启动 DialogFragment 销毁反馈给Fragment 数据的操作
- * (5).UpdateApp App更新类优化,在下载时实时监听进度
- * (6).startActivity 、 startFragment 新增 切换动画，有内置动画，也可自定义动画,设置后会一直有效无需二次设置
- * (7).基类 BaseActivity、BaseFragment、BaseDialogFragments，增加更新UI广播 updateUi(), 与 发送更新UI广播的方法 sendUpdateUiBroadcast()
  * <p>
- * 3.bug优化
- * (1). 将GT库 minSdkVersion 调回 minSdkVersion = 16;
+ * 3.新增 GT.GT_Adapters.BaseAdapter 基类
+ * 4.新增 DataSendReception 数据传输类，用于传输数据目前可支持：跨类、跨进程、跨APP传输数据
+ * 5.新版本的优化
+ * <p>
+ * (1).去掉所有基类自带的 log() toast() err() 类似等方法(不方便维护，故此版本去掉)
+ * (2).去掉 GT_Fragment 与 DialogFragment类中内置的广播，改用 DataSendReception 方式进行传输数据，具体可参考官网教程
+ * 注意：在使用 Dialog 方式切换时，会默认将Fragment加入回退栈
+ * (3).修复 Fragment 与 DialogFragment 当焦点在EditText 时无法监听到返回事件
+ * (4).将 DialogFragment 与 GT_AlertDialog 移植到 GT_Dialog类进行统一管理,新增了弹出DialogFragment隐藏虚拟按钮的方法
+ * <p>
+ * bug优化
+ * 1.Hibernate 在映射表时，父表与子表有相同的属性时，出现的映射问题（当前版本默认使用子表的属性映射）
+ * 2.Hibernate 在查询的时候，出现List<String> 赋值为null的情况下，查询出来会报异常日志（已优化）
+ * 3.Hibernate 在多数据库创建时出现的问题
+ * 4.优化了 Hibernate 的 保存所有 与 查询所有 的效率
+ * 5.优化 GT_Fragment 有几率点击穿透的问题
  
 ````
 
@@ -85,12 +114,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
-	
-	//GT全部功能 需要添加的包
-    	implementation 'com.squareup.okhttp3:okhttp:3.12.0'//okHttp3
- 	implementation 'com.lzy.net:okgo:3.0.4' //OkGo 网络框架
-	implementation 'com.blankj:utilcodex:1.25.9'//集成 AndroidUtilCode 工具包
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
 
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
@@ -109,18 +133,18 @@ dependencies {
 -keep class com.gsls.gt.GT$GT_Fragment$BaseFragments**{*;}
 -keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseFragments { *; }
 
-## 继承 GT包中的 GT.GT_Fragment.BaseDialogFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
--keep class com.gsls.gt.GT$GT_Fragment$BaseDialogFragments**{*;}
--keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseDialogFragments { *; }
+## 继承 GT包中的 GT.GT_Dialog.BaseDialogFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
+-keep class com.gsls.gt.GT$GT_Dialog$BaseDialogFragments**{*;}
+-keep public class * extends com.gsls.gt.GT$GT_Dialog$BaseDialogFragments { *; }
 
 ````
 
 
 ## LICENSE
 ````
-Copyright 2019 GSLS
+Copyright 2021 GSLS
 
-Licensed under the Apache License, Version 1.3.0.1 (the "License");
+Licensed under the Apache License, Version 1.3.0.5 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
