@@ -4,19 +4,24 @@
 
 # [GT库源码](https://github.com/1079374315/GSLS_Tool)
 
-# 最新版本: 1.3.0.5
-发布时间：2021.7.13
+# 最新版本: 1.3.0.6
+发布时间：2021.7.28
 
 ## 此次版本更新： 
 ````
-* 更新时间:2021.7.13
+/**
+ * 工具类说明：
+ * GSLS_Tool
+ * <p>
+ * <p>
+ * 更新时间:2021.7.28
  * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * <p> GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.0.5 版本）
+ * 更新内容：（1.3.0.6 版本）
  * 超级重磅更新！！！
- * 1.内容如下：
- * (1).Hibernate 类的更新
+ * 内容如下：
+ * 1.Hibernate 类的更新
  * 1).Hibernate 数据库支持映射 “数组参数”、“多重继承关系”
  * 2).新增初始化 Hibernate 的方式，可在Application中进行初始化操作：new GT.Hibernate().initialize(); 与 new GT.Hibernate().getHibernate(); （注意，这两个方法均是有创建的效果）
  * 3).新增聚合函数：count(求次数)、sum(求总和)、max(求最大值)、min(求最小值)、average(求平均数)，后续待添加新的...
@@ -42,12 +47,15 @@
  * 10).
  * 11).
  * 2.新增悬浮窗封装类 GT_FloatingWindow 用法与 GT_Fragment 类似，具体使用教程请参考官网,(新增 GT_Floating 工具类，还在优化中)
- *
+ * 3.增加可嵌套的滑动组件 ScrollView
+ * 4.新增 串口类 SerialPortUtils
+ * 5.新增 GT_Socket TCP 类
  * <p>
  * <p>
  * 3.新增 GT.GT_Adapters.BaseAdapter 基类
  * 4.新增 DataSendReception 数据传输类，用于传输数据目前可支持：跨类、跨进程、跨APP传输数据
- * 5.新版本的优化
+ * 5.新增 适配器 AnnotationAdapter 注解基类
+ * n.新版本的优化
  * <p>
  * (1).去掉所有基类自带的 log() toast() err() 类似等方法(不方便维护，故此版本去掉)
  * (2).去掉 GT_Fragment 与 DialogFragment类中内置的广播，改用 DataSendReception 方式进行传输数据，具体可参考官网教程
@@ -61,6 +69,18 @@
  * 3.Hibernate 在多数据库创建时出现的问题
  * 4.优化了 Hibernate 的 保存所有 与 查询所有 的效率
  * 5.优化 GT_Fragment 有几率点击穿透的问题
+ * 6.优化了所有注解的核心方法
+ *
+ *
+ *
+ * <p>
+ * <p>
+ * <p>
+ * 小提示：(用于 AndroidStudio )
+ * 收起所有的 方法: Ctrl + Shift +  - (减号)
+ * 展开所有的 方法: Ctrl + Shift +  + (加号)
+ * 代码格式化快捷键是 Ctrl + Alt + L
+ */
  
 ````
 
@@ -114,8 +134,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
-
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.6'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
