@@ -11,10 +11,10 @@
 ## 粉丝
 <a href="https://opencollective.com/libsodium/organization/0/website"><img src="https://avatars.githubusercontent.com/u/3365442?s=88&u=6b3ddc2fb63099b1a65b24acd188256f68c25ef4&v=4"  width="40px"></a>
 
-## 最新版本: 1.3.0.6
+### 最新版本: 1.3.0.6
 发布时间：2021.7.28
 
-## 此次版本更新： 
+### 此次版本更新： 
 ````
 /**
  * 工具类说明：
