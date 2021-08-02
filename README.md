@@ -6,7 +6,9 @@
 
 
 
-# ![libsodium](https://profile.csdnimg.cn/7/5/9/3_qq_39799899) # [GT库源码](https://github.com/1079374315/GSLS_Tool) 
+# ![libsodium](https://profile.csdnimg.cn/7/5/9/3_qq_39799899)[GT库源码](https://github.com/1079374315/GSLS_Tool) 
+
+
 
 # 最新版本: 1.3.0.6
 发布时间：2021.7.28
