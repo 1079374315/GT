@@ -4,9 +4,11 @@
 [![](https://jitpack.io/v/1079374315/GSLS_Tool.svg)](https://jitpack.io/#1079374315/GSLS_Tool)
 
 
-
-
 # ![libsodium](https://profile.csdnimg.cn/7/5/9/3_qq_39799899)[GT库源码](https://github.com/1079374315/GSLS_Tool) 
+
+
+# Record:
+![libsodium](https://csdnimg.cn/medal/linkedin@240.png) ![libsodium](https://csdnimg.cn/medal/github@240.png) ![libsodium](https://csdnimg.cn/medal/maimai@240.png)
 
 
 
