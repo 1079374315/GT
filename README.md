@@ -8,7 +8,7 @@
 
 
 # Record:
-[![GitHub Versions](https://github.com/jedisct1/libsodium/workflows/CI/badge.svg)](https://csdnimg.cn/medal/linkedin@240.png)
+[![GitHub Versions](https://csdnimg.cn/medal/linkedin@240.png)]
 
 
 
