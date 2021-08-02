@@ -8,7 +8,7 @@
 
 
 # Record:
-!(https://csdnimg.cn/medal/linkedin@240.png) (https://csdnimg.cn/medal/github@240.png) (https://csdnimg.cn/medal/maimai@240.png)
+[![GitHub versions](https://csdnimg.cn/medal/linkedin@240.png)]
 
 
 
