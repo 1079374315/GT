@@ -8,7 +8,7 @@
 
 
 # Record:
-![libsodium](https://csdnimg.cn/medal/linkedin@240.png) ![libsodium](https://csdnimg.cn/medal/github@240.png) ![libsodium](https://csdnimg.cn/medal/maimai@240.png)
+!(https://csdnimg.cn/medal/linkedin@240.png) (https://csdnimg.cn/medal/github@240.png) (https://csdnimg.cn/medal/maimai@240.png)
 
 
 
