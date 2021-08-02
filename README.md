@@ -7,7 +7,7 @@
 # ![libsodium](https://profile.csdnimg.cn/7/5/9/3_qq_39799899)[GT库源码](https://github.com/1079374315/GSLS_Tool) 
 
 
-<a href="https://opencollective.com/libsodium/organization/0/website"><img src="https://avatars.githubusercontent.com/u/3365442?s=88&u=6b3ddc2fb63099b1a65b24acd188256f68c25ef4&v=4"  width="100px"></a>
+<a href="https://opencollective.com/libsodium/organization/0/website"><img src="https://avatars.githubusercontent.com/u/3365442?s=88&u=6b3ddc2fb63099b1a65b24acd188256f68c25ef4&v=4"  width="50px"></a>
 
 
 
