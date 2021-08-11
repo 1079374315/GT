@@ -130,8 +130,7 @@
 第一步 1. 将以下存储库将其添加到根构建中。存储库末尾的gradle
 allprojects {
     repositories {
-        google()
-        jcenter()
+        ...
         maven { url 'https://jitpack.io' }
     }
 }
