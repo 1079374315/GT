@@ -128,10 +128,11 @@
 #### [第33章：GT_Fragment(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t104)(封装 Fragment 管理器)
 #### [第34章：GT_Dialog(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t108)(封装 Dialog 管理器)
 #### [第35章：GT_FloatingWindow(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t114)(封装 悬浮窗 管理器)
-#### [第36章：设备监听类 DeviceListening(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t119(手机设备的监听)
+#### [第36章：设备监听类 DeviceListening(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t119)(手机设备的监听)
 #### [第37章：多媒体类(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t121)(手机设备的音乐、音频，视频等)
 #### [第38章：GT注解(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t123)(GT高级使用方法)
-#### [第39章：GT线程(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t125)(容易上瘾)
+#### [第39章：GT线程(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t125)(容易上瘾，请勿上头)
+
 
 
 
