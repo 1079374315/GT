@@ -91,7 +91,7 @@
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
-### [GT库官方教程入口](https://blog.csdn.net/qq_39799899/category_9956339.html)
+### [GT库官方教程入口](https://blog.csdn.net/qq_39799899/article/details/119696907)
 
 #### [第一章：GT库依赖篇](https://blog.csdn.net/qq_39799899/article/details/105819914)
 #### [第二章：日志(log)篇](https://blog.csdn.net/qq_39799899/article/details/105820384) (常用推荐)
