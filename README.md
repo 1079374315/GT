@@ -97,9 +97,9 @@
 ## [第二章：日志log类(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t9) 
 ## [第三章：吐司类   (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t15) 
 ## [第四章：数据模块](https://blog.csdn.net/qq_39799899/article/details/119696907#t20) 
-	###[1：DataSendReception(数据发送与接收：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t21) 
-	###[2：SaveObject (持久性保存数据：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25) 
-	###[3：GT_SharedPreferences(原始SP封装：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25) 
+###[1：DataSendReception(数据发送与接收：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t21) 
+###[2：SaveObject (持久性保存数据：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25) 
+###[3：GT_SharedPreferences(原始SP封装：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25) 
 
 
 # 如何使用
