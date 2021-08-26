@@ -5,77 +5,33 @@
 
 <img src="https://csdnimg.cn/medal/linkedin@240.png"  width="40px"><img src="https://csdnimg.cn/medal/github@240.png"  width="40px"><img src="https://csdnimg.cn/medal/maimai@240.png"  width="40px"><img src="https://csdnimg.cn/medal/qiandao10@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuedu3@240.png"  width="40px"><img src="https://csdnimg.cn/medal/chizhiyiheng@240.png"  width="40px"><img src="https://csdnimg.cn/medal/1024@240.png"  width="40px"><img src="https://csdnimg.cn/medal/qixiebiaobing4@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_xuexili@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_xinren@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_tansuoS@240.png"  width="40px"><img src="https://csdnimg.cn/medal/fenxiangjingying@240.png"  width="40px">
 
-# <a href="https://blog.csdn.net/qq_39799899"><img src="https://profile.csdnimg.cn/7/5/9/3_qq_39799899"  width="60px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool) 
+# <a href="https://blog.csdn.net/qq_39799899"><img src="https://profile.csdnimg.cn/7/5/9/3_qq_39799899"  width="60px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 
 ![libsodium](https://raw.github.com/jedisct1/libsodium/master/logo.png)
 ============
 
-# 最新版本: 1.3.0.6
-发布时间：2021.7.28
+# 最新版本: 1.3.1
+发布时间：2021.8.26
 
-# 此次版本更新： 
+# 此次版本更新：
 ````
 /**
  * 工具类说明：
  * GSLS_Tool
  * <p>
  * <p>
- * 更新时间:2021.7.28
- * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
+ * 更新时间:2021.8.26
+ * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/119696907
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * <p> GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.0.6 版本）
- * 超级重磅更新！！！
+ * 更新内容：（1.3.1 版本）
  * 内容如下：
- * 1.Hibernate 类的更新
- * 1).Hibernate 数据库支持映射 “数组参数”、“多重继承关系”
- * 2).新增初始化 Hibernate 的方式，可在Application中进行初始化操作：new GT.Hibernate().initialize(); 与 new GT.Hibernate().getHibernate(); （注意，这两个方法均是有创建的效果）
- * 3).新增聚合函数：count(求次数)、sum(求总和)、max(求最大值)、min(求最小值)、average(求平均数)，后续待添加新的...
- * 4).修改了增删查改的方式，优化增删查改的效率，增加了 saveAll() 保存数据方法，当前测试效率：存储10万条数据，09:07:53.199——09:07:59.646 耗时6秒多，具体详情还请参考方法说明
- * 5).正式支持事务操作具体教程请参考官网:saveAll();保存全部方法默认使用事务
- * 6).支持 分库映射 若您创建了两个或两个以上的数据库，那么可以在实体类的标识上指定映射的数据库名称，
- * 实例：不指定的话，默认给所有的数据库映射表，指定单个数据库：@GT.Hibernate.GT_Entity(setSqlName = "MySQL") OR 指定多个数据库：@GT.Hibernate.GT_Entity(setSqlName = {"MySQL","DemoSQL"})
- * 7).将表字段属性设置更名为 “GT_Property”,
- * GT_Property目前支持以下功能：
- * 1).修改字段名：setOldTableValue    释：修改字段名后，数据依旧在
- * 2).设置不为空: setNotNull          释：如果操作数据为null就会操作失败
- * 3).设置限定值：setCheckValues      释：sex = 男 or 女 or 其他
- * 4).设置字段长度：setLength         释：userName varchar(100)
- * 5).设置最大值：setMax              释：设置数字的最大值
- * 6).设置最小值：setMin              释：设置数字的最小值
- * 7).设置不被持久化：setNotInit       释：将不被持久化的字段当做普通的 Java字段
- * 8).设置默认值：setDefaultValue     释：设置默认值，用法有两种，如果是多个默认值，数据库会随机选择一个默认值
- * 第一种：setDefaultValue = "默认值",
- * 第二种：setDefaultValue = {"默认值1"，"默认值2"，"默认值3"....}
- * GT_Key,主键标识目前只支持：设置自增长、设置字段长度、设置限定值、设置最大值、设置最小值
- * 8).优化了 数据库 创建时的性能，增加创建方式：可在线程中创建数据库
- * 9).支持动态创建表的操作：createTable(DemoBean.class);
- * 10).
- * 11).
- * 2.新增悬浮窗封装类 GT_FloatingWindow 用法与 GT_Fragment 类似，具体使用教程请参考官网,(新增 GT_Floating 工具类，还在优化中)
- * 3.增加可嵌套的滑动组件 ScrollView
- * 4.新增 串口类 SerialPortUtils
- * 5.新增 GT_Socket TCP 类
- * <p>
- * <p>
- * 3.新增 GT.GT_Adapters.BaseAdapter 基类
- * 4.新增 DataSendReception 数据传输类，用于传输数据目前可支持：跨类、跨进程、跨APP传输数据
- * 5.新增 适配器 AnnotationAdapter 注解基类
- * n.新版本的优化
- * <p>
- * (1).去掉所有基类自带的 log() toast() err() 类似等方法(不方便维护，故此版本去掉)
- * (2).去掉 GT_Fragment 与 DialogFragment类中内置的广播，改用 DataSendReception 方式进行传输数据，具体可参考官网教程
- * 注意：在使用 Dialog 方式切换时，会默认将Fragment加入回退栈
- * (3).修复 Fragment 与 DialogFragment 当焦点在EditText 时无法监听到返回事件
- * (4).将 DialogFragment 与 GT_AlertDialog 移植到 GT_Dialog类进行统一管理,新增了弹出DialogFragment隐藏虚拟按钮的方法
- * <p>
- * bug优化
- * 1.Hibernate 在映射表时，父表与子表有相同的属性时，出现的映射问题（当前版本默认使用子表的属性映射）
- * 2.Hibernate 在查询的时候，出现List<String> 赋值为null的情况下，查询出来会报异常日志（已优化）
- * 3.Hibernate 在多数据库创建时出现的问题
- * 4.优化了 Hibernate 的 保存所有 与 查询所有 的效率
- * 5.优化 GT_Fragment 有几率点击穿透的问题
- * 6.优化了所有注解的核心方法
+ * 1.优化了 log显示
+ * 2.增加了国际化工具包
+ * 3.更新了简易对话框
+ * 4.新增 Permission 权限动态申请框架
+ * 5.新增无障碍服务基类， AccessibilityServiceBase 使用起来非常简单
+ * 6.新增 GT_View 专门用来解决局部View特别复杂时会让 Avtibity 或 Fragment 变复杂的问题
  *
  *
  *
