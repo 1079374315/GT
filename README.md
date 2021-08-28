@@ -52,15 +52,15 @@
 #### [第1章：集成GT库 (推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t5)(集成GT库成功！！！)
 #### [第2章：日志log类(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t9)(可以让你轻轻松松找到日志处)
 #### [第3章：吐司类   (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t15)(轻松自定义吐司)
-#### [第4章：DataSendReception(新品-推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t21)(跨APP/跨进程/收发消息)
+#### [第4章：DataSendReception(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t21)(跨APP/跨进程/收发消息)
 #### [第5章：SaveObject (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25)(数据永久性存储池)
 #### [第6章：GT_SharedPreferences(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t27)(可存储实体类的SP)
 #### [第7章：GT_IO(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t29)(内部 IO 流存储)
 #### [第8章：FileUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t31)(轻轻松松自定义可视文件组件)
-#### [第9章：Hibernate(热度更新：推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t33)(对原生SQLite数据库的封装)
+#### [第9章：Hibernate(热度推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t33)(对原生SQLite数据库的封装)
 #### [第10章：CleanDataUtils(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t35)(管理手机数据)
 #### [第11章：GT_Random(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t37)(随机类)
-#### [第12章：SerialPortUtils(新品：推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t39)(串口类，无需增添第三文件，可直接构建使用！！！)
+#### [第12章：SerialPortUtils(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t39)(串口类，无需增添第三文件，可直接构建使用！！！)
 #### [第13章：DataUtils(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t41)(数据格式装换类)
 #### [第14章：Network(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t44)(网络类用于判断是否可联网，获取P地址等...)
 #### [第15章：JSON(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t46)(json 与 Bean 互转)
@@ -88,6 +88,9 @@
 #### [第37章：多媒体类(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t121)(手机设备的音乐、音频，视频等)
 #### [第38章：GT注解(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t123)(GT高级使用方法)
 #### [第39章：GT线程(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t125)(容易上瘾，请勿上头)
+#### [第40章：Permission(新品推荐：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t137)(超级简单且轻量级的动态授权框架)
+#### [第41章：GT黑科技(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t139)(黑科技会越来越多，重点发展路线)
+###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t140)
 
 
 
@@ -110,7 +113,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.0.6'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
@@ -181,7 +184,7 @@ dependencies {
 ````
 Copyright 2021 GSLS
 
-Licensed under the Apache License, Version 1.3.0.5 (the "License");
+Licensed under the Apache License, Version 1.3.1 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
