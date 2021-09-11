@@ -7,7 +7,6 @@
 
 # <a href="https://blog.csdn.net/qq_39799899"><img src="https://profile.csdnimg.cn/7/5/9/3_qq_39799899"  width="60px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 
-![libsodium](https://raw.github.com/jedisct1/libsodium/master/logo.png)
 ============
 
 # 最新版本: 1.3.1.2
