@@ -10,8 +10,8 @@
 ![libsodium](https://raw.github.com/jedisct1/libsodium/master/logo.png)
 ============
 
-# 最新版本: 1.3.1.1
-发布时间：2021.9.7
+# 最新版本: 1.3.1.2
+发布时间：2021.9.10
 
 # 此次版本更新：
 ````
@@ -20,18 +20,20 @@
  * GSLS_Tool
  * <p>
  * <p>
- * 更新时间:2021.9.7
- * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/119696907
+* 更新时间:2021.9.10
+ * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * <p> GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.1.1 版本）
- * 内容如下：
- * 1.优化了 log显示
- * 2.增加了国际化工具包
- * 3.更新了简易对话框
- * 4.新增 Permission 权限动态申请框架
- * 5.新增无障碍服务基类， AccessibilityServiceBase 使用起来非常简单
- * 6.新增 GT_View 专门用来解决局部View特别复杂时会让 Avtibity 或 Fragment 变复杂的问题
+ * <p>更新内容：（1.3.1.2 版本）
+ * <p>内容如下：
+ * <p>1.优化了 log显示
+ * <p>2.增加了国际化工具包
+ * <p>3.更新了简易对话框
+ * <p>4.新增 Permission 权限动态申请框架
+ * <p>5.新增无障碍服务基类， AccessibilityServiceBase 使用起来非常简单
+ * <p>6.新增 GT_View 专门用来解决局部View特别复杂时会让 Avtibity 或 Fragment 变复杂的问题
+ * <p>7.回调增加 非常用的注解绑定方法
+ * <p>8.权限申请类适配可以Fragment中直接使用
  *
  *
  *
@@ -113,7 +115,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.1.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.1.2'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
@@ -184,7 +186,7 @@ dependencies {
 ````
 Copyright 2021 GSLS
 
-Licensed under the Apache License, Version 1.3.1 (the "License");
+Licensed under the Apache License, Version 1.3.1.2 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
