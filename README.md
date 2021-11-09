@@ -9,8 +9,8 @@
 
 ============
 
-# 最新版本: 1.3.1.3
-发布时间：2021.9.22
+# 最新版本: 1.3.2
+发布时间：2021.11.9
 
 # 此次版本更新：
 ````
@@ -19,22 +19,15 @@
  * GSLS_Tool
  * <p>
  * <p>
-* 更新时间:2021.9.22
+ * 更新时间:2021.11.9
  * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * <p> GitHub https://github.com/1079374315/GT
- * <p>更新内容：（1.3.1.3 版本）
+ * <p>更新内容：（1.3.2 版本）
  * <p>内容如下：
- * <p>1.优化了 log显示
- * <p>2.增加了国际化工具包
- * <p>3.更新了简易对话框
- * <p>4.新增 Permission 权限动态申请框架
- * <p>5.新增无障碍服务基类， AccessibilityServiceBase 使用起来非常简单
- * <p>6.新增 GT_View 专门用来解决局部View特别复杂时会让 Avtibity 或 Fragment 变复杂的问题
- * <p>7.回调增加 非常用的注解绑定方法
- * <p>8.权限申请类适配可以Fragment中直接使用
- * <p>9.优化了 GT_SharedPreferences 类的查询方法，支持指定返回数据类型
- * <p>10.优化了 getHtmlData 获取网页代码的接口
+ * <p>1.增加了 startFragment、startDialogFragment、startFloatingWindow 的静态调用
+ * <p>2.增加了 HttpUtil post请求添加请求头的方法
+ * <p>3.FileUtils 类增加了 对U盘的操作
  *
  *
  *
@@ -187,7 +180,7 @@ dependencies {
 ````
 Copyright 2021 GSLS
 
-Licensed under the Apache License, Version 1.3.1.3 (the "License");
+Licensed under the Apache License, Version 1.3.2 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
