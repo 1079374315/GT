@@ -8,25 +8,22 @@
 # <a href="https://blog.csdn.net/qq_39799899"><img src="https://github.com/1079374315/GT/blob/master/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 ============
 
-# 最新版本: 1.3.2
-发布时间：2021.11.9
+# 最新版本: 1.3.5
+发布时间：2021.11.10
 
 # 此次版本更新：
 ````
 /**
- * 工具类说明：
- * GSLS_Tool
- * <p>
- * <p>
- * 更新时间:2021.11.9
+ * 更新时间:2021.11.10
  * <p> CSDN 详细教程:https://blog.csdn.net/qq_39799899/article/details/102490617
  * <p> CSDN 博客:https://blog.csdn.net/qq_39799899
  * <p> GitHub https://github.com/1079374315/GT
- * <p>更新内容：（1.3.2 版本）
+ * <p>更新内容：（1.3.5 版本）
  * <p>内容如下：
  * <p>1.增加了 startFragment、startDialogFragment、startFloatingWindow 的静态调用
  * <p>2.增加了 HttpUtil post请求添加请求头的方法
  * <p>3.FileUtils 类增加了 对U盘的操作
+ * <p>4.新增 DataBindingActivity,彻底解放组件获取，组件添加ID后可直接使用，无需获取。(具体教程，请参考官网)
  *
  *
  *
@@ -108,7 +105,7 @@ allprojects {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.2'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 
 }
@@ -137,7 +134,7 @@ dependencies {
 ````
 Copyright 2021 GSLS
 
-Licensed under the Apache License, Version 1.3.2 (the "License");
+Licensed under the Apache License, Version 1.3.5 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
