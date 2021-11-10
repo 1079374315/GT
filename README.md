@@ -7,7 +7,7 @@
 
 # <a href="https://blog.csdn.net/qq_39799899"><img src="https://github.com/1079374315/GT/blob/master/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 ============
-[下载gt-DataBinding.jar](https://github.com/1079374315/GT/blob/master/gt-DataBinding.jar)
+[下载DataBinding.jar](https://github.com/1079374315/GT/blob/master/gt-DataBinding.jar)
 
 # 最新版本: 1.3.5
 发布时间：2021.11.10
