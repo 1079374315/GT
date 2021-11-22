@@ -5,12 +5,12 @@
 
 <img src="https://csdnimg.cn/medal/linkedin@240.png"  width="40px"><img src="https://csdnimg.cn/medal/github@240.png"  width="40px"><img src="https://csdnimg.cn/medal/maimai@240.png"  width="40px"><img src="https://csdnimg.cn/medal/qiandao10@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuedu3@240.png"  width="40px"><img src="https://csdnimg.cn/medal/chizhiyiheng@240.png"  width="40px"><img src="https://csdnimg.cn/medal/1024@240.png"  width="40px"><img src="https://csdnimg.cn/medal/qixiebiaobing4@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_xuexili@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_xinren@240.png"  width="40px"><img src="https://csdnimg.cn/medal/yuanli_tansuoS@240.png"  width="40px"><img src="https://csdnimg.cn/medal/fenxiangjingying@240.png"  width="40px">
 
-# <a href="https://blog.csdn.net/qq_39799899"><img src="http://gsls.3vfree.cn/img/GT/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
+# <a href="https://blog.csdn.net/qq_39799899"><img src="http://gsls.3vfree.cn/Servers/GT/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 ============
 
 #### [第1下载网址：DataBinding.jar](https://github.com/1079374315/GT/blob/master/gt-DataBinding.jar)
 
-#### [第2下载网址：DataBinding.jar](http://gsls.3vfree.cn/GT/gt-DataBinding.jar)
+#### [第2下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
 # 最新版本: 1.3.5.2
 发布时间：2021.11.12
