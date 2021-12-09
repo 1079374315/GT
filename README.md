@@ -125,16 +125,8 @@ dependencies {
 ````gradle
 
 ## GT：（必要的混淆）
--keep class com.gsls.gt.GT**{*;}
-
-## 继承GT包中的 GT_Fragment.BaseFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
-## Fragment                        
--keep class com.gsls.gt.GT$GT_Fragment$BaseFragments**{*;}
--keep public class * extends com.gsls.gt.GT$GT_Fragment$BaseFragments { *; }
-
-## 继承 GT包中的 GT.GT_Dialog.BaseDialogFragments 均不能混淆：(如果没有继承该类，可以不用混淆)
--keep class com.gsls.gt.GT$GT_Dialog$BaseDialogFragments**{*;}
--keep public class * extends com.gsls.gt.GT$GT_Dialog$BaseDialogFragments { *; }
+-keep class com.gsls.gt.** {*;}
+## 其余的看情况混淆
 
 ````
 
