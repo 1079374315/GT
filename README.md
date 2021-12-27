@@ -10,16 +10,16 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.3.6.1
-发布时间：2021.12.26
+# 最新版本: 1.3.6.2
+发布时间：2021.12.27
 
 # 此次版本更新：
 ````
 /**
- * 更新时间:2021.12.26
+ * 更新时间:2021.12.27
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.6.1 版本 取消GT库默认提供的权限，默认提供的权限可在官网教程处查看）
+ * 更新内容：（1.3.6.2 版本 取消GT库默认提供的权限，默认提供的权限可在官网教程处查看）
  * 内容如下：
  * 1.优化logs、errs日志的显示
  * 2.优化 GT适配器加载数据
@@ -131,4 +131,26 @@ dependencies {
 -keep class com.gsls.gt.** {*;}
 ## 其余的看情况混淆
 
+````
+## 部分功能使用到的权限：（权限参考）
+````
+<!-- U盘操作 -->
+    <uses-permission
+        android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
+        tools:ignore="ProtectedPermissions" /> <!-- 悬浮窗 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /> <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- 读取手机权限 -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ````
