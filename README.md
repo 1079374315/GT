@@ -10,17 +10,18 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.3.6.2
-发布时间：2021.12.27
+# 最新版本: 1.3.6.4
+发布时间：2022.1.10
 
 # 此次版本更新：
 ````
 /**
- * 更新时间:2021.12.27
+ * 更新时间:2022.1.10
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.6.2 版本 取消GT库默认提供的权限，默认提供的权限可在官网教程处查看）
+ * 更新内容：（1.3.6.4 版本 大爆料）
  * 内容如下：
+ * 主要核心内容：新增 MVC、MVP、MVVM 辅助框架,取消GT库默认提供的权限，默认提供的权限可在官网教程处查看
  * 1.优化logs、errs日志的显示
  * 2.优化 GT适配器加载数据
  * 3.新增 GT_Toolkit 可视化工具(目前功能较少，今后会扩展)
@@ -31,16 +32,18 @@
  * 5.新增 gt-DataBinding中对 DialogFragment、BaseFloatingWindow、BaseAdapter、GTView的支持
  * 6.优化 Hibernate 多线程操作
  * 7.gt-DataBinding支持解析第三布局 <include 标签的引入布局，但需要为识别的<include 标签加上 id号
- *
- *
- *
- * <p>
- * <p>
- * <p>
- * 小提示：(用于 AndroidStudio )
- * 收起所有的 方法: Ctrl + Shift +  - (减号)
- * 展开所有的 方法: Ctrl + Shift +  + (加号)
- * 代码格式化快捷键是 Ctrl + Alt + L
+ * 8.新增 GT_PopupWindow 类
+ * 9.LOG 类新增 GT.logt("标记日志"); GT.errt("标记日志");
+ * 10.优化 时间与时间戳互转的方法 GT.GT_Date.timeToTimestampToTime(String timeOrTimestamp, String timeFormat)
+ * 11.新增 编程辅助框架 MVC/MVP/MVVM/GT/GT_Binding模式
+ * 12.增强 AnnotationAssist 反射、注解工具类,新增以下功能方法
+     * 1.获取类的泛类型
+     * 2.反射类中方法进行赋值
+     * 3.获取反射方法的返回值
+     * 4.获取反射变量的值(可私用变量)
+     * 5.利用反射给变量设置值(可私有变量)
+     * 6.反射该类所有的变量值 (可接受类型 class、String(类包名)、实体类)
+     * 7.字符串转Class
  */
  
 ````
@@ -114,7 +117,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.4'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
     	annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
