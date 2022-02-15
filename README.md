@@ -10,7 +10,7 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.3.6.4
+# 最新版本: 1.3.6.5
 发布时间：2022.1.10
 
 # 此次版本更新：
@@ -19,7 +19,7 @@
  * 更新时间:2022.1.10
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.6.4 版本 大爆料）
+ * 更新内容：（1.3.6.5 版本 大爆料）
  * 内容如下：
  * 主要核心内容：新增 MVC、MVP、MVVM 辅助框架,取消GT库默认提供的权限，默认提供的权限可在官网教程处查看
  * 1.优化logs、errs日志的显示
@@ -117,7 +117,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.4'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.5'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
     	annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
