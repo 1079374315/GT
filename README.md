@@ -131,8 +131,10 @@ dependencies {
 
 ````gradle
 
-## GT：（必要的混淆）
+# 不混淆GT库
 -keep class com.gsls.gt.** {*;}
+#jar库不参与混淆
+-libraryjars libs/gt-DataBinding.jar
 ## 其余的看情况混淆
 
 ````
