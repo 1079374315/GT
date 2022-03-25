@@ -113,7 +113,7 @@ dependencies {
 	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.9'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
-    annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
+        annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，请参考该篇文章：https://blog.csdn.net/qq_39799899/article/details/102490617
 }
