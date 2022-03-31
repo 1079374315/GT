@@ -10,8 +10,8 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.3.6.9
-发布时间：2022.3.25
+# 最新版本: 1.3.7
+发布时间：2022.4.1
 
 # 此次版本更新：
 ````
