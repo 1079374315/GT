@@ -16,10 +16,10 @@
 # 此次版本更新：
 ````
 /**
-  * 更新时间:2022.3.25
+  * 更新时间:2022.4.1
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.6.9 版本 大爆料：新增 MVC、MVP、MVVM 辅助框架）
+ * 更新内容：（1.3.7 版本 大爆料：新增 MVC、MVP、MVVM 辅助框架、GT.EventBus 框架）
  * 内容如下：
  * 1.新增 GT_PopupWindow 类
  * 2.LOG 类新增 GT.logt("标记日志"); GT.errt("标记日志");
@@ -36,6 +36,8 @@
  * 6.增强分享功能
  * 7.优化所有的 DataBinding自动生成类 ，增强 GT_BindingViewModel 并支持 通过泛类映射实例化 ，增加了 适配器的 DataBinding
  * 8.增加 WebViewUtils 类
+ * 9.GT.Thread 增加线程池管理功能
+ * 10.新增 GT.EventBus 类，具体使用教程清参考官网教程
  */
  
 ````
