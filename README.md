@@ -26,13 +26,13 @@
  * 3.优化 时间与时间戳互转的方法 GT.GT_Date.timeToTimestampToTime(String timeOrTimestamp, String timeFormat)
  * 4.新增 编程辅助框架 MVC/MVP/MVVM/GT/GT_Binding模式
  * 5.增强 AnnotationAssist 反射、注解工具类,新增以下功能方法
- * 1.获取类的泛类型
- * 2.反射类中方法进行赋值
- * 3.获取反射方法的返回值
- * 4.获取反射变量的值(可私用变量)
- * 5.利用反射给变量设置值(可私有变量)
- * 6.反射该类所有的变量值 (可接受类型 class、String(类包名)、实体类)
- * 7.字符串转Class
+     * (1).获取类的泛类型
+     * (2).反射类中方法进行赋值
+     * (3).获取反射方法的返回值
+     * (4).获取反射变量的值(可私用变量)
+     * (5).利用反射给变量设置值(可私有变量)
+     * (6).反射该类所有的变量值 (可接受类型 class、String(类包名)、实体类)
+     * (7).字符串转Class
  * 6.增强分享功能
  * 7.优化所有的 DataBinding自动生成类 ，增强 GT_BindingViewModel 并支持 通过泛类映射实例化 ，增加了 适配器的 DataBinding
  * 8.增加 WebViewUtils 类
