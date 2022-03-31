@@ -112,7 +112,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.6.9'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.7'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
         annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
