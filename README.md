@@ -90,7 +90,8 @@
 ###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t136)
 #### [第42章：GT-DataBinding(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/121270536)(彻底解放 findViewById)
 #### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123801259?spm=1001.2014.3001.5502)(超简单GT_MVVM入门系列)
-#### [第44章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288)(GT.EventBus 全面解析教程)
+#### [第44章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288)(解决数据传递框架)
+#### [第45章：GT-Observable(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123982353)(异步线程切换框架)
 
 
 
