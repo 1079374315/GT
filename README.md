@@ -38,7 +38,7 @@
  * 8.增加 WebViewUtils 类
  * 9.GT.Thread 增加线程池管理功能
  * 10.新增 GT.EventBus 类，具体使用教程清参考官网教程
- * 11.新增异步操作的框架 Observable 具体使用教程清参考官网
+ * 
  */
  
 ````
