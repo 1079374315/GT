@@ -106,7 +106,7 @@
 allprojects {
     repositories {
         ...
-        jcenter()//需要添加该库
+        
         maven { url 'https://jitpack.io' }//必要的
     }
 }
