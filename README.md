@@ -10,16 +10,16 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.3.9.7
-发布时间：2022.6.21
+# 最新版本: 1.3.9.9
+发布时间：2022.7.9
 
 # 此次版本更新：
 ````
 /**
- * 更新时间:2022.6.21
+ * 更新时间:2022.7.9
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.3.9.7 版本 大爆料：
+ * 更新内容：（1.3.9.9 版本 大爆料：
  * 新增 MVC、MVP、MVVM (辅助框架)、
  * GT.EventBus (数据传递)框架、
  * Observable (异步框架）、
@@ -50,10 +50,12 @@
  * (6).GIF(待增加)
  * (6).支持圆角图片(待增加)
  * (6).指定图片大小(待增加)
- * 15.新增 RoundImageView 图片圆角类
- * 16.将 Permission 权限申请类 转移到 AppAuthorityManagement 类中
- * 17.新增 StrColor 类，动态设置文字颜色
- * 18. Observable 异步线程操作，让你的业务流程，干净又清爽
+ * 15.将 Permission 权限申请类 转移到 AppAuthorityManagement 类中
+ * 16.新增 StrColor 类，动态设置文字颜色
+ * 17. Observable 异步线程操作，让你的业务流程，干净又清爽
+ * 18.新增 FormatTools 图片资源转换工具类
+ * 19.新增 GTImageView 加载图片组件,可以圆角动态图
+ * 20.新增 NeverCrash 类，防止APP奔溃类，APP产生奔溃后，会捕获，并将异常手机信息与异常原因发送出来
  * <p>
  * 优化:
  * 1.修复适配器 布局限制的问题,且增加瀑布流一键设置功能
@@ -139,7 +141,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.3.9.7'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.3.9.9//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
     	annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
