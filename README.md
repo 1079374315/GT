@@ -10,16 +10,16 @@
 
 #### [下载网址：DataBinding.jar](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
-# 最新版本: 1.4.0.2
-发布时间：2022.7.11
+# 最新版本: 1.4.0.3
+发布时间：2022.7.14
 
 # 此次版本更新：
 ````
 /**
- * 更新时间:2022.7.11
+ * 更新时间:2022.7.14
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 更新内容：（1.4.0.2 版本 大爆料：
+ * 更新内容：（1.4.0.3 版本 大爆料：
  * 新增 MVC、MVP、MVVM (辅助框架)、
  * GT.EventBus (数据传递)框架、
  * Observable (异步框架）、
@@ -50,12 +50,12 @@
  * (6).GIF(待增加)
  * (6).支持圆角图片(待增加)
  * (6).指定图片大小(待增加)
- * 15.将 Permission 权限申请类 转移到 AppAuthorityManagement 类中
- * 16.新增 StrColor 类，动态设置文字颜色
- * 17. Observable 异步线程操作，让你的业务流程，干净又清爽
- * 18.新增 FormatTools 图片资源转换工具类
- * 19.新增 GTImageView 加载图片组件,可以圆角动态图
- * 20.新增 NeverCrash 类，防止APP奔溃类，APP产生奔溃后，会捕获，并将异常手机信息与异常原因发送出来
+ * 16.将 Permission 权限申请类 转移到 AppAuthorityManagement 类中
+ * 17.新增 StrColor 类，动态设置文字颜色
+ * 18. Observable 异步线程操作，让你的业务流程，干净又清爽
+ * 19.新增 FormatTools 图片资源转换工具类
+ * 20.新增 GTImageView 加载图片组件,可以圆角动态图
+ * 21.新增 NeverCrash 类，防止APP奔溃类，APP产生奔溃后，会捕获，并将异常手机信息与异常原因发送出来
  * <p>
  * 优化:
  * 1.修复适配器 布局限制的问题,且增加瀑布流一键设置功能
@@ -67,56 +67,53 @@
  */
  
 ````
-
 ## 为了更好的使用该库，推荐阅读下面的文章:
 ### [GT库官方教程入口](https://blog.csdn.net/qq_39799899/article/details/119696907)
 
-#### [第1章：集成GT库 (推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t1)(集成GT库成功！！！)
-#### [第2章：日志log类(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t5)(可以让你轻轻松松找到日志处)
-#### [第3章：吐司类   (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t11)(轻松自定义吐司)
-#### [第4章：DataSendReception(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t17)(跨APP/跨进程/收发消息)
-#### [第5章：SaveObject (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t21)(数据永久性存储池)
-#### [第6章：GT_SharedPreferences(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t23)(可存储实体类的SP)
-#### [第7章：GT_IO(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t25)(内部 IO 流存储)
-#### [第8章：FileUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t27)(轻轻松松自定义可视文件组件)
-#### [第9章：Hibernate(热度推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t29)(对原生SQLite数据库的封装)
-#### [第10章：CleanDataUtils(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t31)(管理手机数据)
-#### [第11章：GT_Random(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t33)(随机类)
-#### [第12章：SerialPortUtils(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t35)(串口类，无需增添第三文件，可直接构建使用！！！)
-#### [第13章：DataUtils(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t37)(数据格式装换类)
-#### [第14章：Network(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t40)(网络类用于判断是否可联网，获取P地址等...)
-#### [第15章：JSON(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t42)(json 与 Bean 互转)
-#### [第16章：OkGo(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t48)(网络请求框架，需要另外依赖上 OKGO的库)
-#### [第17章：OkHttp(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t48)(网络请求框架，需要另外依赖上 OkHttp的库)
-#### [第18章：HttpUtil(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t50)(原始网络请求框架)
-#### [第19章：WebViewUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t52)(轻松加载APP、PC网页、拔网页代码)
-#### [第20章：GT_Date(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t58)(强大的日期工具包)
-#### [第21章：ScreenOperation(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t61)(手机屏幕操作)
-#### [第22章：ApplicationUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t63)(小工具包)
-#### [第23章：UpdateApp(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t66)(下载APP并自动安装)
-#### [第24章：RepairAPP(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t69)(APP热更新：悄无声息的解决线上bug)
-#### [第25章：BaseArrayAdapters(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t72)(针对与 ArrayAdapter 进行封装)
-#### [第26章：BaseAdapter(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t74)(针对与 RecyclerView.Adapter 进行封装)
-#### [第27章：Encryption(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t79)(加密工具包)
-#### [第28章：ProgressDialogUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t84)(多种加载进度条)
-#### [第29章：GT_Animation(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t90)(强大的GT动画库)
-#### [第30章：WindowUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t92)(WindowUtils 窗体类，封装了APP窗口类工具)
-#### [第31章：ViewUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t94)(自定义View工具集合，可直接添加到xml 布局文件中)
-#### [第32章：GT_Activity(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t96)(封装 Activity 管理器)
-#### [第33章：GT_Fragment(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t100)(封装 Fragment 管理器)
-#### [第34章：GT_Dialog(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t104)(封装 Dialog 管理器)
-#### [第35章：GT_FloatingWindow(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t119)(封装 悬浮窗 管理器)
-#### [第36章：设备监听类 DeviceListening(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t126)(手机设备的监听)
-#### [第37章：多媒体类(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t128)(手机设备的音乐、音频，视频等)
-#### [第38章：GT注解(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t130)(GT高级使用方法)
-#### [第39章：GT线程(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t132)(容易上瘾，请勿上头)
-#### [第40章：Permission(新品推荐：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t133)(超级简单且轻量级的动态授权框架)
-#### [第41章：GT黑科技(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t135)(黑科技会越来越多，重点发展路线)
-###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907#t136)
-#### [第42章：GT-DataBinding(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/121270536)(彻底解放 findViewById)
-#### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123801259?spm=1001.2014.3001.5502)(超简单GT_MVVM入门系列)
-#### [第44章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288)(解决数据传递框架)
-#### [第45章：GT-Observable(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123982353)(异步线程切换框架)
+#### [第1章：集成GT库 (推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(集成GT库成功！！！)
+#### [第2章：日志log类(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(可以让你轻轻松松找到日志处)
+#### [第3章：吐司类   (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(轻松自定义吐司)
+#### [第4章：DataSendReception(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(跨APP/跨进程/收发消息)
+#### [第5章：SaveObject (推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(数据永久性存储池)
+#### [第6章：GT_SharedPreferences(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(可存储实体类的SP)
+#### [第7章：GT_IO(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(内部 IO 流存储)
+#### [第8章：FileUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(轻轻松松自定义可视文件组件)
+#### [第9章：Hibernate(热度推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/105935756?spm=1001.2014.3001.5501)(对原生SQLite数据库的封装)
+#### [第10章：CleanDataUtils(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(管理手机数据)
+#### [第11章：GT_Random(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(随机类)
+#### [第12章：SerialPortUtils(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(串口类，无需增添第三文件，可直接构建使用！！！)
+#### [第13章：DataUtils(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(数据格式装换类)
+#### [第14章：Network(推荐指数：✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(网络类用于判断是否可联网，获取P地址等...)
+#### [第15章：JSON(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(json 与 Bean 互转)
+#### [第16章：HttpUtil与HttpCall(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/125697371?spm=1001.2014.3001.5501)(超简单实用的网络请求框架)
+#### [第17章：WebViewUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(轻松加载APP、PC网页、拔网页代码)
+#### [第18章：GT_Date(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(强大的日期工具包)
+#### [第19章：ScreenOperation(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(手机屏幕操作)
+#### [第20章：ApplicationUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(小工具包)
+#### [第21章：UpdateApp(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(下载APP并自动安装)
+#### [第22章：RepairAPP(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(APP热更新：悄无声息的解决线上bug)
+#### [第23章：BaseArrayAdapters(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(针对与 ArrayAdapter 进行封装)
+#### [第24章：BaseAdapter(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(针对与 RecyclerView.Adapter 进行封装)
+#### [第25章：Encryption(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(加密工具包)
+#### [第26章：ProgressDialogUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(多种加载进度条)
+#### [第27章：GT_Animation(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(强大的GT动画库)
+#### [第28章：WindowUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(WindowUtils 窗体类，封装了APP窗口类工具)
+#### [第29章：ViewUtils(推荐指数：✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(自定义View工具集合，可直接添加到xml 布局文件中)
+#### [第30章：GT_Activity(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(封装 Activity 管理器)
+#### [第31章：GT_Fragment(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(封装 Fragment 管理器)
+#### [第32章：GT_Dialog(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(封装 Dialog 管理器)
+#### [第33章：GT_FloatingWindow(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(封装 悬浮窗 管理器)
+#### [第34章：设备监听类 DeviceListening(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(手机设备的监听)
+#### [第35章：多媒体类(推荐指数：✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(手机设备的音乐、音频，视频等)
+#### [第36章：GT注解(推荐指数：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(GT高级使用方法)
+#### [第37章：GT线程(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(容易上瘾，请勿上头)
+#### [第38章：Permission(新品推荐：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(超级简单且轻量级的动态授权框架)
+#### [第39章：GT黑科技(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(黑科技会越来越多，重点发展路线)
+###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)
+#### [第40章：GT-DataBinding(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(彻底解放 findViewById)
+#### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(超简单GT_MVVM入门系列)
+#### [第41章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288?spm=1001.2014.3001.5501)(解决数据传递框架)
+#### [第45章：GT-Observable(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123982353?spm=1001.2014.3001.5501)(异步线程切换框架)
 
 
 
@@ -131,7 +128,6 @@
 allprojects {
     repositories {
         ...
-        
         maven { url 'https://jitpack.io' }//必要的
     }
 }
@@ -141,7 +137,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.0.2//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.0.3//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
     	annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
