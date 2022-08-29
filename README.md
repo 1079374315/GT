@@ -10,15 +10,15 @@
 
 #### [下载网址：DataBinding.jar-v1.0.6]([http://gsls.3vfree.cn/Servers/index.html](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar))
 
-# 最新版本: 1.4.1.0
-发布时间：2022.8.23
+# 最新版本: 1.4.1.1
+发布时间：2022.8.28
 
 # 此次版本更新：
 ````
 /**
 CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
 GitHub https://github.com/1079374315/GT
-更新内容 1.4.1.0 版本 大爆料：
+更新内容 1.4.1.1 版本 大爆料：
 新增 MVC、MVP、MVVM (辅助框架)、
 GT.EventBus (数据传递)框架、
 Observable (异步框架）、
@@ -67,6 +67,7 @@ Observable 异步线程操作，让你的业务流程，干净又清爽
 解决项目包名大于三层后 适配器在 GT_DataBinding 自动生成的时候，出现 ID,R路径 少生成一个的问题
 4.HttpUtil 类修改了使用方法 需要实例化进行请求 如：new GT.HttpUtil().postRequest(....)
 5.优化 HttpCall 无法请求下载文件的问题，新版教程请参考官网
+6.仅在 v1.4.1.0版本上 优化了部分功能的性能
  * 
  */
  
@@ -143,7 +144,7 @@ allprojects {
 dependencies {
 
 	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.1.0'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.1.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
 	
 	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册，请前往官网下载最新 jar 进行注册
     	annotationProcessor files('libs/gt-DataBinding.jar')//注册 gt-DataBinding 功能
