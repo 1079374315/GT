@@ -8,7 +8,7 @@
 # <a href="https://blog.csdn.net/qq_39799899"><img src="http://gsls.3vfree.cn/Servers/img/GT/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 #### ============[请不要关注源码页](https://github.com/1079374315/GSLS_Tool)
 
-#### [下载网址：DataBinding.jar-v1.0.6]([http://gsls.3vfree.cn/Servers/index.html](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar))
+#### [下载网址：DataBinding.jar-v1.0.6](http://gsls.3vfree.cn/Servers/GT/gt-DataBinding.jar)
 
 # 最新版本: 1.4.1.1
 发布时间：2022.8.28
