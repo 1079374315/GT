@@ -157,9 +157,12 @@ dependencies {
 **2. GT包混淆：**
 
 ````gradle
+#不混淆GT库
+-keep public class com.gsls.gt.GT { *; }
+#不混淆 继承GT类 或 继承GT内部类 的类
+-keep public class * extends com.gsls.gt.GT { *; }
+-keep public class * extends com.gsls.gt.GT$* { *; }
 
-# 不混淆GT库
--keep class com.gsls.gt.** {*;}
 #jar库不参与混淆
 -libraryjars libs/gt-DataBinding.jar
 ## 其余的看情况混淆
