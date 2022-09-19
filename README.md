@@ -144,11 +144,11 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 
-	//GT基础功能
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.1'//如果不需要使用全部功能，可以只添加GT基础依赖。
+	//GT基础功能(必要的)
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.2'
 	
-	//如需使用 gt-DataBinding 才需要添加以下注册否则可以不注册
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.1'//注册 gt-DataBinding 功能
+	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.2'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
