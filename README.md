@@ -8,7 +8,7 @@
 # <a href="https://blog.csdn.net/qq_39799899"><img src="http://gsls.3vfree.cn/Servers/img/GT/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 #### ============[关注我，查找更简单(*￣︶￣)](https://github.com/1079374315/GSLS_Tool)
 
-#### [gt-DataBinding-v1.0.7-更新详情](http://gsls.3vfree.cn/Servers/index.html)
+#### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
 # 最新版本: v1.4.2.2
 发布时间：2022.9.19
