@@ -87,7 +87,7 @@
 #### [第46章：GT-Glide(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/125692488?spm=1001.2014.3001.5501)(加载图片，支持动态图)
 #### [第47章：GT-GT_Notification(新品推荐：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127001248?spm=1001.2014.3001.5501)(轻松自定义 酷狗音乐播放状态栏)
 #### [第48章：GT-WebViews(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127265708?spm=1001.2014.3001.5501)(安卓与H5交互，可支持侵入式开发)
-#### [第49章：GT_View(推荐指数：✪✪✪✪✪)]([https://blog.csdn.net/qq_39799899/article/details/119696907](https://blog.csdn.net/qq_39799899/article/details/127268713?spm=1001.2014.3001.5501)(自定义底部弹窗支付页面)
+#### [第49章：GT_View(推荐指数：✪✪✪✪✪)]([https://blog.csdn.net/qq_39799899/article/details/127268713?spm=1001.2014.3001.5501])(自定义底部弹窗支付页面)
 
 
 
