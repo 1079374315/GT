@@ -10,64 +10,28 @@
 
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
-# 最新版本: v1.4.2.2
-发布时间：2022.9.19
+# 最新版本: v1.4.2.4
+发布时间：2022.10.16
 
 # 此次版本更新：
 ````
 /**
- * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
+* CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 新增 MVC、MVP、MVVM (辅助框架)、
+ * 新增 MVC、MVP、MVVM、GT_MVVM(辅助框架)、
  * GT.EventBus (数据传递)框架、
  * Observable (异步框架）、
  * HttpCall (网络请求框架)、
  * Glide (图片加载框架，支持三级缓存)
  * 内容如下：
- * 1.新增 GT_PopupWindow 类
- * 2.LOG 类新增 GT.logt("标记日志"); GT.errt("标记日志");
- * 3.优化 时间与时间戳互转的方法
- * 4.新增 编程辅助框架 MVC/MVP/MVVM/GT/GT_Binding模式
- * 5.增强 AnnotationAssist 反射、注解工具类
- * 6.增强分享功能
- * 7.优化所有的 DataBinding自动生成类 ，增强 GT_BindingViewModel 并支持 通过泛类映射实例化 ，增加了 适配器的 DataBinding
- * 8.增加 WebViewUtils 类
- * 9.GT.Thread 增加线程池管理功能
- * 10.新增 GT.EventBus 类，具体使用教程清参考官网教程
- * 11.新增异步操作的框架 Observable 具体使用教程清参考官网
- * 12.增加 GT_Cache GT内部缓存类 （随时随地从缓存里拿对象使用）
- * 目前支持:GT_SharedPreferences、Hibernate、GT_Fragment、HttpCall、SerialPortUtils、GT_Socket.TCP
- * 13.去掉 OkGo 与 OkHttp 的封装类，增加 HttpCall 网络请求框架(支持网络请求与文件下载上传) ,具体使用教程清参考官网
- * 14.新增图片加载类 GT.Glide 使用方法类似于 Glide框架  GT.Glide.with(MainActivity.this).load(url).into(imageView);
- * 支持功能：
- * (1).加载图片的类型非常丰富
- * (2).支持三级缓存,可设置是否缓存
- * (3).占位图（图片完成前的图）
- * (4).异常图（图片加载异常的）
- * (5).高斯模糊(如：.blurTransformation(5))
- * (6).GIF(可使用 GTImageView 组件 来实现圆角动态图)
- * (6).支持圆角图片(.roundedCorners(30,0,30,90))
- * (6).指定图片大小(与设置缩略图同一个 api 方法)
- * 16.将 Permission 权限申请类 转移到 AppAuthorityManagement 类中
- * 17.新增 StrColor 类，动态设置文字颜色
- * 18. Observable 异步线程操作，让你的业务流程，干净又清爽
- * 19.新增 ImageViewTools 强大的图片工具包
- * 20.新增 GTImageView 加载图片组件,可以圆角动态图
- * 21.新增 NeverCrash 类，防止APP奔溃类，APP产生奔溃后，会捕获，并将异常手机信息与异常原因发送出来
- * 22.所有UI基类增加 手机 与 Pad 布局切换功能，并全部支持 DataBinding
- * 23.增加 Zip 工具包
- * 24.优化 GT调试悬浮窗
- * 25.优化 热修复类、下载app类、安装app类
- * 26.HttpUtil 类增加下载文件 API
- * 27.新增 GT_Notification 通知封装类 (让自定义通知更加简单)
+ * 1.新增 GT.EventBus 事件取消分发 、跨进程功能
+ * 2.新增 GT_Notification 通知封装类 (让自定义通知更加简单)
+ * 3.新增 BaseWeb 封装类，让 JS 交互更轻松
  * <p>
  * 优化:
- * 1.修复适配器 布局限制的问题,且增加瀑布流一键设置功能
- * 2.新增 BaseFragment 类中 show 与 hide 方法用于监听 Fragment 在不经历生命周期时的调用
- * 3.修复 GT_DataBinding 在不同布局的相同 ID的组件上，获取异常的情况.
- * 解决项目包名大于三层后 适配器在 GT_DataBinding 自动生成的时候，出现 ID,R路径 少生成一个的问题
- * 4.HttpUtil 类修改了使用方法 需要实例化进行请求 如：new GT.HttpUtil().postRequest(....)
- * 5.优化 HttpCall 无法请求下载文件的问题，新版教程请参考官网
+ * 1.优化 封装的适配器
+ * 2.优化 GT.Glide 框架
+ * 3.增加新的应用检测 前后台切换的方法
  * 
  */
  
@@ -145,10 +109,10 @@ dependencyResolutionManagement {
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.2'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.4'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.2'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.4'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
