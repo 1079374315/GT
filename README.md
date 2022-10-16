@@ -82,9 +82,12 @@
 ###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)
 #### [第40章：GT-DataBinding(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(彻底解放 findViewById)
 #### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(超简单GT_MVVM入门系列)
-#### [第41章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288?spm=1001.2014.3001.5501)(解决数据传递框架)
+#### [第41章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288?spm=1001.2014.3001.5501)(解决数据传递框架,支持跨进程传递)
 #### [第45章：GT-Observable(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123982353?spm=1001.2014.3001.5501)(异步线程切换框架)
-
+#### [第46章：GT-Glide(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/125692488?spm=1001.2014.3001.5501)(加载图片，支持动态图)
+#### [第47章：GT-GT_Notification(新品推荐：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127001248?spm=1001.2014.3001.5501)(轻松自定义 酷狗音乐播放状态栏)
+#### [第48章：GT-WebViews(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127265708?spm=1001.2014.3001.5501)(安卓与H5交互，可支持侵入式开发)
+#### [第49章：GT_View(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(自定义底部弹窗支付页面)
 
 
 
