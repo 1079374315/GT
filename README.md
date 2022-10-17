@@ -32,7 +32,13 @@
  * 1.优化 封装的适配器
  * 2.优化 GT.Glide 框架
  * 3.增加新的应用检测 前后台切换的方法
- * 
+ //监听是否前台
+        registerActivityLifecycleCallbacks(new GT.AppLifecycleManager(new GT.OnListener<Boolean>() {
+            @Override
+            public void onListener(Boolean... obj) {
+                GT.logt("是否前台:" + obj[0]);
+            }
+        }));
  */
  
 ````
