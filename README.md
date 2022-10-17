@@ -10,7 +10,7 @@
 
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
-#### [直接依赖GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
+#### [直接依赖GT库源码，可直接修改源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 # 最新版本: v1.4.2.4
 发布时间：2022.10.16
 
