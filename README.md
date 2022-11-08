@@ -11,8 +11,8 @@
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
-# 最新版本: v1.4.2.4
-发布时间：2022.10.16
+# 最新版本: v1.4.2.5
+发布时间：2022.11.08
 
 # 此次版本更新：
 ````
@@ -28,11 +28,14 @@
  * 1.新增 GT.EventBus 事件取消分发 、跨进程功能
  * 2.新增 GT_Notification 通知封装类 (让自定义通知更加简单)
  * 3.新增 BaseWeb 封装类，让 JS 交互更轻松
+ * 4.增强 WebViews 封装类，默认支持 H5 调用相册与拍摄功能
+ * 5.增强 ImageViewTools 工具类，增加少许API方法
  * <p>
  * 优化:
  * 1.优化 封装的适配器
  * 2.优化 GT.Glide 框架
- * 3.增加新的应用检测 前后台切换的方法
+ * 3.优化图片加载框架，并修复部分伙伴们反馈的问题,支持动态图圆角修改
+ * 4.增加新的应用检测 前后台切换的方法
  //监听是否前台
         registerActivityLifecycleCallbacks(new GT.AppLifecycleManager(new GT.OnListener<Boolean>() {
             @Override
@@ -119,10 +122,10 @@ dependencyResolutionManagement {
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.4'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.5'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.4'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.5'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
