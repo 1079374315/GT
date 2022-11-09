@@ -34,7 +34,7 @@
  * 优化:
  * 1.优化 封装的适配器
  * 2.优化 GT.Glide 框架
- * 3.优化图片加载框架，并修复部分伙伴们反馈的问题,支持动态图圆角修改
+ * 3.优化图片加载框架，并修改伙伴们反馈的问题,支持动态图圆角修改
  * 4.增加新的应用检测 前后台切换的方法
  //监听是否前台
         registerActivityLifecycleCallbacks(new GT.AppLifecycleManager(new GT.OnListener<Boolean>() {
