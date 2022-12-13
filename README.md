@@ -144,7 +144,7 @@ dependencies {
 ## 其余的看情况混淆
 
 ````
-## 部分功能使用到的权限：（权限参考）
+## 部分功能使用到的权限：（权限仅参考）
 ````
     <!-- U盘操作 --> 
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" tools:ignore="ProtectedPermissions" />
