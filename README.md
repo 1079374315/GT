@@ -21,7 +21,7 @@
  * 更新内容如下：
  * 1.优化 Fragment 框架
  * 2.优化 GT日志悬浮窗 部分功能
- * 3.优化 GT_Floating 	日志,具体详情参考教程：
+ * 3.优化 GT_Floating 	日志,具体详情参考教程：https://blog.csdn.net/qq_39799899/article/details/128497267
  * 4.优化 Glide 		加载动态图设置圆角的问题
  * 5.修改 Hibernate 	SQL插入数据的方式
  * 6.优化 HttpUtil 	网络请求框架 body 方式
