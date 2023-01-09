@@ -11,39 +11,33 @@
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
-# 最新版本: v1.4.2.5
-发布时间：2022.11.08
+# 最新版本: v1.4.2.6
+发布时间：2023.1.10
 
 # 此次版本更新：
 ````
-/**
-* CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
+ * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
- * 新增 MVC、MVP、MVVM、GT_MVVM(辅助框架)、
- * GT.EventBus (数据传递)框架、
- * Observable (异步框架）、
- * HttpCall (网络请求框架)、
- * Glide (图片加载框架，支持三级缓存)
- * 内容如下：
- * 1.新增 GT.EventBus 事件取消分发 、跨进程功能
- * 2.新增 GT_Notification 通知封装类 (让自定义通知更加简单)
- * 3.新增 BaseWeb 封装类，让 JS 交互更轻松
- * 4.增强 WebViews 封装类，默认支持 H5 调用相册与拍摄功能
- * 5.增强 ImageViewTools 工具类，增加少许API方法
- * <p>
- * 优化:
- * 1.优化 封装的适配器
- * 2.优化 GT.Glide 框架
- * 3.优化图片加载框架，并修改伙伴们反馈的问题,支持动态图圆角修改
- * 4.增加新的应用检测 前后台切换的方法
- //监听是否前台
-        registerActivityLifecycleCallbacks(new GT.AppLifecycleManager(new GT.OnListener<Boolean>() {
-            @Override
-            public void onListener(Boolean... obj) {
-                GT.logt("是否前台:" + obj[0]);
-            }
-        }));
- */
+ * 更新内容如下：
+ * 1.优化 Fragment 框架
+ * 2.优化 GT日志悬浮窗 部分功能
+ * 3.优化 GT_Floating 	日志,具体详情参考教程：
+ * 4.优化 Glide 		加载动态图设置圆角的问题
+ * 5.修改 Hibernate 	SQL插入数据的方式
+ * 6.优化 HttpUtil 	网络请求框架 body 方式
+ * 7.优化 WebViewUtils 工具的 setWebViewKernel方法
+ * 8.增加 ImageViewTools 工具的 base64ToBitmap()方法
+ * 9.优化 Adapters		GT封装的适配器
+ * 10.优化 GT_WebView	初始化默认不缓存参数
+ * 11.优化 GTImageView	优化圆角设置方法
+ * 12.优化 Frame 思想	ViewModel 框架（让所有页面共用同一个 ViewModel）
+ * 13.增强 ApplicationUtils
+     (1)增加屏蔽字库方法 shieldedCharacterLibrary()
+     (2)去掉结尾为0		removeZero()
+     (3)防止空数据的方法	notyNull()
+     (4)获取 字符串中的 电话号码	checkCellphone()
+     (5)获取当前手机所有app信息 getAllAppData2()
+
  
 ````
 
@@ -122,10 +116,10 @@ dependencyResolutionManagement {
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.5'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.6'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.5'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.6'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
