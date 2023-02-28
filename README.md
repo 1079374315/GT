@@ -11,8 +11,8 @@
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.3vfree.cn/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
-# 最新版本: v1.4.2.6
-发布时间：2023.1.10
+# 最新版本: v1.4.2.7
+发布时间：2023.2.28
 
 # 此次版本更新：
 ````
@@ -37,7 +37,7 @@
      (3)防止空数据的方法	notyNull()
      (4)获取 字符串中的 电话号码	checkCellphone()
      (5)获取当前手机所有app信息 getAllAppData2()
-
+ * 14.优化性能
  
 ````
 
@@ -116,10 +116,10 @@ dependencyResolutionManagement {
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.6'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.7'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.6'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.7'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
