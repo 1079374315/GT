@@ -108,10 +108,10 @@ dependencyResolutionManagement {
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.7'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.8'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.7'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.8'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
