@@ -11,33 +11,25 @@
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.hkfree.work/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
-# 最新版本: v1.4.2.7
-发布时间：2023.2.28
+# 最新版本: v1.4.2.8
+发布时间：2023.4.23
 
 # 此次版本更新：
 ````
  * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
  * 更新内容如下：
- * 1.优化 Fragment 框架
- * 2.优化 GT日志悬浮窗 部分功能
- * 3.优化 GT_Floating 	日志,具体详情参考教程：https://blog.csdn.net/qq_39799899/article/details/128497267?spm=1001.2014.3001.5502
- * 4.优化 Glide 		加载动态图设置圆角的问题
- * 5.修改 Hibernate 	SQL插入数据的方式
- * 6.优化 HttpUtil 	网络请求框架 body 方式
- * 7.优化 WebViewUtils 工具的 setWebViewKernel方法
- * 8.增加 ImageViewTools 工具的 base64ToBitmap()方法
- * 9.优化 Adapters		GT封装的适配器
- * 10.优化 GT_WebView	初始化默认不缓存参数
- * 11.优化 GTImageView	优化圆角设置方法
- * 12.优化 Frame 思想	ViewModel 框架（让所有页面共用同一个 ViewModel）
- * 13.增强 ApplicationUtils
-     (1)增加屏蔽字库方法 shieldedCharacterLibrary()
-     (2)去掉结尾为0		removeZero()
-     (3)防止空数据的方法	notyNull()
-     (4)获取 字符串中的 电话号码	checkCellphone()
-     (5)获取当前手机所有app信息 getAllAppData2()
- * 14.优化性能
+ * 1.优化 Hibernate 数据库（具体使用教程请参考：https://blog.csdn.net/qq_39799899/article/details/105935756?spm=1001.2014.3001.5502）
+ * (1)新增索引功能：单列索引、组合索引、唯一索引
+ * (2)新增 数据库Hibernate 使用 接口的方式调用管理数据库API
+ * (3)将数据库注解 @GT.Hibernate.GT_Property 改为了 @GT.Hibernate.GT_Column
+ * (4)数据库新增 读写锁，线程操作更安全
+ * (5)增强数据库 保存全部数据saveAll() 的功能(之前最多一次性能保存50万条，增强后内存足够的情况下，上无上限)
+ * <p>
+ * 2.优化日志 调用方法
+ * 3.优化 GT_WebView googleplay 报错 onReceivedSslError 的问题
+ * 4.优化 使用串口工具 SerialPortUtils 时，缺少 libserial_port.so 文件的问题
+ * 5.遗弃的方法 readWritePermission()
  
 ````
 
