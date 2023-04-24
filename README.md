@@ -23,7 +23,7 @@
  * (2)新增 数据库Hibernate 使用 接口的方式调用管理数据库API
  * (3)将数据库注解 @GT.Hibernate.GT_Property 改为了 @GT.Hibernate.GT_Column
  * (4)数据库新增 读写锁，线程操作更安全
- * (5)增强数据库 保存全部数据saveAll() 的功能(之前最多一次性能保存50万条，增强后内存足够的情况下，上无上限)
+ * (5)增强数据库 保存全部数据saveAll() 的功能(之前最多一次性能保存50万条，增强后内存足够的情况下，无上限)
  * <p>
  * 2.优化日志 调用方法
  * 3.优化 GT_WebView googleplay 报错 onReceivedSslError 的问题
