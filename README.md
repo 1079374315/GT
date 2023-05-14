@@ -10,8 +10,8 @@
 #### [gt-DataBinding-v1.0.8-更新详情](http://gsls.hkfree.work/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
-# 最新版本: v1.4.2.9 (kotlin updating...)
-发布时间：2023.4.23
+# 最新版本: v1.4.2.9
+发布时间：2023.4.23 (kotlin版 加快更新中...)
 
 # 此次版本更新：
 ````
