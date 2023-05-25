@@ -78,7 +78,7 @@
 #### [第39章：GT黑科技(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(黑科技会越来越多，重点发展路线)
 ###### [黑科技1号：超简单无障碍服务-自带基础寻找组件工具包(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)
 #### [第40章：GT-DataBinding(新品指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(彻底解放 findViewById)
-#### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/119696907)(超简单GT_MVVM入门系列)
+#### [第43章：GT-MVVM架构(新品推荐：✪✪✪✪✪✪)]([https://blog.csdn.net/qq_39799899/article/details/119696907](https://blog.csdn.net/qq_39799899/article/details/127093032?spm=1001.2014.3001.5501))(超简单GT_MVVM入门系列)
 #### [第41章：GT-EventBus(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123871288?spm=1001.2014.3001.5501)(解决数据传递框架,支持跨进程传递)
 #### [第45章：GT-Observable(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/123982353?spm=1001.2014.3001.5501)(异步线程切换框架)
 #### [第46章：GT-Glide(新品推荐：✪✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/125692488?spm=1001.2014.3001.5501)(加载图片，支持动态图)
