@@ -12,12 +12,12 @@
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 #### [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
-# 最新版本: v1.4.2.9
-发布时间：2023.4.23 (kotlin版 加快更新中...)
+# 最新版本: v1.4.3.6
+发布时间：2023.5.31 (kotlin版 新版来袭！！！)
 
 # 此次版本更新：
 ````
- * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
+* CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
  * 更新内容如下：
  * 1.优化 Hibernate 数据库（具体使用教程请参考：[第9章：Hibernate(热度推荐：✪✪✪✪✪✪)]）
@@ -31,6 +31,12 @@
  * 3.优化 GT_WebView googleplay 报错 onReceivedSslError 的问题
  * 4.优化 使用串口工具 SerialPortUtils 时，缺少 libserial_port.so 文件的问题
  * 5.遗弃的方法 readWritePermission()
+ * 6.完成 Kotlin 新版，具体新增那些请参考官网教程
+ * 7.增加 GT.Res 资源工具类
+ * 8.新增 @GT_R_Build("资源文件名")解决多模块中无法使用注解绑定组件ID的情况 具体使用教程，请参考官网教程：
+ * 9.新增线程池封装类管理 map,增多获取简洁线程池 api
+ * 10.适配 kotlin 版 gt-DataBinding 注解
+ * 11.新增简易强大 kotlin 扩展函数库 库名为 GTE.kt
  
 ````
 
@@ -90,7 +96,7 @@
 
 
 # 如何使用
-### 注意：以下为android的使用方式
+### 注意：以下为android-Java的使用方式
 **1. 项目下app的build.gradle中依赖：**
 
 ````gradle
@@ -102,22 +108,57 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }//必要的
     }
 }
-
-	
 	
 第二步 2. 添加依赖关系
 dependencies {
 
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.2.9'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.3.6'
 	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.2.9'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.3.6'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
 }
 ````
+
+### 注意：以下为android-Kotlin的使用方式
+**1. 项目下app的build.gradle中依赖：**
+
+````gradle
+第一步 1. 将以下存储库将其添加到根构建中。存储库末尾的 settings.gradle
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }//必要的
+    }
+}
+	
+第二步 2. 添加依赖关系
+dependencies {
+
+	//GT基础功能(必要的)
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.3.6'
+	
+	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.3.6'//注册 gt-DataBinding 功能
+	
+	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
+	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
+}
+````
+
+注意：如需要使用 gt-DataBinding 才需要加上第三步，否则可不加
+第三步 3. 在 build.gradle(app模块中) 引入 'kotlin-kapt'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+}
+
+
 
 **2. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
 
