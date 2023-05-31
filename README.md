@@ -37,7 +37,8 @@
  * 9.新增线程池封装类管理 map,增多获取简洁线程池 api
  * 10.适配 kotlin 版 gt-DataBinding 注解
  * 11.新增简易强大 kotlin 扩展函数库 库名为 GTE.kt
- 
+ * 12.优化 GT_Fragment 类，API，解决 Fragment返回失效的问题
+  
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
