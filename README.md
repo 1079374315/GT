@@ -148,7 +148,6 @@ dependencies {
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
 }
-````
 
 注意：如需要使用 gt-DataBinding 才需要加上第三步，否则可不加
 第三步 3. 在 build.gradle(app模块中) 引入 'kotlin-kapt'
@@ -157,7 +156,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
 }
-
+````
 
 
 **2. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
