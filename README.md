@@ -111,10 +111,8 @@ dependencyResolutionManagement {
 	
 第二步 2. 添加依赖关系
 dependencies {
-
 	//GT基础功能(必要的)
 	implementation 'com.github.1079374315:GSLS_Tool:v1.4.3.6'
-	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
         annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.3.6'//注册 gt-DataBinding 功能
 	
@@ -138,10 +136,8 @@ dependencyResolutionManagement {
 	
 第二步 2. 添加依赖关系
 dependencies {
-
 	//GT基础功能(必要的)
 	implementation 'com.github.1079374315:GSLS_Tool:v1.4.3.6'
-	
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
         kapt 'com.github.1079374315:GSLS_Tool:v1.4.3.6'//注册 gt-DataBinding 功能
 	
@@ -152,10 +148,22 @@ dependencies {
 注意：如需要使用 gt-DataBinding 才需要加上第三步，否则可不加
 第三步 3. 在 build.gradle(app模块中) 引入 'kotlin-kapt'
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    ...
     id 'kotlin-kapt'
 }
+
+注意：如果运行编译出现 "task (current target is 1.8) and 'kaptGenerateStubsDebugKotlin' task (current target is 17) jvm" 问题，
+可直接在 build.gradle(app模块中) 添加以下关系来解决:
+android {
+    ...
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile.class){
+        kotlinOptions {
+            jvmTarget = "1.8"
+        }
+    }
+ 
+}
+
 
 ````
 
