@@ -168,8 +168,17 @@ android {
 
 ````
 
+**2. 出现以下问题请直接进入传送门进行参考解决：** [传送门](https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5502)
+````gradle
+1.依赖GT库详情
+2.kotlin中使用 gt-DataBinding 所遇见的问题
+3.注解ID 资源爆红的问题
+4.同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K
+5.待发现与更新中....
+````
 
-**2. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
+
+**3. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
 
 ````gradle
 #不混淆GT库
