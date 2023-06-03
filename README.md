@@ -168,7 +168,7 @@ android {
 
 ````
 
-**2. 出现以下问题请直接进入传送门进行参考解决：** [传送门](https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5502)
+**2. 出现以下问题，请直接进入传送门进行参考解决：** [传送门](https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5502)
 ````gradle
 1.依赖GT库详情
 2.kotlin中使用 gt-DataBinding 所遇见的问题
