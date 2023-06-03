@@ -7,7 +7,7 @@
 # <a href="https://blog.csdn.net/qq_39799899"><img src="http://gsls.hkfree.work/Servers/img/GT/logo.png"  width="200px"></a>[GT库源码](https://github.com/1079374315/GSLS_Tool)
 #### [关注我，查找更简单(*￣︶￣)](https://github.com/1079374315/GSLS_Tool)
 
-#### [gt-DataBinding-v1.0.8-更新详情](http://gsls.hkfree.work/Servers/index.html)
+#### [gt-DataBinding-更新详情](http://gsls.hkfree.work/Servers/index.html)
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
