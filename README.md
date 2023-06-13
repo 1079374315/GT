@@ -96,7 +96,7 @@
 #### [第49章：GT_Notification(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127001248?spm=1001.2014.3001.5502)(8种通知栏,有酷狗通知栏源码)
 #### [第52章：GT_MVVM(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127093032?spm=1001.2014.3001.5502)(懒人必备框架-MVVM)
 #### [第51章：GT_WebView(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127265708?csdn_share_tail=%7B%22type%22%3A%22blog%22%2C%22rType%22%3A%22article%22%2C%22rId%22%3A%22127265708%22%2C%22source%22%3A%22qq_39799899%22%7D)(Android H5 混合开发)
-#### [第52章：GT-Res(推荐指数：✪✪✪✪✪)](#)(GT库资源获取)
+#### [第52章：GT-Res(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/131027023?spm=1001.2014.3001.5501#t4)(GT库资源获取)
 
 
 
