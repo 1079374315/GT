@@ -12,33 +12,35 @@
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 #### [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
-# 最新版本: v1.4.4.5
-发布时间：2023.6.4 (kotlin 抢先体验版)
+# 最新版本: v1.4.4.6
+发布时间：2023.8.10 (kotlin 抢先体验版)
 
 # 此次版本更新：
 ````
-* CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
+ * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
  * GitHub https://github.com/1079374315/GT
  * 更新内容如下：
- * 1.优化 Hibernate 数据库（具体使用教程请参考：[第9章：Hibernate(热度推荐：✪✪✪✪✪✪)]）
- * (1)新增索引功能：单列索引、组合索引、唯一索引
- * (2)新增 数据库Hibernate 使用 接口的方式调用管理数据库API
- * (3)将数据库注解 @GT.Hibernate.GT_Property 改为了 @GT.Hibernate.GT_Column
- * (4)数据库新增 读写锁，线程操作更安全
- * (5)增强数据库 保存全部数据saveAll() 的功能(之前最多一次性能保存50万条，增强后内存足够的情况下，无上限)
- * <p>
- * 2.优化日志 调用方法
- * 3.优化 GT_WebView googleplay 报错 onReceivedSslError 的问题
- * 4.优化 使用串口工具 SerialPortUtils 时，缺少 libserial_port.so 文件的问题
- * 5.遗弃的方法 readWritePermission()
- * 6.完成 Kotlin 新版，具体新增那些请参考官网教程
- * 7.增加 GT.Res 资源工具类
- * 8.新增 @GT_R_Build("资源文件名")解决多模块中无法使用注解绑定组件ID的情况 具体使用教程，请参考官网教程：
- * 9.新增线程池封装类管理 map,增多获取简洁线程池 api
- * 10.适配 kotlin 版 gt-DataBinding 注解
- * 11.新增简易强大 kotlin 扩展函数库 库名为 GTE.kt
- * 12.优化 GT_Fragment 类，API，修改 GT_Fragment 类 返回策略
- * 13.更新 悬浮窗类名
+ * 1.优化 GT_Fragment 类，API，修改 GT_Fragment 类 返回策略
+ * 2.新增 指纹验证工具类 FingerprintUtils 和 封装好的指纹验证对话框 FingerprintDialogFragment 使用教程清参考官网
+ * 3.新增 选择图片 功能
+ * 4.GT.Glide 图片加载框架优化内容:
+ * (1).优化内存缓存策略
+ * (2).提升加载动态图性能 提升透明动画稳定性
+ * (3).解决断网时读取本地缓存图片失败的问题
+ * (4).解决 加载动态图后，View事件丢失的问题
+ * (5).解决 在复杂布局中，加载动态图，动态图错位的问题
+ * 5.去掉 U盘工具 API
+ * 6.ApplicationUtils 类 增加获取 软键盘高度 API
+ * 7.ImageViewUtils 类 增加 生成、解析二维码
+ * 8.去掉 GT.ApplicationUtils 封装类中的所有分享api方法， 新增分享工具类 ShareUtils ，支持一键分享文件、网图、GIF图、支持万能渠道分享
+ * 9.新增 手电筒 FlashlightUtils 封装类，五行代码 搞定
+ * 10.新增 声音分贝 AudioRecordUtils 封装类，三行代码 搞定
+ * 11.磁场传感器 MagneticFieldUtils 封装类，四行代码 搞定
+ * 12.光源传感器 LightSourceUtils 封装类，四步搞定
+ * 13.水平仪传感器 GradienterUtils 封装类，四步搞定
+ * 14.新增壁纸管理器 WallpaperManagerUtils，两步搞定
+ * 15.新增跳转封装类 SkipUtils，跳转各种系统页面
+ * 16.GT.EventBus 新增局部 发布事件 和 订阅事件，灵活多变，支持事件拦截，结果返回等。(具体请参考博客教程)
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
@@ -117,9 +119,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.5'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.6'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.4.5'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.4.6'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -142,9 +144,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.5'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.6'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.4.5'//注册 gt-DataBinding 功能
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.4.6'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
