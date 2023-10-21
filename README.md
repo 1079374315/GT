@@ -184,7 +184,7 @@ android {
 ````
 
 
-**3. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
+**3. GT包混淆：** [整体项目混淆参考【请戳我】](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
 
 ````gradle
 #不混淆GT类
