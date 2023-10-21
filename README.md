@@ -187,11 +187,14 @@ android {
 **3. GT包混淆：** [整体项目混淆参考](https://github.com/1079374315/GSLS_Tool/blob/master/gt/proguard-rules.pro)
 
 ````gradle
-#不混淆GT库
--keep public class com.gsls.gt.GT { *; }
+#不混淆GT类
+#-keep public class com.gsls.gt.GT { *; }
+-keep class com.gsls.** { *; }
 #不混淆 继承GT类 或 继承GT内部类 的类
 -keep public class * extends com.gsls.gt.GT { *; }
 -keep public class * extends com.gsls.gt.GT$* { *; }
+-keep public class * extends com.gsls.gtk.GTK { *; }
+-keep public class * extends com.gsls.gtk.GTK$* { *; }
 
 ## 其余的看情况混淆
 
