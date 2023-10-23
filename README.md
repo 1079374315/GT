@@ -11,7 +11,7 @@
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
-#### [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
+## [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
 # 最新版本: v1.4.4.9
 发布时间：2023.8.10 (kotlin 抢先体验版)
 
