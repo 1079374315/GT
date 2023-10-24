@@ -34,8 +34,6 @@ GSLS - 1号贡献者
 
 # 此次版本更新：
 ````
- * CSDN 博客/官网教程:https://blog.csdn.net/qq_39799899
- * GitHub https://github.com/1079374315/GT
  * 更新内容如下：
  * 1.优化 GT_Fragment 类，API，修改 GT_Fragment 类 返回策略
  * 2.新增 指纹验证工具类 FingerprintUtils 和 封装好的指纹验证对话框 FingerprintDialogFragment 使用教程清参考官网
@@ -44,7 +42,7 @@ GSLS - 1号贡献者
  * (1).优化内存缓存策略
  * (2).提升加载动态图性能 提升透明动画稳定性
  * (3).解决断网时读取本地缓存图片失败的问题
- * (4).解决 加载动态图后，View事件丢失的问题(若适配器中使用动态图 请用GTImageView组件 替换 ImageView)
+ * (4).解决 加载动态图后，View事件丢失的问题
  * (5).解决 在复杂布局中，加载动态图，动态图错位的问题
  * 5.去掉 U盘工具 API
  * 6.ApplicationUtils 类 增加获取 软键盘高度 API
@@ -58,6 +56,10 @@ GSLS - 1号贡献者
  * 14.新增壁纸管理器 WallpaperManagerUtils，两步搞定
  * 15.新增跳转封装类 SkipUtils，跳转各种系统页面
  * 16.GT.EventBus 新增局部 发布事件 和 订阅事件，灵活多变，支持事件拦截，结果返回等。(具体请参考博客教程)
+ * 17.新增 颜色选择封装 对话话框
+ * 18.优化 WebUtils 加载web稳定性，新增 解析 html源码 解析资源 api方法
+ * 19.增强 Hibernate 数据库稳定性
+ * 20.优化 AppAuthorityManagement 权限申请 稳定性
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
