@@ -12,8 +12,8 @@
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 ## [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
-# 最新版本: v1.4.4.9
-发布时间：2023.8.10 (kotlin 抢先体验版)
+# 最新版本: v1.4.5.1
+发布时间：2023.10.24 (kotlin 抢先体验版)
 
 # GT库官方群1: 814506562
 ````
@@ -136,9 +136,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.9'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.1'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.4.9'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.5.1'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -161,9 +161,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.4.9'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.1'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.4.9'//注册 gt-DataBinding 功能
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.5.1'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
