@@ -135,6 +135,7 @@ dependencyResolutionManagement {
     repositories {
         ...
         maven { url 'https://jitpack.io' }//必要的
+	//新版的AS 用法: maven { url = uri("https://jitpack.io") }
     }
 }
 	
@@ -160,6 +161,7 @@ dependencyResolutionManagement {
     repositories {
         ...
         maven { url 'https://jitpack.io' }//必要的
+       //新版的AS 用法: maven { url = uri("https://jitpack.io") }
     }
 }
 	
