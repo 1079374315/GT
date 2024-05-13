@@ -12,8 +12,8 @@
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 ## [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
-# 最新版本: v1.4.5.2
-发布时间：2024.1.10 (kotlin 抢先体验版)
+# 最新版本: v1.4.5.7
+发布时间：2024.5.13 (抢先体验版)
 
 # GT库官方群1: 814506562
 ````
@@ -35,34 +35,11 @@ GSLS - 1号贡献者
 # 此次版本更新：
 ````
  * 更新内容如下：
- * 1.优化 GT_Fragment 类，API，修改 GT_Fragment 类 返回策略
- * 2.新增 指纹验证工具类 FingerprintUtils 和 封装好的指纹验证对话框 FingerprintDialogFragment 使用教程清参考官网
- * 3.新增 选择图片 功能
- * 4.GT.Glide 图片加载框架优化内容:
- * (1).优化内存缓存策略
- * (2).提升加载动态图性能 提升透明动画稳定性
- * (3).解决断网时读取本地缓存图片失败的问题
- * (4).解决 加载动态图后，View事件丢失的问题
- * (5).解决 在复杂布局中，加载动态图，动态图错位的问题
- * 5.去掉 U盘工具 API
- * 6.ApplicationUtils 类 增加获取 软键盘高度 API
- * 7.ImageViewUtils 类 增加 生成、解析二维码
- * 8.去掉 GT.ApplicationUtils 封装类中的所有分享api方法， 新增分享工具类 ShareUtils ，支持一键分享文件、网图、GIF图、支持万能渠道分享
- * 9.新增 手电筒 FlashlightUtils 封装类，五行代码 搞定
- * 10.新增 声音分贝 AudioRecordUtils 封装类，三行代码 搞定
- * 11.磁场传感器 MagneticFieldUtils 封装类，四行代码 搞定
- * 12.光源传感器 LightSourceUtils 封装类，四步搞定
- * 13.水平仪传感器 GradienterUtils 封装类，四步搞定
- * 14.新增壁纸管理器 WallpaperManagerUtils，两步搞定
- * 15.新增跳转封装类 SkipUtils，跳转各种系统页面
- * 16.GT.EventBus 新增局部 发布事件 和 订阅事件，灵活多变，支持事件拦截，结果返回等。(具体请参考博客教程)
- * 17.新增 颜色选择封装 对话话框
- * 18.优化 WebUtils 加载web稳定性，新增 解析 html源码 解析资源 api方法
- * 19.增强 Hibernate 数据库稳定性
- * 20.优化 AppAuthorityManagement 权限申请 稳定性
- * 21.优化 WebView SslErrorHandler 事件，上架googleplay 遇见的问题
- * 22.优化 Android混合开发中 WebView 上传图片的问题，并增加优化了  拍照、相册选着图片、相册选择视频、拍摄视频、本地文件上传 功能。
- * 23.更新了 GT动画封装库的次数逻辑(若用到GT库的动画类 GT_Animation 才会有影响到)
+ * 1.优化 WebView SslErrorHandler 事件，上架googleplay 遇见的问题
+ * 2.优化 Android混合开发中 WebView 上传图片的问题，并增加优化了  拍照、相册选着图片、相册选择视频、拍摄视频、本地文件上传 功能。
+ * 3.更新了 GT动画封装库的次数逻辑
+ * 4.增加 路由框架 GT.ARouter，教程请参考： 待更新
+ * 5.降低GT库 JDK1.8版本、降低KT版 1.6本、适配gt-DataBinding项目结构 
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
@@ -142,9 +119,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.2'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.7'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.5.2'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.5.7'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -168,9 +145,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.2'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.7'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.5.2'//注册 gt-DataBinding 功能
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.5.7'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
