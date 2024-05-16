@@ -12,8 +12,8 @@
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 ## [GT库历史版本](https://github.com/1079374315/GSLS_Tool/releases)
-# 最新版本: v1.4.5.7
-发布时间：2024.5.13 (抢先体验版)
+# 最新版本: v1.4.5.8
+发布时间：2024.5.17 (抢先体验版)
 
 # GT库官方群1: 814506562
 ````
@@ -38,8 +38,9 @@ GSLS - 1号贡献者
  * 1.优化 WebView SslErrorHandler 事件，上架googleplay 遇见的问题
  * 2.优化 Android混合开发中 WebView 上传图片的问题，并增加优化了  拍照、相册选着图片、相册选择视频、拍摄视频、本地文件上传 功能。
  * 3.更新了 GT动画封装库的次数逻辑
- * 4.增加 路由框架 GT.ARouter，教程请参考： 待更新
- * 5.降低GT库 JDK1.8版本、降低KT版 1.6本、适配gt-DataBinding项目结构 
+ * 4.增加 路由框架 GT.ARouter，教程请参考：编写中...
+ * 5.降低GT库 JDK版本、降低KT版本、适配gt-DataBinding项目结构
+ * 6.适配Android14 自定义通知栏 单击事件引起的问题，未涉及 通知栏单击事件的不受影响
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
@@ -119,9 +120,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.7'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.8'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.5.7'//注册 gt-DataBinding 功能
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.5.8'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -145,9 +146,9 @@ dependencyResolutionManagement {
 第二步 2. 添加依赖关系
 dependencies {
 	//GT基础功能(必要的)
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.7'
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.5.8'
 	//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.5.7'//注册 gt-DataBinding 功能
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.5.8'//注册 gt-DataBinding 功能
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
