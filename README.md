@@ -9,8 +9,6 @@
 
 #### [gt-DataBinding-更新详情](http://gsls.hkfree.work/Servers/index.html)
 
-#### [gt.jar-最新版下载请戳我](https://jitpack.io/com/github/1079374315/GSLS_Tool/v1.4.5.8/GSLS_Tool-v1.4.5.8.jar)
-
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
 # 最新版本: v1.4.5.8
