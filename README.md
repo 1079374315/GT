@@ -37,7 +37,7 @@ GSLS - 1号贡献者
  * 1.优化 WebView SslErrorHandler 事件，上架googleplay 遇见的问题
  * 2.优化 Android混合开发中 WebView 上传图片的问题，并增加优化了  拍照、相册选着图片、相册选择视频、拍摄视频、本地文件上传 功能。
  * 3.更新了 GT动画封装库的次数逻辑
- * 4.增加 路由框架 GT.ARouter，教程请参考：[GT 路由解析](https://blog.csdn.net/qq_39799899/article/details/135116489?spm=1001.2014.3001.5501)
+ * 4.增加 路由框架 GT.ARouter，教程请参考：https://blog.csdn.net/qq_39799899/article/details/135116489?spm=1001.2014.3001.5501
  * 5.降低GT库 JDK版本、降低KT版本、适配gt-DataBinding项目结构
  * 6.适配Android14 自定义通知栏 单击事件引起的问题，未涉及 通知栏单击事件的不受影响
  * 7.优化 串口引入的问题
@@ -99,6 +99,7 @@ GSLS - 1号贡献者
 #### [第52章：GT_MVVM(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127093032?spm=1001.2014.3001.5502)(懒人必备框架-MVVM)
 #### [第51章：GT_WebView(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/127265708?csdn_share_tail=%7B%22type%22%3A%22blog%22%2C%22rType%22%3A%22article%22%2C%22rId%22%3A%22127265708%22%2C%22source%22%3A%22qq_39799899%22%7D)(Android H5 混合开发)
 #### [第52章：GT-Res(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/131027023?spm=1001.2014.3001.5501#t4)(GT库资源获取)
+#### [第53章：GT.ARouter(推荐指数：✪✪✪✪✪)](https://blog.csdn.net/qq_39799899/article/details/135116489?spm=1001.2014.3001.5501)(GT库路由解析)
 
 
 
