@@ -42,7 +42,7 @@ GSLS - 1号贡献者
  * 6.适配Android14 自定义通知栏 单击事件引起的问题，未涉及 通知栏单击事件的不受影响
  * 7.优化 串口引入的问题
  * 8.解决最新AS在使用R2的情况下出现的问题(需要先注释掉R2注解，先编译完成后再使用)
- * 9.适配AS kts依赖
+ * 9.适配AS build.gradle.kts 依赖
  * 10.新增单击间隔限制: GT.ApplicationUtils.clickIntervalTimes
 ````
 
