@@ -11,8 +11,8 @@
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
-# 最新版本: v1.4.6.6
-发布时间：2024.6.27 (抢先体验版)
+# 最新版本: v1.4.6.7
+发布时间：2024.7.6 (抢先体验版)
 
 # GT库官方群1: 814506562
 ````
@@ -38,6 +38,7 @@ GSLS - 1号贡献者
  * 2.适配 多层 深层次子模块下 GT_Route路由框架 (在使用上，不受影响)
  * 3.适配 多层 深层次子模块下 GT_R_Build R2 框架 (在使用上，不受影响)
  * 4.GT kt语言，增加View 快捷用法 show、gone、hide、interceptClick(拦截单击事件)
+ * 5.优化 Base_View 启动默认模式出现的问题
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
@@ -119,12 +120,12 @@ dependencyResolutionManagement {
 dependencies {
 
 	//旧版的AS 常规版 依赖方式：
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.6'//GT基础功能(必要的)
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.6.6'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//GT基础功能(必要的)
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
 
 	//新版的AS build.gradle.kts 依赖方式：
-	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.6")
-	//annotationProcessor("com.github.1079374315:GSLS_Tool:v1.4.6.6")
+	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.7")
+	//annotationProcessor("com.github.1079374315:GSLS_Tool:v1.4.6.7")
 
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -149,12 +150,12 @@ dependencyResolutionManagement {
 dependencies {
 
 	//旧版的AS 常规版 依赖方式：
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.6' //GT基础功能(必要的)
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.6.6'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.7' //GT基础功能(必要的)
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
 
 	//新版的AS build.gradle.kts 依赖方式：
-	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.6")
-	//kapt("com.github.1079374315:GSLS_Tool:v1.4.6.6")
+	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.7")
+	//kapt("com.github.1079374315:GSLS_Tool:v1.4.6.7")
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
