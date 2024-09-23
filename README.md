@@ -165,7 +165,7 @@ dependencies {
 第三步 3. 在 build.gradle(app模块中) 引入 'kotlin-kapt'
 plugins {
     ...
-    id 'kotlin-kapt'
+    id 'kotlin-kapt'  //新版 kotlin("kapt")
 }
 
 注意：如果运行编译出现 "task (current target is 1.8) and 'kaptGenerateStubsDebugKotlin' task (current target is 17) jvm" 问题，
