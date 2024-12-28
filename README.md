@@ -11,8 +11,8 @@
 
 #### [无法满足需求，需要修改GT库源码-请戳这里](https://blog.csdn.net/qq_39799899/article/details/127358406)
 
-# 最新版本: v1.4.6.7
-发布时间：2024.7.6 (抢先体验版)
+# 最新版本: v1.4.6.8
+发布时间：2024.12.28 (抢先体验版)
 
 # GT库官方群1: 814506562
 ````
@@ -34,11 +34,16 @@ GSLS - 1号贡献者
 # 此次版本更新：
 ````
  * 更新内容如下：
- * 1.GT_DataBinding 类 所有注解常量均转为大写 (若有涉及到的需要整体将小写转为大写即可)
- * 2.适配 多层 深层次子模块下 GT_Route路由框架 (在使用上，不受影响)
- * 3.适配 多层 深层次子模块下 GT_R_Build R2 框架 (在使用上，不受影响)
- * 4.GT kt语言，增加View 快捷用法 show、gone、hide、interceptClick(拦截单击事件)
- * 5.优化 Base_View 启动默认模式出现的问题
+ * 1.增强App工具类，并将跳转工具类 更名为 JumpUtils
+ * 2.新增 视频播放器 辅助类GT_VideoView
+ * 3.新增 算法类 Algorithm(后面会慢慢收集算法)
+ * 4.优化数据库保存map时的问题，新增 @GT_table 为映射表的标识
+ * 5.适配 Kotlin的 data 类型的数据表映射
+ * 6.解决在启动旧 Fragment 后调用的show 特殊情况下会调用失败的问题
+ * 7.悬浮窗优化：(默认悬浮窗是 桌面级)
+ * (1)桌面级悬浮窗：可在Android桌面和各种App之上显示 (缺点，无法在系统设置页面显示)
+ * (2)绑定 Activity 层级悬浮窗 ：悬浮窗 根据当前寄生的Activity进行显示和隐藏
+ * (3)绑定 无障碍 层级悬浮窗：几乎所有界面都能显示包括系统设置界面。
 ````
 
 ## 为了更好的使用该库，推荐阅读下面的文章:
@@ -120,12 +125,12 @@ dependencyResolutionManagement {
 dependencies {
 
 	//旧版的AS 常规版 依赖方式：
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//GT基础功能(必要的)
-        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.8'//GT基础功能(必要的)
+        annotationProcessor 'com.github.1079374315:GSLS_Tool:v1.4.6.8'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
 
 	//新版的AS build.gradle.kts 依赖方式：
-	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.7")
-	//annotationProcessor("com.github.1079374315:GSLS_Tool:v1.4.6.7")
+	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.8")
+	//annotationProcessor("com.github.1079374315:GSLS_Tool:v1.4.6.8")
 
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
@@ -150,12 +155,12 @@ dependencyResolutionManagement {
 dependencies {
 
 	//旧版的AS 常规版 依赖方式：
-	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.7' //GT基础功能(必要的)
-        kapt 'com.github.1079374315:GSLS_Tool:v1.4.6.7'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
+	implementation 'com.github.1079374315:GSLS_Tool:v1.4.6.8' //GT基础功能(必要的)
+        kapt 'com.github.1079374315:GSLS_Tool:v1.4.6.8'//使用 gt-DataBinding 才需要添加以下注册,否则可以不添加
 
 	//新版的AS build.gradle.kts 依赖方式：
-	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.7")
-	//kapt("com.github.1079374315:GSLS_Tool:v1.4.6.7")
+	//implementation("com.github.1079374315:GSLS_Tool:v1.4.6.8")
+	//kapt("com.github.1079374315:GSLS_Tool:v1.4.6.8")
 	
 	//同步后如果出现 ：The number of method references in a .dex file cannot exceed 64K. 错误，
 	//请参考该篇文章解决错误：https://blog.csdn.net/qq_39799899/article/details/120165435?spm=1001.2014.3001.5501
